@@ -11,15 +11,10 @@
           <a-menu-item key="DashboardPage">
             Dashboard
           </a-menu-item>
+          <a-menu-item key="DataUploadPage">
+            Data Upload
+          </a-menu-item>
         </a-menu>
-        
-        <!-- 底部登出按钮也跟随字体大小 -->
-        <div style="padding: 16px;">
-          <a-button type="link" @click="handleLogout" style="font-size: 13px;">
-            <LogoutOutlined />
-            <span>Logout</span>
-          </a-button>
-        </div>
       </div>
     </a-layout-sider>
     <!-- 内容区域 -->
@@ -61,13 +56,12 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { LeftOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons-vue';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue';
 
 export default {
   components: {
     LeftOutlined,
     RightOutlined,
-    LogoutOutlined
   },
   setup() {
     const currentView = ref('DashboardPage');
@@ -120,7 +114,8 @@ export default {
     handleMenuClick({ key }) {
       this.currentView = key;
       const routeMap = {
-        'DashboardPage': '/dashboard'
+        'DashboardPage': '/dashboard',
+        'DataUploadPage': '/data-upload'
       };
       if (routeMap[key]) {
         this.$router.push(routeMap[key]);

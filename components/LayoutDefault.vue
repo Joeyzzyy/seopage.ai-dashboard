@@ -102,9 +102,7 @@ export default {
 
     const menuItems = [
       { title: 'Dashboard', path: '/dashboard', icon: '📊' },
-      { title: 'Keywords & Topics', path: '/keywords-topics', icon: '🔍' },
-      { title: 'Task Management', path: '/task-management', icon: '📝' },
-      { title: 'Brand Assets', path: '/brand-assets', icon: '🏷️' },
+      { title: 'Data Upload', path: '/data-upload', icon: '📤' },
     ];
 
     // 添加获取用户名称的方法
