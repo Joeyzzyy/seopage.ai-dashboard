@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../components/Home.vue';
 import DataUploadPage from '../components/DataUploadPage.vue'
+import Login from '../components/Login.vue'
 
 const routes = [
   {
@@ -9,8 +10,7 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'Dashboard',
-        component: () => import('../components/DashboardPage.vue')
+        redirect: '/dashboard'
       },
       {
         path: 'dashboard',
@@ -23,6 +23,11 @@ const routes = [
         component: DataUploadPage
       }
     ]
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
   }
 ];
 

@@ -1,7 +1,7 @@
 <template>
   <a-layout style="height: 100vh;">
     <a-layout-sider :width="150" style="background: #fff">
-      <div style="padding-top: 20px; font-size: 13px;">
+      <div style="padding-top: 20px; font-size: 13px; height: 100%; display: flex; flex-direction: column;">
         <a-menu
           mode="inline"
           :selectedKeys="[currentView]"
@@ -15,6 +15,19 @@
             Data Upload
           </a-menu-item>
         </a-menu>
+        
+        <!-- 添加登出按钮 -->
+        <div style="margin-top: auto; padding: 16px;">
+          <a-button 
+            type="text" 
+            danger 
+            block 
+            @click="handleLogout"
+            style="text-align: left; padding-left: 24px;"
+          >
+            Logout
+          </a-button>
+        </div>
       </div>
     </a-layout-sider>
     <!-- 内容区域 -->
@@ -54,8 +67,8 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue';
 
 export default {
@@ -64,7 +77,30 @@ export default {
     RightOutlined,
   },
   setup() {
+    const router = useRouter();
+    const route = useRoute();
     const currentView = ref('DashboardPage');
+
+    // 根据路由路径设置当前视图
+    const updateCurrentView = () => {
+      const pathMap = {
+        '/dashboard': 'DashboardPage',
+        '/data-upload': 'DataUploadPage'
+      };
+      currentView.value = pathMap[route.path] || 'DashboardPage';
+    };
+
+    // 组件挂载时更新当前视图
+    onMounted(() => {
+      updateCurrentView();
+    });
+
+    // 监听路由变化
+    watch(
+      () => route.path,
+      () => updateCurrentView()
+    );
+
     return {
       currentView
     };
@@ -138,10 +174,7 @@ export default {
       this.hideUserModal();
     },
     handleLogout() {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('intelickIsLoggedIn');
-      localStorage.removeItem('customers');
-      localStorage.removeItem('currentUserId');
+      localStorage.removeItem('adminToken');
       this.$router.push('/login');
     },
     getCurrentUserName(userId) {
