@@ -119,12 +119,93 @@ const searchKeywords = async (params) => {
     }
 };
 
-// 修改导出方式
-export { apiClient };
+// 上传 top 页面列表接口
+const uploadTopPages = async (file, customerId, domainName) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('customerId', customerId);
+        formData.append('domainName', domainName);
+        
+        const response = await apiClient.post('/top-pages', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 30000,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Upload top pages error:', error);
+        throw error;
+    }
+};
+
+// 获取 top pages 列表接口
+const getTopPages = async (params) => {
+    try {
+        const response = await apiClient.get('/top-pages', {
+            params: {
+                customerId: params.customerId,
+                domainName: params.domainName,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get top pages error:', error);
+        throw error;
+    }
+};
+
+// 上传 top page URL 关键词列表接口
+const uploadTopPageKeywords = async (file, customerId, topURL) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('customerId', customerId);
+        formData.append('topURL', topURL);
+        
+        const response = await apiClient.post('/top-pages/keyword', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 30000,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Upload top page keywords error:', error);
+        throw error;
+    }
+};
+
+// 获取 top pages keywords 列表接口
+const getTopPageKeywords = async (params) => {
+    try {
+        const response = await apiClient.get('/top-pages/keyword', {
+            params: {
+                customerId: params.customerId,
+                topURL: params.topURL,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get top page keywords error:', error);
+        throw error;
+    }
+};
+
+// 修改导出对象
 export const api = {
     login,
     getCustomerList,
     uploadKeywords,
     searchKeywords,
+    uploadTopPages,
+    getTopPages,
+    uploadTopPageKeywords,
+    getTopPageKeywords,
     apiClient
 };

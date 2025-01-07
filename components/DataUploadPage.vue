@@ -85,34 +85,96 @@
       <a-row :gutter="[16, 16]" style="margin-top: 16px">
         <a-col :span="24">
           <a-card title="Competitors Top Pages Data" :bordered="false">
-            <template #extra>
-              <a-upload
-                :before-upload="beforeUploadCompetitors"
-                accept=".csv,.xlsx"
+            <div v-if="competitors.length === 0" class="empty-hint">
+              No competitors added
+            </div>
+            <a-tabs v-else v-model:activeKey="activeCompetitorKey">
+              <a-tab-pane 
+                v-for="competitor in competitors" 
+                :key="competitor.name"
               >
-                <a-button type="primary">
-                  <upload-outlined /> Upload Excel/CSV
-                </a-button>
-              </a-upload>
-            </template>
-            
-            <!-- Competitors Data Table -->
-            <a-table
-              :columns="competitorsColumns"
-              :data-source="competitorsData"
-              :loading="competitorsLoading"
-              :pagination="{ pageSize: 10 }"
-            >
-              <template #emptyText>
-                <div class="empty-hint">
-                  No data available. Please upload a competitors data file.
+                <template #tab>
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    {{ competitor.name }}
+                    <a-badge 
+                      v-if="!competitorsData[competitor.url]?.length" 
+                      dot 
+                      status="error" 
+                    />
+                  </span>
+                </template>
+                <div class="upload-section">
+                  <a-upload
+                    :before-upload="(file) => beforeUploadCompetitors(file, competitor.url)"
+                    accept=".csv,.xlsx"
+                  >
+                    <a-button type="primary">
+                      <upload-outlined /> Upload Top Pages for {{ competitor.name }}
+                    </a-button>
+                  </a-upload>
                 </div>
-              </template>
-            </a-table>
+
+                <!-- Competitors Data Table -->
+                <a-table
+                  :columns="competitorsColumns"
+                  :data-source="competitorsData[competitor.url] || []"
+                  :loading="competitorsLoading[competitor.url]"
+                  :pagination="{ pageSize: 20 }"
+                >
+                  <template #emptyText>
+                    <div class="empty-hint">
+                      No data available. Please upload top pages data for {{ competitor.name }}.
+                    </div>
+                  </template>
+                  <template #actions="{ record }">
+                    <a-button type="link" @click="showKeywordsModal(record.URL)">
+                      Check Keywords
+                    </a-button>
+                  </template>
+                </a-table>
+              </a-tab-pane>
+            </a-tabs>
           </a-card>
         </a-col>
       </a-row>
     </template>
+
+    <!-- Keywords Modal -->
+    <a-modal
+      v-model:visible="isKeywordsModalVisible"
+      title="Top Page Keywords"
+      width="800px"
+      :footer="null"
+    >
+      <div class="url-display">
+        <strong>URL:</strong> {{ currentTopPageUrl }}
+      </div>
+      
+      <div class="upload-section">
+        <a-upload
+          :before-upload="handleTopPageKeywordsUpload"
+          accept=".csv,.xlsx"
+        >
+          <a-button type="primary">
+            <upload-outlined /> Upload Keywords
+          </a-button>
+        </a-upload>
+      </div>
+
+      <a-table
+        :columns="topPageKeywordsColumns"
+        :data-source="topPageKeywords"
+        :loading="topPageKeywordsLoading"
+        :pagination="topPageKeywordsPagination"
+        @change="handleTopPageKeywordsTableChange"
+      >
+        <template #emptyText>
+          <div class="empty-hint">
+            No keywords data available. Please upload keywords file.
+          </div>
+        </template>
+      </a-table>
+    </a-modal>
   </div>
 </template>
 
@@ -147,8 +209,8 @@ const keywordsData = ref(keywordTypes.reduce((acc, type) => {
 }, {}))
 
 // States
-const competitorsLoading = ref(false)
-const competitorsData = ref([])
+const competitorsLoading = ref({})
+const competitorsData = ref({})
 
 // Remove columns definitions
 const keywordsColumns = [
@@ -188,24 +250,78 @@ const keywordsColumns = [
   }
 ]
 
-const competitorsColumns = []
+const competitorsColumns = [
+  {
+    title: 'URL',
+    dataIndex: 'URL',
+    key: 'URL',
+  },
+  {
+    title: 'Traffic',
+    dataIndex: 'traffic',
+    key: 'traffic',
+    sorter: (a, b) => a.traffic - b.traffic,
+  },
+  {
+    title: 'Traffic Value',
+    dataIndex: 'trafficValue',
+    key: 'trafficValue',
+    sorter: (a, b) => a.trafficValue - b.trafficValue,
+  },
+  {
+    title: 'Keywords',
+    dataIndex: 'keywords',
+    key: 'keywords',
+    sorter: (a, b) => a.keywords - b.keywords,
+  },
+  {
+    title: 'Top Keyword',
+    dataIndex: 'topKeyword',
+    key: 'topKeyword',
+  },
+  {
+    title: 'Top Keyword Volume',
+    dataIndex: 'topKeywordVolume',
+    key: 'topKeywordVolume',
+    sorter: (a, b) => a.topKeywordVolume - b.topKeywordVolume,
+  },
+  {
+    title: 'Top Keyword Position',
+    dataIndex: 'topKeywordPosition',
+    key: 'topKeywordPosition',
+    sorter: (a, b) => a.topKeywordPosition - b.topKeywordPosition,
+  },
+  {
+    title: 'Actions',
+    key: 'actions',
+    fixed: 'right',
+    width: 120,
+    slots: {
+      customRender: 'actions',
+    },
+  }
+]
 
 // 添加客户相关的状态
 const loading = ref(false)
 const customers = ref([])
 const selectedCustomerId = ref(null)
 
+// 添加竞争对手相关的状态
+const competitors = ref([])
+const activeCompetitorKey = ref('')
+
 // 获取客户列表
 const fetchCustomerList = async () => {
   loading.value = true
   try {
     const response = await api.getCustomerList()
-    customers.value = Object.entries(response.data).map(([id, name]) => ({
+    customers.value = Object.entries(response.data).map(([id, data]) => ({
       id,
-      name
+      name: data.productName,
+      competeProduct: data.competeProduct
     }))
     
-    // 移除这里的默认选择，改为通过 watch 处理
     if (customers.value.length > 0 && !selectedCustomerId.value) {
       selectedCustomerId.value = customers.value[0].id
     }
@@ -238,20 +354,63 @@ const fetchKeywordsData = async (customerId, type, page = 1) => {
   }
 }
 
-// 添加监听器来处理客户选择变更
-watch(selectedCustomerId, async (newCustomerId) => {
-  if (newCustomerId) {
+// 合并两个监听器为一个
+watch(selectedCustomerId, async (newId) => {
+  if (newId) {
+    console.log('Customer changed to:', newId)
+    
+    // 加载所有关键词类型的数据
     for (const type of keywordTypes) {
-      await fetchKeywordsData(newCustomerId, type.key)
+      await fetchKeywordsData(newId, type.key)
+    }
+    
+    // 加载竞争对手数据
+    const selectedCustomer = customers.value.find(c => c.id === newId)
+    if (selectedCustomer?.competeProduct) {
+      const competitorsList = selectedCustomer.competeProduct.split(',').map(item => {
+        const [name, url] = item.split('|')
+        return { name, url }
+      })
+      
+      competitors.value = competitorsList
+      if (competitorsList.length > 0) {
+        activeCompetitorKey.value = competitorsList[0].name
+        for (const competitor of competitorsList) {
+          try {
+            await fetchCompetitorData(competitor.url)
+          } catch (error) {
+            console.error(`Failed to fetch data for competitor ${competitor.name}:`, error)
+          }
+        }
+      }
+    } else {
+      competitors.value = []
+      activeCompetitorKey.value = ''
     }
   }
 })
 
-// 修改 onMounted
-onMounted(async () => {
-  await fetchCustomerList()
-  // 移除这里的数据加载，完全依赖 watch 来处理
-})
+// 修改 fetchCompetitorData 方法，添加更多日志
+const fetchCompetitorData = async (competitorUrl) => {
+  console.log(`Starting fetchCompetitorData for URL: ${competitorUrl}`)
+  competitorsLoading.value[competitorUrl] = true
+  
+  try {
+    const response = await api.getTopPages({
+      customerId: selectedCustomerId.value,
+      domainName: competitorUrl,
+      page: 1,
+      limit: 20
+    })
+    console.log(`Received data for ${competitorUrl}:`, response)
+    competitorsData.value[competitorUrl] = response.data || []
+  } catch (error) {
+    console.error(`Error fetching data for ${competitorUrl}:`, error)
+    competitorsData.value[competitorUrl] = []
+  } finally {
+    competitorsLoading.value[competitorUrl] = false
+  }
+}
 
 // Modified upload handler
 const beforeUploadKeywords = (file, type) => {
@@ -267,7 +426,7 @@ const beforeUploadKeywords = (file, type) => {
   return false
 }
 
-const beforeUploadCompetitors = (file) => {
+const beforeUploadCompetitors = (file, competitorUrl) => {
   const isValidFormat = file.type === 'text/csv' || 
     file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   
@@ -276,8 +435,7 @@ const beforeUploadCompetitors = (file) => {
     return false
   }
 
-  // 这里添加文件处理逻辑
-  handleCompetitorsFile(file)
+  handleCompetitorsFile(file, competitorUrl)
   return false
 }
 
@@ -303,21 +461,24 @@ const handleKeywordsFile = async (file, type) => {
   }
 }
 
-const handleCompetitorsFile = async (file) => {
+const handleCompetitorsFile = async (file, competitorUrl) => {
   if (!selectedCustomerId.value) {
     message.error('Please select a customer first')
     return
   }
 
-  competitorsLoading.value = true
+  competitorsLoading.value[competitorUrl] = true
   try {
-    // 这里添加文件解析和数据处理逻辑
-    // 可以将 selectedCustomerId.value 传递给后端
-    message.success('Competitors data uploaded successfully!')
+    // 从 URL 中提取域名
+    const domainName = competitorUrl
+    const response = await api.uploadTopPages(file, selectedCustomerId.value, domainName)
+    competitorsData.value[competitorUrl] = response.data || []
+    message.success(`Top pages data for competitor uploaded successfully!`)
   } catch (error) {
-    message.error('File processing failed: ' + error.message)
+    console.error('Top pages upload failed:', error)
+    message.error('File processing failed: ' + (error.response?.data?.message || error.message))
   } finally {
-    competitorsLoading.value = false
+    competitorsLoading.value[competitorUrl] = false
   }
 }
 
@@ -342,6 +503,116 @@ const handlePageChange = async (page, type) => {
     await fetchKeywordsData(selectedCustomerId.value, type, page)
   }
 }
+
+// 添加新的状态
+const isKeywordsModalVisible = ref(false)
+const currentTopPageUrl = ref('')
+const topPageKeywords = ref([])
+const topPageKeywordsLoading = ref(false)
+
+// 添加新的列定义
+const topPageKeywordsColumns = [
+  {
+    title: 'Keyword',
+    dataIndex: 'keyword',
+    key: 'keyword',
+  },
+  {
+    title: 'Position',
+    dataIndex: 'position',
+    key: 'position',
+    sorter: (a, b) => a.position - b.position,
+  },
+  {
+    title: 'Volume',
+    dataIndex: 'volume',
+    key: 'volume',
+    sorter: (a, b) => a.volume - b.volume,
+  },
+  {
+    title: 'Traffic',
+    dataIndex: 'traffic',
+    key: 'traffic',
+    sorter: (a, b) => a.traffic - b.traffic,
+  }
+]
+
+// 添加新的方法
+const showKeywordsModal = async (url) => {
+  currentTopPageUrl.value = url
+  isKeywordsModalVisible.value = true
+  await fetchTopPageKeywords(url)
+}
+
+// 添加分页相关的状态
+const topPageKeywordsPagination = ref({
+  current: 1,
+  pageSize: 20,
+  total: 0
+})
+
+// 修改 fetchTopPageKeywords 方法
+const fetchTopPageKeywords = async (url, page = 1) => {
+  topPageKeywordsLoading.value = true
+  try {
+    const response = await api.getTopPageKeywords({
+      customerId: selectedCustomerId.value,
+      topURL: url,
+      page,
+      limit: topPageKeywordsPagination.value.pageSize
+    })
+    topPageKeywords.value = response.data || []
+    topPageKeywordsPagination.value = {
+      ...topPageKeywordsPagination.value,
+      current: page,
+      total: response.totalCount || 0
+    }
+  } catch (error) {
+    console.error('Failed to fetch top page keywords:', error)
+    message.error('Failed to load keywords data')
+  } finally {
+    topPageKeywordsLoading.value = false
+  }
+}
+
+// 添加分页变化处理方法
+const handleTopPageKeywordsTableChange = async (pagination) => {
+  await fetchTopPageKeywords(currentTopPageUrl.value, pagination.current)
+}
+
+const handleTopPageKeywordsUpload = async (file) => {
+  if (!selectedCustomerId.value || !currentTopPageUrl.value) {
+    message.error('Invalid operation')
+    return false
+  }
+
+  const isValidFormat = file.type === 'text/csv' || 
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  
+  if (!isValidFormat) {
+    message.error('Please upload CSV or XLSX format files!')
+    return false
+  }
+
+  topPageKeywordsLoading.value = true
+  try {
+    await api.uploadTopPageKeywords(file, selectedCustomerId.value, currentTopPageUrl.value)
+    message.success('Keywords uploaded successfully')
+    await fetchTopPageKeywords(currentTopPageUrl.value)
+  } catch (error) {
+    console.error('Failed to upload keywords:', error)
+    message.error('Failed to upload keywords')
+  } finally {
+    topPageKeywordsLoading.value = false
+  }
+  return false
+}
+
+// 简化 onMounted
+onMounted(async () => {
+  console.log('Component mounted, fetching customer list...')
+  await fetchCustomerList()
+})
 </script>
 
 <style scoped>
@@ -371,5 +642,13 @@ const handlePageChange = async (page, type) => {
 
 .ant-card {
   border-radius: 8px;
+}
+
+.url-display {
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  word-break: break-all;
 }
 </style> 
