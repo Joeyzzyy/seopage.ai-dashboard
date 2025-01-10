@@ -143,7 +143,7 @@
     <a-modal
       v-model:visible="isKeywordsModalVisible"
       title="Top Page Keywords"
-      width="800px"
+      width="1200px"
       :footer="null"
     >
       <div class="url-display">
@@ -510,30 +510,93 @@ const currentTopPageUrl = ref('')
 const topPageKeywords = ref([])
 const topPageKeywordsLoading = ref(false)
 
-// 添加新的列定义
+// 修改 topPageKeywordsColumns 定义，调整列宽并设置固定列
 const topPageKeywordsColumns = [
   {
     title: 'Keyword',
     dataIndex: 'keyword',
     key: 'keyword',
+    width: '200px',
+    ellipsis: true,
+    fixed: 'left', // 固定在左侧
   },
   {
-    title: 'Position',
-    dataIndex: 'position',
-    key: 'position',
-    sorter: (a, b) => a.position - b.position,
+    title: 'Pos',  // 缩短标题
+    dataIndex: 'currentPosition',
+    key: 'currentPosition',
+    width: '60px',
+    sorter: (a, b) => a.currentPosition - b.currentPosition,
   },
   {
-    title: 'Volume',
+    title: 'URL Inside',
+    dataIndex: 'currentURLInside',
+    key: 'currentURLInside',
+    width: '100px',
+    ellipsis: true,
+  },
+  {
+    title: 'Vol',  // 缩短标题
     dataIndex: 'volume',
     key: 'volume',
+    width: '70px',
     sorter: (a, b) => a.volume - b.volume,
   },
   {
-    title: 'Traffic',
-    dataIndex: 'traffic',
-    key: 'traffic',
-    sorter: (a, b) => a.traffic - b.traffic,
+    title: 'KD',
+    dataIndex: 'KD',
+    key: 'KD',
+    width: '60px',
+    sorter: (a, b) => a.KD - b.KD,
+  },
+  {
+    title: 'CPC',
+    dataIndex: 'CPC',
+    key: 'CPC',
+    width: '70px',
+    sorter: (a, b) => a.CPC - b.CPC,
+  },
+  {
+    title: 'Organic',  // 缩短标题
+    dataIndex: 'organicTraffic',
+    key: 'organicTraffic',
+    width: '80px',
+    sorter: (a, b) => a.organicTraffic - b.organicTraffic,
+  },
+  {
+    title: 'Paid',  // 缩短标题
+    dataIndex: 'paidTraffic',
+    key: 'paidTraffic',
+    width: '70px',
+    sorter: (a, b) => a.paidTraffic - b.paidTraffic,
+  },
+  {
+    title: 'SERP Features',
+    dataIndex: 'serpFeatures',
+    key: 'serpFeatures',
+    width: '150px',
+    ellipsis: true,
+  },
+  {
+    title: 'Intent',
+    key: 'intent',
+    width: '150px',
+    ellipsis: true,
+    customRender: ({ record }) => {
+      const intents = [];
+      if (record.informational) intents.push('Info');  // 缩短显示文本
+      if (record.commercial) intents.push('Comm');
+      if (record.transactional) intents.push('Trans');
+      if (record.navigational) intents.push('Nav');
+      if (record.local) intents.push('Local');
+      if (record.branded) intents.push('Brand');
+      return intents.join(', ');
+    }
+  },
+  {
+    title: 'Updated',  // 缩短标题
+    dataIndex: 'updated',
+    key: 'updated',
+    width: '120px',
   }
 ]
 
