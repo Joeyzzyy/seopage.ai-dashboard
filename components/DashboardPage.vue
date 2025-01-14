@@ -18,7 +18,7 @@
                     :key="customer.id"
                     :value="customer.id"
                   >
-                    {{ customer.name }}
+                    {{ customer.productName }}
                   </a-select-option>
                 </a-select>
                 <a-range-picker
@@ -90,11 +90,10 @@
               title="Indexing Rate"
               :value="selectedCustomer.monthlyStats.indexingRate"
               :precision="2"
-              suffix="%"
               :valueStyle="{ color: '#1890ff' }"
             >
               <template #prefix>
-                <PercentageOutlined />
+                <LineChartOutlined />
               </template>
             </Statistic>
           </a-card>
@@ -144,7 +143,7 @@ import {
   ThunderboltOutlined,
   DollarOutlined,
   CheckCircleOutlined,
-  PercentageOutlined
+  LineChartOutlined
 } from '@ant-design/icons-vue'
 import * as echarts from 'echarts'
 import { Statistic } from 'ant-design-vue'
@@ -226,9 +225,10 @@ const fetchCustomerData = async () => {
   try {
     const response = await api.getCustomerList()
     
-    customers.value = Object.entries(response.data).map(([id, name]) => ({
+    customers.value = Object.entries(response.data).map(([id, data]) => ({
       id,
-      name,
+      productName: data.productName,
+      competeProduct: data.competeProduct,
       monthlyStats: {
         generatedPages: 0,
         publishedPages: 0,

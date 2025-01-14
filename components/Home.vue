@@ -8,6 +8,9 @@
           @click="handleMenuClick"
           style="font-size: 13px;"
         >
+          <a-menu-item key="InitializationPage">
+            Initialization
+          </a-menu-item>
           <a-menu-item key="DashboardPage">
             Dashboard
           </a-menu-item>
@@ -67,7 +70,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue';
 
@@ -77,7 +80,6 @@ export default {
     RightOutlined,
   },
   setup() {
-    const router = useRouter();
     const route = useRoute();
     const currentView = ref('DashboardPage');
 
@@ -85,7 +87,8 @@ export default {
     const updateCurrentView = () => {
       const pathMap = {
         '/dashboard': 'DashboardPage',
-        '/data-upload': 'DataUploadPage'
+        '/data-upload': 'DataUploadPage',
+        '/initialization': 'InitializationPage'
       };
       currentView.value = pathMap[route.path] || 'DashboardPage';
     };
@@ -113,45 +116,13 @@ export default {
       users: JSON.parse(localStorage.getItem('customers') || '[]'),
     };
   },
-  computed: {
-    selectedCustomer() {
-      return this.customers.find(customer => customer.id === this.selectedCustomerId);
-    }
-  },
-  mounted() {
-    this.fetchCustomerData();
-  },
   methods: {
-    fetchCustomerData() {
-      // Simulate API call with mock data
-      this.customers = [
-        {
-          id: 1,
-          name: 'Customer A',
-          generatedPages: 120,
-          publishedPages: 100,
-          deletedPages: 20,
-          currentPageStock: 80,
-          tokenConsumptionMedian: 50,
-          indexedPages: 90
-        },
-        {
-          id: 2,
-          name: 'Customer B',
-          generatedPages: 200,
-          publishedPages: 180,
-          deletedPages: 20,
-          currentPageStock: 160,
-          tokenConsumptionMedian: 45,
-          indexedPages: 170
-        }
-      ];
-    },
     handleMenuClick({ key }) {
       this.currentView = key;
       const routeMap = {
         'DashboardPage': '/dashboard',
-        'DataUploadPage': '/data-upload'
+        'DataUploadPage': '/data-upload',
+        'InitializationPage': '/initialization'
       };
       if (routeMap[key]) {
         this.$router.push(routeMap[key]);
