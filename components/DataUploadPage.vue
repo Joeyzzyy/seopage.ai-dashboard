@@ -7,20 +7,29 @@
           <a-space direction="vertical" size="middle" style="width: 100%">
             <div class="selector-header">
               <h2>Data Upload</h2>
-              <a-select
-                v-model:value="selectedCustomerId"
-                placeholder="Select a customer"
-                style="width: 200px"
-                :loading="loading"
-              >
-                <a-select-option
-                  v-for="customer in customers"
-                  :key="customer.id"
-                  :value="customer.id"
+              <div class="header-actions">
+                <a-button
+                  type="primary"
+                  :style="{ backgroundColor: '#52c41a', borderColor: '#52c41a' }"
+                  @click="handleStartAnalysis"
                 >
-                  {{ customer.name }}
-                </a-select-option>
-              </a-select>
+                  Complete Data Upload & Start Analysis
+                </a-button>
+                <a-select
+                  v-model:value="selectedCustomerId"
+                  placeholder="Select a customer"
+                  style="width: 200px"
+                  :loading="loading"
+                >
+                  <a-select-option
+                    v-for="customer in customers"
+                    :key="customer.id"
+                    :value="customer.id"
+                  >
+                    {{ customer.name }}
+                  </a-select-option>
+                </a-select>
+              </div>
             </div>
           </a-space>
         </a-card>
@@ -671,6 +680,22 @@ const handleTopPageKeywordsUpload = async (file) => {
   return false
 }
 
+// 添加分析处理方法
+const handleStartAnalysis = async () => {
+  if (!selectedCustomerId.value) {
+    message.error('Please select a customer first');
+    return;
+  }
+
+  try {
+    await api.startAnalysis(selectedCustomerId.value);
+    message.success('Analysis started successfully');
+    // 可以在这里添加导航到分析页面的逻辑
+  } catch (error) {
+    message.error('Failed to start analysis: ' + (error.response?.data?.message || error.message));
+  }
+};
+
 // 简化 onMounted
 onMounted(async () => {
   console.log('Component mounted, fetching customer list...')
@@ -713,5 +738,11 @@ onMounted(async () => {
   background-color: #f5f5f5;
   border-radius: 4px;
   word-break: break-all;
+}
+
+.header-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 </style> 

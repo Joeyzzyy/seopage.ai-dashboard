@@ -197,6 +197,19 @@ const getTopPageKeywords = async (params) => {
     }
 };
 
+// 添加关键词分析接口
+const startAnalysis = async (customerId) => {
+    try {
+        const response = await apiClient.post('/planning/analysis', null, {
+            params: { customerId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Start analysis error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -207,5 +220,6 @@ export const api = {
     getTopPages,
     uploadTopPageKeywords,
     getTopPageKeywords,
-    apiClient
+    apiClient,
+    startAnalysis,
 };
