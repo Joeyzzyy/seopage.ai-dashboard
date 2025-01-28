@@ -27,6 +27,12 @@ const routes = [
         path: 'initialization',
         name: 'Initialization',
         component: InitializationPage
+      },
+      {
+        path: 'package-config',
+        name: 'PackageConfig',
+        component: () => import('../components/PackageConfig.vue'),
+        meta: { requiresAuth: true }
       }
     ]
   },

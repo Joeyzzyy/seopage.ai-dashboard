@@ -1,39 +1,51 @@
 <template>
-  <a-layout style="height: 100vh;">
-    <a-layout-sider :width="150" style="background: #fff">
-      <div style="padding-top: 20px; font-size: 13px; height: 100%; display: flex; flex-direction: column;">
+  <a-layout style="min-height: 100vh">
+    <a-layout-sider 
+      :width="200" 
+      style="background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);"
+    >
+      <div class="sidebar-container">
+        <div class="logo">
+          <h1>Admin System</h1>
+        </div>
         <a-menu
           mode="inline"
           :selectedKeys="[currentView]"
           @click="handleMenuClick"
-          style="font-size: 13px;"
+          style="border-right: 0;"
         >
           <a-menu-item key="InitializationPage">
+            <template #icon><setting-outlined /></template>
             Initialization
           </a-menu-item>
           <a-menu-item key="DashboardPage">
+            <template #icon><dashboard-outlined /></template>
             Dashboard
           </a-menu-item>
           <a-menu-item key="DataUploadPage">
+            <template #icon><upload-outlined /></template>
             Data Upload
+          </a-menu-item>
+          <a-menu-item key="PackageConfigPage">
+            <template #icon><tool-outlined /></template>
+            Package Config
           </a-menu-item>
         </a-menu>
         
-        <!-- 添加登出按钮 -->
-        <div style="margin-top: auto; padding: 16px;">
+        <div class="logout-container">
           <a-button 
             type="text" 
             danger 
             block 
             @click="handleLogout"
-            style="text-align: left; padding-left: 24px;"
           >
+            <template #icon><logout-outlined /></template>
             Logout
           </a-button>
         </div>
       </div>
     </a-layout-sider>
-    <!-- 内容区域 -->
+    <!-- Content Area -->
     <a-layout-content style="padding: 20px; overflow: auto; height: calc(100% - 20px);">
       <router-view />
     </a-layout-content>
@@ -72,15 +84,26 @@
 <script>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons-vue';
+import { 
+  SettingOutlined, 
+  DashboardOutlined, 
+  UploadOutlined, 
+  ToolOutlined,
+  LogoutOutlined 
+} from '@ant-design/icons-vue';
+import axios from 'axios';
 
 export default {
   components: {
-    LeftOutlined,
-    RightOutlined,
+    SettingOutlined,
+    DashboardOutlined,
+    UploadOutlined,
+    ToolOutlined,
+    LogoutOutlined
   },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const currentView = ref('DashboardPage');
 
     // 根据路由路径设置当前视图
@@ -88,7 +111,8 @@ export default {
       const pathMap = {
         '/dashboard': 'DashboardPage',
         '/data-upload': 'DataUploadPage',
-        '/initialization': 'InitializationPage'
+        '/initialization': 'InitializationPage',
+        '/package-config': 'PackageConfigPage'
       };
       currentView.value = pathMap[route.path] || 'DashboardPage';
     };
@@ -102,6 +126,20 @@ export default {
     watch(
       () => route.path,
       () => updateCurrentView()
+    );
+
+    // 添加响应拦截器
+    axios.interceptors.response.use(
+      response => response,
+      error => {
+        if (error.response && error.response.status === 401) {
+          // 清除token
+          localStorage.removeItem('adminToken');
+          // 跳转到登录页
+          router.push('/login');
+        }
+        return Promise.reject(error);
+      }
     );
 
     return {
@@ -122,7 +160,8 @@ export default {
       const routeMap = {
         'DashboardPage': '/dashboard',
         'DataUploadPage': '/data-upload',
-        'InitializationPage': '/initialization'
+        'InitializationPage': '/initialization',
+        'PackageConfigPage': '/package-config'
       };
       if (routeMap[key]) {
         this.$router.push(routeMap[key]);
@@ -145,8 +184,19 @@ export default {
       this.hideUserModal();
     },
     handleLogout() {
-      localStorage.removeItem('adminToken');
-      this.$router.push('/login');
+      this.$confirm({
+        title: 'Confirm Logout',
+        content: 'Are you sure you want to log out?',
+        okText: 'Logout',
+        cancelText: 'Cancel',
+        okButtonProps: {
+          danger: true
+        },
+        onOk: () => {
+          localStorage.removeItem('adminToken');
+          this.$router.push('/login');
+        }
+      });
     },
     getCurrentUserName(userId) {
       const user = this.users.find(u => u.userID === userId);
@@ -208,5 +258,41 @@ html, body, #app {
 .user-option-name {
   font-size: 14px;
   color: #2D2B4A;
+}
+
+.sidebar-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  height: 64px;
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.logout-container {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+:deep(.ant-menu-item) {
+  height: 50px;
+  line-height: 50px;
+  margin: 4px 0;
+}
+
+:deep(.ant-menu-item .anticon) {
+  font-size: 16px;
 }
 </style>

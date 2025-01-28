@@ -148,11 +148,15 @@ import {
 import * as echarts from 'echarts'
 import { Statistic } from 'ant-design-vue'
 import { api } from '../api/api';
+import dayjs from 'dayjs'
 
 // State
 const loading = ref(false)
 const selectedCustomerId = ref(null)
-const dateRange = ref([])
+const dateRange = ref([
+  dayjs().subtract(14, 'day'),
+  dayjs()
+])
 const customers = ref([])
 
 // Computed

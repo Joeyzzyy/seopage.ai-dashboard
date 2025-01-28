@@ -210,6 +210,50 @@ const startAnalysis = async (customerId) => {
     }
 };
 
+// 获取套餐功能列表接口
+const getPackageFeatures = async () => {
+    try {
+        const response = await apiClient.get('/package-features');
+        return response.data;
+    } catch (error) {
+        console.error('Get package features error:', error);
+        throw error;
+    }
+};
+
+// 创建套餐功能接口
+const createPackageFeature = async (featureData) => {
+    try {
+        const response = await apiClient.post('/package-features', featureData);
+        return response.data;
+    } catch (error) {
+        console.error('Create package feature error:', error);
+        throw error;
+    }
+};
+
+// 删除套餐功能接口
+const deletePackageFeature = async (packageId) => {
+    try {
+        const response = await apiClient.delete(`/package-features/${packageId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Delete package feature error:', error);
+        throw error;
+    }
+};
+
+// 更新套餐功能接口
+const updatePackageFeature = async (packageId, featureData) => {
+    try {
+        const response = await apiClient.put(`/package-features/${packageId}`, featureData);
+        return response.data;
+    } catch (error) {
+        console.error('Update package feature error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -222,4 +266,8 @@ export const api = {
     getTopPageKeywords,
     apiClient,
     startAnalysis,
+    getPackageFeatures,
+    createPackageFeature,
+    deletePackageFeature,
+    updatePackageFeature,
 };
