@@ -213,7 +213,7 @@ const startAnalysis = async (customerId) => {
 // 获取套餐功能列表接口
 const getPackageFeatures = async () => {
     try {
-        const response = await apiClient.get('/package-features');
+        const response = await apiClient.get('/features-package');
         return response.data;
     } catch (error) {
         console.error('Get package features error:', error);
@@ -224,7 +224,7 @@ const getPackageFeatures = async () => {
 // 创建套餐功能接口
 const createPackageFeature = async (featureData) => {
     try {
-        const response = await apiClient.post('/package-features', featureData);
+        const response = await apiClient.post('/features-package', featureData);
         return response.data;
     } catch (error) {
         console.error('Create package feature error:', error);
@@ -235,7 +235,7 @@ const createPackageFeature = async (featureData) => {
 // 删除套餐功能接口
 const deletePackageFeature = async (packageId) => {
     try {
-        const response = await apiClient.delete(`/package-features/${packageId}`);
+        const response = await apiClient.delete(`/features-package/${packageId}`);
         return response.data;
     } catch (error) {
         console.error('Delete package feature error:', error);
@@ -246,10 +246,48 @@ const deletePackageFeature = async (packageId) => {
 // 更新套餐功能接口
 const updatePackageFeature = async (packageId, featureData) => {
     try {
-        const response = await apiClient.put(`/package-features/${packageId}`, featureData);
+        const response = await apiClient.put(`/features-package/${packageId}`, featureData);
         return response.data;
     } catch (error) {
         console.error('Update package feature error:', error);
+        throw error;
+    }
+};
+
+// 申请免费试用接口
+const applyTrialPackage = async (trialData) => {
+    try {
+        const response = await apiClient.post('/admin/trial-package', trialData);
+        return response.data;
+    } catch (error) {
+        console.error('Apply trial package error:', error);
+        throw error;
+    }
+};
+
+// 获取免费试用列表接口
+const getTrialPackages = async (params) => {
+    try {
+        const response = await apiClient.get('/admin/trial-package', {
+            params: {
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get trial packages error:', error);
+        throw error;
+    }
+};
+
+// 删除免费试用申请接口
+const deleteTrialPackage = async (trialId) => {
+    try {
+        const response = await apiClient.delete(`/admin/trial-package/${trialId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Delete trial package error:', error);
         throw error;
     }
 };
@@ -270,4 +308,7 @@ export const api = {
     createPackageFeature,
     deletePackageFeature,
     updatePackageFeature,
+    applyTrialPackage,
+    getTrialPackages,
+    deleteTrialPackage,
 };

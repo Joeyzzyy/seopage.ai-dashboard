@@ -2,7 +2,7 @@
   <a-layout style="min-height: 100vh">
     <a-layout-sider 
       :width="200" 
-      style="background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);"
+      style="background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); position: fixed; height: 100vh; left: 0; top: 0; z-index: 1000;"
     >
       <div class="sidebar-container">
         <div class="logo">
@@ -45,8 +45,14 @@
         </div>
       </div>
     </a-layout-sider>
+    
+    <!-- 占位 sider -->
+    <a-layout-sider :width="200" style="visibility: hidden; background: transparent;" />
+    
     <!-- Content Area -->
-    <a-layout-content style="padding: 20px; overflow: auto; height: calc(100% - 20px);">
+    <a-layout-content 
+      style="padding: 20px; overflow: auto; min-height: 100vh; width: 100%; box-sizing: border-box;"
+    >
       <router-view />
     </a-layout-content>
   </a-layout>
@@ -220,6 +226,15 @@ export default {
 </script>
 
 <style scoped>
+.ant-layout {
+  display: flex;
+  width: 100%;
+}
+
+.ant-layout-content {
+  flex: 1;
+}
+
 html, body, #app {
   height: 100%;
   margin: 0;
@@ -261,9 +276,24 @@ html, body, #app {
 }
 
 .sidebar-container {
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+}
+
+/* 添加滚动条样式 */
+.sidebar-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-container::-webkit-scrollbar-thumb {
+  background-color: #e8e8e8;
+  border-radius: 3px;
+}
+
+.sidebar-container::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
 .logo {

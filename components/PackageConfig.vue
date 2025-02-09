@@ -20,8 +20,79 @@
                 {{ record.active ? 'Active' : 'Inactive' }}
               </a-tag>
             </template>
+            <template v-if="column.key === 'price'">
+              ${{ record.packagePrice }}
+            </template>
           </template>
         </a-table>
+
+        <!-- Add Trial Code Section -->
+        <div style="margin-top: 24px;">
+          <h3>Trial Code Management</h3>
+          
+          <!-- Create Trial Code Form -->
+          <a-form layout="inline" :model="trialForm" style="margin-bottom: 16px;">
+            <a-form-item label="Package">
+              <a-select 
+                v-model:value="trialForm.packageId" 
+                style="width: 200px;"
+                placeholder="Select package"
+              >
+                <a-select-option 
+                  v-for="pkg in packages" 
+                  :key="pkg.packageFeatureId" 
+                  :value="pkg.packageFeatureId"
+                >
+                  {{ pkg.packageName }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="Days">
+              <a-input-number 
+                v-model:value="trialForm.days" 
+                :min="1" 
+                style="width: 100px;"
+              />
+            </a-form-item>
+            <a-form-item label="Name">
+              <a-input 
+                v-model:value="trialForm.name" 
+                placeholder="Trial name"
+                style="width: 200px;"
+              />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" @click="createTrialCode">
+                Generate Trial Code
+              </a-button>
+            </a-form-item>
+          </a-form>
+
+          <!-- Trial Codes Table -->
+          <a-table 
+            :columns="trialColumns" 
+            :data-source="trialCodes" 
+            :loading="trialLoading"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.key === 'status'">
+                <a-tag :color="record.active ? 'red' : 'green'">
+                  {{ record.active ? 'Used' : 'Available' }}
+                </a-tag>
+              </template>
+              <template v-if="column.key === 'action'">
+                <a-button 
+                  type="link" 
+                  danger 
+                  @click="handleDeleteTrial(record)"
+                  :disabled="!record.active"
+                >
+                  Delete
+                </a-button>
+              </template>
+            </template>
+          </a-table>
+        </div>
       </a-card>
     </div>
 
@@ -35,20 +106,20 @@
         <a-form-item label="Package Name" name="packageName">
           <a-input v-model:value="formState.packageName" />
         </a-form-item>
-        <a-form-item label="Monthly Price" name="monthPrice">
-          <a-input-number v-model:value="formState.monthPrice" :min="0" style="width: 100%;" />
+        <a-form-item label="Package Price" name="packagePrice">
+          <a-input-number v-model:value="formState.packagePrice" :min="0" style="width: 100%;" />
         </a-form-item>
-        <a-form-item label="Annual Price" name="annualPrice">
-          <a-input-number v-model:value="formState.annualPrice" :min="0" style="width: 100%;" />
+        <a-form-item label="Package Type" name="packageType">
+          <a-select v-model:value="formState.packageType">
+            <a-select-option :value="1">Monthly</a-select-option>
+            <a-select-option :value="2">Annual</a-select-option>
+          </a-select>
         </a-form-item>
-        <a-form-item label="Monthly Outline Generation Limit" name="monthlyOutlineGeneratorLimit">
-          <a-input-number v-model:value="formState.monthlyOutlineGeneratorLimit" :min="0" style="width: 100%;" />
+        <a-form-item label="Outline Generation Limit" name="outlineGeneratorLimit">
+          <a-input-number v-model:value="formState.outlineGeneratorLimit" :min="0" style="width: 100%;" />
         </a-form-item>
-        <a-form-item label="Monthly Page Generation Limit" name="monthPageGeneratorLimit">
-          <a-input-number v-model:value="formState.monthPageGeneratorLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Annual Page Generation Limit" name="annualPageGeneratorLimit">
-          <a-input-number v-model:value="formState.annualPageGeneratorLimit" :min="0" style="width: 100%;" />
+        <a-form-item label="Page Generation Limit" name="pageGeneratorLimit">
+          <a-input-number v-model:value="formState.pageGeneratorLimit" :min="0" style="width: 100%;" />
         </a-form-item>
         <a-form-item label="Free Deployment Page Limit" name="freeDeploymentPageLimit">
           <a-input-number v-model:value="formState.freeDeploymentPageLimit" :min="0" style="width: 100%;" />
@@ -102,15 +173,9 @@ export default {
         key: 'packageName',
       },
       {
-        title: 'Monthly Price',
-        dataIndex: 'monthPrice',
-        key: 'monthPrice',
-        customRender: ({ text }) => `$${text}`
-      },
-      {
-        title: 'Annual Price',
-        dataIndex: 'annualPrice',
-        key: 'annualPrice',
+        title: 'Price',
+        dataIndex: 'packagePrice',
+        key: 'price',
         customRender: ({ text }) => `$${text}`
       },
       {
@@ -123,8 +188,8 @@ export default {
       },
       {
         title: 'Updated At',
-        dataIndex: 'updated',
-        key: 'updated',
+        dataIndex: 'updatedAt',
+        key: 'updatedAt',
         customRender: ({ text }) => new Date(text).toLocaleString('en-US'),
       },
       {
@@ -141,6 +206,58 @@ export default {
     const formRef = ref(null);
     const loading = ref(false);
 
+    const trialForm = reactive({
+      packageId: undefined,
+      days: 7,
+      name: '',
+    });
+
+    const trialCodes = ref([]);
+    const trialLoading = ref(false);
+
+    const trialColumns = [
+      {
+        title: 'Trial Code',
+        dataIndex: 'inviteCode',
+        key: 'code',
+      },
+      {
+        title: 'Trial Name',
+        dataIndex: 'trialName',
+        key: 'trialName',
+      },
+      {
+        title: 'Duration (Days)',
+        dataIndex: 'duration',
+        key: 'days',
+      },
+      {
+        title: 'Description',
+        dataIndex: 'description',
+        key: 'description',
+      },
+      {
+        title: 'Status',
+        dataIndex: 'active',
+        key: 'status',
+        customRender: ({ text }) => h(Tag, {
+          color: text ? 'green' : 'red'
+        }, () => text ? 'Available' : 'Used')
+      },
+      {
+        title: 'Created At',
+        dataIndex: 'created_at',
+        key: 'createdAt',
+        customRender: ({ text }) => new Date(text).toLocaleString('en-US'),
+      },
+      {
+        title: 'Action',
+        key: 'action',
+        fixed: 'right',
+        width: 100,
+      },
+    ];
+
     const fetchPackages = async () => {
       loading.value = true;
       try {
@@ -153,54 +270,87 @@ export default {
       }
     };
 
+    const fetchTrialCodes = async () => {
+      trialLoading.value = true;
+      try {
+        const params = {
+          page: pagination.value.current,
+          limit: pagination.value.pageSize
+        };
+        const response = await api.getTrialPackages(params);
+        console.log('Trial codes response:', response.data);
+        trialCodes.value = response.data;
+        pagination.value.total = response.total;
+        pagination.value.totalPage = response.totalPage;
+      } catch (error) {
+        message.error('Failed to fetch trial codes: ' + error.message);
+      } finally {
+        trialLoading.value = false;
+      }
+    };
+
+    const pagination = ref({
+      current: 1,
+      pageSize: 10,
+      total: 0,
+      totalPage: 0
+    });
+
+    const trialList = ref([]);
+
+    const handleTableChange = (pag) => {
+      pagination.value.current = pag.current;
+      pagination.value.pageSize = pag.pageSize;
+      fetchTrialCodes();
+    };
+
     onMounted(() => {
       fetchPackages();
+      fetchTrialCodes();
     });
 
     const formState = reactive({
       packageName: '',
-      monthPrice: 0,
-      annualPrice: 0,
-      monthlyOutlineGeneratorLimit: 0,
-      monthPageGeneratorLimit: 0,
-      annualPageGeneratorLimit: 0,
+      packagePrice: 0,
+      packageType: 1,
+      outlineGeneratorLimit: 0,
+      pageGeneratorLimit: 0,
       freeDeploymentPageLimit: 0,
       internalLinkStorageLimit: 0,
       imageStorageLimit: 0,
       videoStorageLimit: 0,
       packageDescription: '',
       additionalBenefits: [],
+      active: true
     });
 
     const rules = {
-      packageName: [{ required: true, message: 'Please enter package name' }],
-      monthPrice: [{ required: true, message: 'Please enter monthly price' }],
-      annualPrice: [{ required: true, message: 'Please enter annual price' }],
-      monthlyOutlineGeneratorLimit: [{ required: true, message: 'Please enter monthly outline generation limit' }],
-      monthPageGeneratorLimit: [{ required: true, message: 'Please enter monthly page generation limit' }],
-      annualPageGeneratorLimit: [{ required: true, message: 'Please enter annual page generation limit' }],
-      freeDeploymentPageLimit: [{ required: true, message: 'Please enter free deployment page limit' }],
-      internalLinkStorageLimit: [{ required: true, message: 'Please enter internal link storage limit' }],
-      imageStorageLimit: [{ required: true, message: 'Please enter image storage limit' }],
-      videoStorageLimit: [{ required: true, message: 'Please enter video storage limit' }],
-      packageDescription: [{ required: true, message: 'Please enter package description' }],
-      additionalBenefits: [{ required: true, message: 'Please enter additional benefits' }],
+      packageName: [{ required: true, message: '请输入套餐名称' }],
+      packagePrice: [{ required: true, message: '请输入套餐价格' }],
+      packageType: [{ required: true, message: '请选择套餐类型' }],
+      outlineGeneratorLimit: [{ required: true, message: '请输入大纲生成限制' }],
+      pageGeneratorLimit: [{ required: true, message: '请输入页面生成限制' }],
+      freeDeploymentPageLimit: [{ required: true, message: '请输入免费部署页面限制' }],
+      internalLinkStorageLimit: [{ required: true, message: '请输入内部链接存储限制' }],
+      imageStorageLimit: [{ required: true, message: '请输入图片存储限制' }],
+      videoStorageLimit: [{ required: true, message: '请输入视频存储限制' }],
+      packageDescription: [{ required: true, message: '请输入套餐描述' }],
     };
 
     const showAddModal = () => {
       modalMode.value = 'add';
       formState.packageName = '';
-      formState.monthPrice = 0;
-      formState.annualPrice = 0;
-      formState.monthlyOutlineGeneratorLimit = 0;
-      formState.monthPageGeneratorLimit = 0;
-      formState.annualPageGeneratorLimit = 0;
+      formState.packagePrice = 0;
+      formState.packageType = 1;
+      formState.outlineGeneratorLimit = 0;
+      formState.pageGeneratorLimit = 0;
       formState.freeDeploymentPageLimit = 0;
       formState.internalLinkStorageLimit = 0;
       formState.imageStorageLimit = 0;
       formState.videoStorageLimit = 0;
       formState.packageDescription = '';
       formState.additionalBenefits = [];
+      formState.active = true;
       modalVisible.value = true;
     };
 
@@ -258,6 +408,54 @@ export default {
       formState.additionalBenefits.splice(index, 1);
     };
 
+    const createTrialCode = async () => {
+      if (!trialForm.packageId || !trialForm.days || !trialForm.name) {
+        message.error('Please fill in all required fields');
+        return;
+      }
+
+      try {
+        const trialData = {
+          packageId: trialForm.packageId,
+          trailDays: trialForm.days,
+          trialName: trialForm.name
+        };
+        await api.applyTrialPackage(trialData);
+        message.success('Trial code created successfully');
+        fetchTrialCodes();
+        trialForm.name = '';
+      } catch (error) {
+        message.error('Failed to create trial code: ' + error.message);
+      }
+    };
+
+    const handleDeleteTrial = (record) => {
+      console.log('Trial record:', record);
+      
+      const trialId = record.trialId;
+      
+      if (!trialId) {
+        message.error('Invalid trial ID');
+        return;
+      }
+
+      Modal.confirm({
+        title: 'Confirm Delete',
+        content: `Are you sure you want to delete trial code "${record.inviteCode}"?`,
+        okText: 'Confirm',
+        cancelText: 'Cancel',
+        async onOk() {
+          try {
+            await api.deleteTrialPackage(trialId);
+            message.success('Trial code deleted successfully');
+            fetchTrialCodes();
+          } catch (error) {
+            message.error('Delete failed: ' + error.message);
+          }
+        },
+      });
+    };
+
     return {
       columns,
       packages,
@@ -274,6 +472,16 @@ export default {
       handleModalCancel,
       addBenefit,
       removeBenefit,
+      trialForm,
+      trialCodes,
+      trialLoading,
+      trialColumns,
+      createTrialCode,
+      pagination,
+      trialList,
+      fetchTrialCodes,
+      handleTableChange,
+      handleDeleteTrial,
     };
   },
 };
