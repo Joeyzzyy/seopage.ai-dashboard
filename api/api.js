@@ -3,7 +3,7 @@ import { message } from 'ant-design-vue';
 
 // 创建一个 axios 实例
 const apiClient = axios.create({
-  baseURL: 'https://strapi.sheet2email.com/v1', // 替换为实际的 API 基础地址
+  baseURL: 'https://api.websitelm.com/v1', // 替换为实际的 API 基础地址
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
