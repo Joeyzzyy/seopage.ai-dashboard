@@ -15,6 +15,9 @@
                   Initialize
                 </a-button>
               </template>
+              <template v-if="column.key === 'competeProduct'">
+                {{ formatCompeteProducts(record.competeProduct) }}
+              </template>
             </template>
           </a-table>
         </a-card>
@@ -37,7 +40,7 @@ const initializationColumns = [
     key: 'productName',
   },
   {
-    title: 'Competing Product',
+    title: 'Competing Products',
     dataIndex: 'competeProduct',
     key: 'competeProduct',
   },
@@ -71,6 +74,13 @@ const fetchCustomerData = async () => {
 
 const handleInitialize = (record) => {
   message.success(`Initialized ${record.productName}`)
+}
+
+const formatCompeteProducts = (text) => {
+  if (!text) return '-'
+  return text.split(',')
+    .map(item => item.split('|')[0])
+    .join(', ')
 }
 
 onMounted(() => {
