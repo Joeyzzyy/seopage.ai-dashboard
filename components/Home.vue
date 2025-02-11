@@ -279,50 +279,132 @@ html, body, #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   overflow-y: auto;
+  background: linear-gradient(180deg, #1a1f3c 0%, #2d3250 100%);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 添加滚动条样式 */
+:deep(.ant-menu) {
+  background: transparent;
+  width: 100%;
+}
+
+:deep(.ant-menu-item) {
+  height: 50px;
+  line-height: 50px;
+  margin: 8px 12px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(5px);
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+}
+
+:deep(.ant-menu-item:hover) {
+  background: linear-gradient(90deg, rgba(82, 190, 255, 0.1), rgba(82, 190, 255, 0.05)) !important;
+  color: #52beff;
+  transform: translateX(5px);
+  box-shadow: 0 0 20px rgba(82, 190, 255, 0.1);
+}
+
+:deep(.ant-menu-item.ant-menu-item-selected) {
+  background: linear-gradient(90deg, rgba(82, 190, 255, 0.2), rgba(82, 190, 255, 0.1));
+  color: #52beff;
+  font-weight: 500;
+  box-shadow: 0 0 25px rgba(82, 190, 255, 0.15);
+  border-left: 3px solid #52beff;
+}
+
+:deep(.ant-menu-item .anticon) {
+  font-size: 18px;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.ant-menu-item:hover .anticon) {
+  transform: scale(1.1);
+  color: #52beff;
+}
+
+.logout-container {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(26, 31, 60, 0.8) 0%, rgba(45, 50, 80, 0.8) 100%);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logout-container .ant-btn {
+  height: 40px;
+  border-radius: 8px;
+  font-weight: 500;
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.2);
+  color: #ff4d4f;
+  transition: all 0.3s ease;
+}
+
+.logout-container .ant-btn:hover {
+  background: rgba(255, 77, 79, 0.2);
+  border-color: rgba(255, 77, 79, 0.3);
+  color: #ff4d4f;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 77, 79, 0.2);
+}
+
+/* 滚动条样式 */
 .sidebar-container::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .sidebar-container::-webkit-scrollbar-thumb {
-  background-color: #e8e8e8;
-  border-radius: 3px;
+  background-color: rgba(82, 190, 255, 0.3);
+  border-radius: 2px;
 }
 
 .sidebar-container::-webkit-scrollbar-track {
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 添加全局渐变动画 */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.sidebar-container {
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
 }
 
 .logo {
   height: 64px;
   padding: 16px;
   text-align: center;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #1a1f3c 0%, #2d3250 100%);
 }
 
 .logo h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
-  color: #1890ff;
-}
-
-.logout-container {
-  margin-top: auto;
-  padding: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-:deep(.ant-menu-item) {
-  height: 50px;
-  line-height: 50px;
-  margin: 4px 0;
-}
-
-:deep(.ant-menu-item .anticon) {
-  font-size: 16px;
+  color: #fff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(82, 190, 255, 0.5);
 }
 </style>
