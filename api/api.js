@@ -99,7 +99,7 @@ const uploadKeywords = async (file, customerId, keywordType) => {
 // 搜索关键词接口
 const searchKeywords = async (params) => {
     try {
-        const response = await apiClient.get('/keywords/search', {
+        const response = await apiClient.get('admin/keywords/search', {
             params: {
                 customerId: params.customerId,
                 keyword: params.keyword,
