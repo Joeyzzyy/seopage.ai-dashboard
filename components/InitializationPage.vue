@@ -5,7 +5,7 @@
         <a-card title="Customers Requiring Data Initialization">
           <a-table
             :columns="initializationColumns"
-            :data-source="mockData"
+            :data-source="customers"
             :pagination="{ pageSize: 5 }"
             :loading="loading"
           >
@@ -24,8 +24,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
+import { api } from '../api/api'
 
 const loading = ref(false)
 
@@ -46,23 +47,35 @@ const initializationColumns = [
   },
 ]
 
-// 使用模拟数据
-const mockData = [
-  {
-    key: '1',
-    productName: 'Test Product 1',
-    competeProduct: 'Competitor A',
-  },
-  {
-    key: '2',
-    productName: 'Test Product 2',
-    competeProduct: 'Competitor B',
-  },
-]
+// Replace mock data with actual data
+const customers = ref([])
+
+// Fetch customer list data
+const fetchCustomerData = async () => {
+  loading.value = true
+  try {
+    const response = await api.getCustomerList()
+    customers.value = Object.entries(response.data).map(([id, data]) => ({
+      key: id,
+      id,
+      productName: data.productName,
+      competeProduct: data.competeProduct || '-'
+    }))
+  } catch (error) {
+    console.error('Failed to fetch customer list:', error)
+    message.error('Failed to fetch customer list')
+  } finally {
+    loading.value = false
+  }
+}
 
 const handleInitialize = (record) => {
   message.success(`Initialized ${record.productName}`)
 }
+
+onMounted(() => {
+  fetchCustomerData()
+})
 </script>
 
 <style scoped>
