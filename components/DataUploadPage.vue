@@ -191,7 +191,10 @@
 import { ref, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
-import { api } from '../api/api';
+import { api } from '../api/api'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 // Keywords types configuration
 const keywordTypes = [
@@ -331,7 +334,10 @@ const fetchCustomerList = async () => {
       competeProduct: data.competeProduct
     }))
     
-    if (customers.value.length > 0 && !selectedCustomerId.value) {
+    const routeCustomerId = route.query.customerId
+    if (routeCustomerId) {
+      selectedCustomerId.value = routeCustomerId
+    } else if (customers.value.length > 0 && !selectedCustomerId.value) {
       selectedCustomerId.value = customers.value[0].id
     }
   } catch (error) {

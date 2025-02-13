@@ -30,7 +30,9 @@
 import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { api } from '../api/api'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const loading = ref(false)
 
 const initializationColumns = [
@@ -73,7 +75,13 @@ const fetchCustomerData = async () => {
 }
 
 const handleInitialize = (record) => {
-  message.success(`Initialized ${record.productName}`)
+  router.push({
+    name: 'DataUpload',
+    query: { 
+      customerId: record.id,
+      customerName: record.productName  // 额外传递客户名称
+    }
+  })
 }
 
 const formatCompeteProducts = (text) => {

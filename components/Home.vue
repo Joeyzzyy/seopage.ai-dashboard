@@ -396,6 +396,9 @@ html, body, #app {
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(135deg, #1a1f3c 0%, #2d3250 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo h1 {
