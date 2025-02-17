@@ -37,6 +37,11 @@ const loading = ref(false)
 
 const initializationColumns = [
   {
+    title: 'Customer ID',
+    dataIndex: 'customerId',
+    key: 'customerId',
+  },
+  {
     title: 'Customer Name',
     dataIndex: 'productName',
     key: 'productName',
@@ -63,6 +68,7 @@ const fetchCustomerData = async () => {
     customers.value = Object.entries(response.data).map(([id, data]) => ({
       key: id,
       id,
+      customerId: data.customerId || '-',
       productName: data.productName,
       competeProduct: data.competeProduct || '-'
     }))

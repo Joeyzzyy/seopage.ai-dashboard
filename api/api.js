@@ -83,7 +83,7 @@ const uploadKeywords = async (file, customerId, keywordType) => {
         formData.append('customerId', customerId);
         formData.append('keywordType', keywordType);
         
-        const response = await apiClient.post('/keywords', formData, {
+        const response = await apiClient.post('admin/keywords', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -127,7 +127,7 @@ const uploadTopPages = async (file, customerId, domainName) => {
         formData.append('customerId', customerId);
         formData.append('domainName', domainName);
         
-        const response = await apiClient.post('/top-pages', formData, {
+        const response = await apiClient.post('admin/top-pages', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -143,7 +143,7 @@ const uploadTopPages = async (file, customerId, domainName) => {
 // 获取 top pages 列表接口
 const getTopPages = async (params) => {
     try {
-        const response = await apiClient.get('/top-pages', {
+        const response = await apiClient.get('admin/top-pages', {
             params: {
                 customerId: params.customerId,
                 domainName: params.domainName,
@@ -166,7 +166,7 @@ const uploadTopPageKeywords = async (file, customerId, topURL) => {
         formData.append('customerId', customerId);
         formData.append('topURL', topURL);
         
-        const response = await apiClient.post('/top-pages/keyword', formData, {
+        const response = await apiClient.post('admin/top-pages/keyword', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -182,7 +182,7 @@ const uploadTopPageKeywords = async (file, customerId, topURL) => {
 // 获取 top pages keywords 列表接口
 const getTopPageKeywords = async (params) => {
     try {
-        const response = await apiClient.get('/top-pages/keyword', {
+        const response = await apiClient.get('admin/top-pages/keyword', {
             params: {
                 customerId: params.customerId,
                 topURL: params.topURL,
