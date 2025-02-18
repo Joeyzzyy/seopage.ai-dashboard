@@ -11,9 +11,14 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
-                <a-button type="primary" size="small" @click="handleInitialize(record)">
-                  Initialize
-                </a-button>
+                <a-space>
+                  <a-button type="default" size="small" @click="handleEditPlan(record)">
+                    Edit Plan
+                  </a-button>
+                  <a-button type="primary" size="small" @click="handleInitialize(record)">
+                    Initialize
+                  </a-button>
+                </a-space>
               </template>
               <template v-if="column.key === 'competeProduct'">
                 {{ formatCompeteProducts(record.competeProduct) }}
@@ -23,6 +28,67 @@
         </a-card>
       </a-col>
     </a-row>
+
+    <!-- Add Modal -->
+    <a-modal
+      v-model:visible="modalVisible"
+      title="Trial Package Details"
+      :footer="null"
+      width="600px"
+    >
+      <div v-if="selectedPackage" class="package-form">
+        <a-form :model="selectedPackage" layout="vertical">
+          <a-form-item label="Trial ID">
+            <a-input v-model:value="selectedPackage.trialId" disabled />
+          </a-form-item>
+          <a-form-item label="Trial Name">
+            <a-input v-model:value="selectedPackage.trialName" disabled />
+          </a-form-item>
+          <a-form-item label="Package ID">
+            <a-input v-model:value="selectedPackage.packageId" disabled />
+          </a-form-item>
+          <a-form-item label="Customer ID">
+            <a-input v-model:value="selectedPackage.customerId" disabled />
+          </a-form-item>
+          <a-form-item label="Status">
+            <a-tag :color="selectedPackage.active ? 'green' : 'red'">
+              {{ selectedPackage.active ? 'Active' : 'Inactive' }}
+            </a-tag>
+          </a-form-item>
+          <a-form-item label="Start Time">
+            <a-date-picker
+              v-model:value="selectedPackage.startTime"
+              :format="'YYYY-MM-DD'"
+              style="width: 100%"
+            />
+          </a-form-item>
+          <a-form-item label="End Time">
+            <a-date-picker
+              v-model:value="selectedPackage.endTime"
+              :format="'YYYY-MM-DD'"
+              style="width: 100%"
+            />
+          </a-form-item>
+          <a-form-item label="Invite Code">
+            <a-input v-model:value="selectedPackage.inviteCode" disabled />
+          </a-form-item>
+          <a-form-item label="Description">
+            <a-textarea v-model:value="selectedPackage.description" disabled />
+          </a-form-item>
+          <a-form-item label="Duration (Days)">
+            <a-input v-model:value="selectedPackage.duration" disabled />
+          </a-form-item>
+          <a-form-item label="Created At">
+            <a-input v-model:value="selectedPackage.createdAt" disabled />
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" :loading="saving" @click="handleSave">
+              Save Changes
+            </a-button>
+          </a-form-item>
+        </a-form>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -31,6 +97,7 @@ import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { api } from '../api/api'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const loading = ref(false)
@@ -90,6 +157,137 @@ const handleInitialize = (record) => {
   })
 }
 
+// Add new refs
+const modalVisible = ref(false)
+const trialPackages = ref([])
+const packageLoading = ref(false)
+
+const packageColumns = [
+  {
+    title: 'Trial ID',
+    dataIndex: 'trialId',
+    key: 'trialId',
+  },
+  {
+    title: 'Trial Name',
+    dataIndex: 'trialName',
+    key: 'trialName',
+  },
+  {
+    title: 'Package ID',
+    dataIndex: 'packageId',
+    key: 'packageId',
+  },
+  {
+    title: 'Customer ID',
+    dataIndex: 'customerId',
+    key: 'customerId',
+  },
+  {
+    title: 'Status',
+    dataIndex: 'active',
+    key: 'active',
+    customRender: ({ text }) => text ? 'Active' : 'Inactive'
+  },
+  {
+    title: 'Start Time',
+    dataIndex: 'startTime',
+    key: 'startTime',
+    width: 150,
+    slots: {
+      customRender: 'startTime'
+    }
+  },
+  {
+    title: 'End Time',
+    dataIndex: 'endTime',
+    key: 'endTime',
+    width: 150,
+    slots: {
+      customRender: 'endTime'
+    }
+  },
+  {
+    title: 'Invite Code',
+    dataIndex: 'inviteCode',
+    key: 'inviteCode',
+  },
+  {
+    title: 'Description',
+    dataIndex: 'description',
+    key: 'description',
+  },
+  {
+    title: 'Duration (Days)',
+    dataIndex: 'duration',
+    key: 'duration',
+  },
+  {
+    title: 'Created At',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
+  }
+]
+
+const handleDateChange = (record, field, date) => {
+  if (date) {
+    record[field] = dayjs(date)
+  } else {
+    record[field] = null
+  }
+  console.log('Date changed:', { record, field, date })
+}
+
+const selectedPackage = ref(null)
+const saving = ref(false)
+
+const handleEditPlan = async (record) => {
+  modalVisible.value = true
+  packageLoading.value = true
+  try {
+    const response = await api.getTrialPackages({
+      customerId: record.customerId,
+      page: 1,
+      limit: 10
+    })
+    // 假设我们只显示第一个套餐的详情
+    const packageData = response.data[0]
+    if (packageData) {
+      selectedPackage.value = {
+        ...packageData,
+        startTime: packageData.startTime ? dayjs(packageData.startTime) : null,
+        endTime: packageData.endTime ? dayjs(packageData.endTime) : null,
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch trial packages:', error)
+    message.error('Failed to fetch trial packages')
+  } finally {
+    packageLoading.value = false
+  }
+}
+
+const handleSave = async () => {
+  if (!selectedPackage.value) return
+  
+  saving.value = true
+  try {
+    const updateData = {
+      startTime: selectedPackage.value.startTime.format('YYYY-MM-DD'),
+      endTime: selectedPackage.value.endTime.format('YYYY-MM-DD')
+    }
+    
+    await api.updateTrialPackage(selectedPackage.value.trialId, updateData)
+    message.success('更新成功')
+    modalVisible.value = false
+  } catch (error) {
+    console.error('Failed to update trial package:', error)
+    message.error('更新失败')
+  } finally {
+    saving.value = false
+  }
+}
+
 const formatCompeteProducts = (text) => {
   if (!text) return '-'
   return text.split(',')
@@ -105,5 +303,11 @@ onMounted(() => {
 <style scoped>
 .initialization-container {
   padding: 24px;
+}
+
+.package-form {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0 16px;
 }
 </style> 

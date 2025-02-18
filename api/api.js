@@ -270,6 +270,7 @@ const getTrialPackages = async (params) => {
     try {
         const response = await apiClient.get('/admin/trial-package', {
             params: {
+                customerId: params.customerId,
                 page: params.page,
                 limit: params.limit
             }
@@ -288,6 +289,17 @@ const deleteTrialPackage = async (trialId) => {
         return response.data;
     } catch (error) {
         console.error('Delete trial package error:', error);
+        throw error;
+    }
+};
+
+// 更新免费试用申请接口
+const updateTrialPackage = async (trialId, trialData) => {
+    try {
+        const response = await apiClient.put(`/admin/trial-package/${trialId}`, trialData);
+        return response.data;
+    } catch (error) {
+        console.error('Update trial package error:', error);
         throw error;
     }
 };
@@ -311,4 +323,5 @@ export const api = {
     applyTrialPackage,
     getTrialPackages,
     deleteTrialPackage,
+    updateTrialPackage,
 };
