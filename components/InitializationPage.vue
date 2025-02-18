@@ -81,6 +81,21 @@
           <a-form-item label="Created At">
             <a-input v-model:value="selectedPackage.createdAt" disabled />
           </a-form-item>
+          <a-form-item label="Package">
+            <a-select
+              v-model:value="selectedPackage.packageFeatureId"
+              style="width: 100%"
+              placeholder="Select package"
+            >
+              <a-select-option
+                v-for="pkg in packageList"
+                :key="pkg.packageFeatureId"
+                :value="pkg.packageFeatureId"
+              >
+                {{ pkg.packageName }} (${{ pkg.packagePrice }})
+              </a-select-option>
+            </a-select>
+          </a-form-item>
           <a-form-item>
             <a-button type="primary" :loading="saving" @click="handleSave">
               Save Changes
@@ -161,6 +176,7 @@ const handleInitialize = (record) => {
 const modalVisible = ref(false)
 const trialPackages = ref([])
 const packageLoading = ref(false)
+const packageList = ref([])
 
 const packageColumns = [
   {
@@ -257,6 +273,7 @@ const handleEditPlan = async (record) => {
         ...packageData,
         startTime: packageData.startTime ? dayjs(packageData.startTime) : null,
         endTime: packageData.endTime ? dayjs(packageData.endTime) : null,
+        packageFeatureId: packageData.packageId // 确保使用当前客户的套餐ID
       }
     }
   } catch (error) {
@@ -267,6 +284,18 @@ const handleEditPlan = async (record) => {
   }
 }
 
+// 获取套餐列表
+const fetchPackageList = async () => {
+  try {
+    const response = await api.getPackageFeatures()
+    packageList.value = response.data
+  } catch (error) {
+    console.error('Failed to fetch package list:', error)
+    message.error('获取套餐列表失败')
+  }
+}
+
+// 修改 handleSave 函数
 const handleSave = async () => {
   if (!selectedPackage.value) return
   
@@ -274,7 +303,8 @@ const handleSave = async () => {
   try {
     const updateData = {
       startTime: selectedPackage.value.startTime.format('YYYY-MM-DD'),
-      endTime: selectedPackage.value.endTime.format('YYYY-MM-DD')
+      endTime: selectedPackage.value.endTime.format('YYYY-MM-DD'),
+      packageId: selectedPackage.value.packageFeatureId // 添加套餐ID
     }
     
     await api.updateTrialPackage(selectedPackage.value.trialId, updateData)
@@ -297,6 +327,7 @@ const formatCompeteProducts = (text) => {
 
 onMounted(() => {
   fetchCustomerData()
+  fetchPackageList() // 初始化时获取套餐列表
 })
 </script>
 
