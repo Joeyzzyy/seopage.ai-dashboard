@@ -304,6 +304,44 @@ const updateTrialPackage = async (trialId, trialData) => {
     }
 };
 
+// 批量发送邮件接口
+const batchSendEmail = async (emailData) => {
+    try {
+        const response = await apiClient.post('/admin/batch/send-email', {
+            emails: emailData.emails,
+            html: emailData.html,
+            subject: emailData.subject,
+            sendEmail: emailData.sendEmail,
+            sendName: emailData.sendName,
+            replyTo: emailData.replyTo
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Batch send email error:', error);
+        throw error;
+    }
+};
+
+// 获取批量发送邮件列表接口
+const getBatchEmailList = async (params) => {
+    try {
+        const response = await apiClient.get('/admin/batch/send-email', {
+            params: {
+                batchId: params.batchId,
+                email: params.email,
+                startTime: params.startTime,
+                endTime: params.endTime,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get batch email list error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -324,4 +362,6 @@ export const api = {
     getTrialPackages,
     deleteTrialPackage,
     updateTrialPackage,
+    batchSendEmail,
+    getBatchEmailList,
 };

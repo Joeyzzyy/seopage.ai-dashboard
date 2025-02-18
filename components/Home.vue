@@ -30,6 +30,10 @@
             <template #icon><tool-outlined /></template>
             Package Config
           </a-menu-item>
+          <a-menu-item key="EDM">
+            <template #icon><mail-outlined /></template>
+            EDM
+          </a-menu-item>
         </a-menu>
         
         <div class="logout-container">
@@ -95,7 +99,8 @@ import {
   DashboardOutlined, 
   UploadOutlined, 
   ToolOutlined,
-  LogoutOutlined 
+  LogoutOutlined,
+  MailOutlined
 } from '@ant-design/icons-vue';
 import axios from 'axios';
 
@@ -105,7 +110,8 @@ export default {
     DashboardOutlined,
     UploadOutlined,
     ToolOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    MailOutlined
   },
   setup() {
     const route = useRoute();
@@ -118,7 +124,8 @@ export default {
         '/dashboard': 'DashboardPage',
         '/data-upload': 'DataUploadPage',
         '/initialization': 'InitializationPage',
-        '/package-config': 'PackageConfigPage'
+        '/package-config': 'PackageConfigPage',
+        '/edm': 'EDM'
       };
       currentView.value = pathMap[route.path] || 'DashboardPage';
     };
@@ -167,7 +174,8 @@ export default {
         'DashboardPage': '/dashboard',
         'DataUploadPage': '/data-upload',
         'InitializationPage': '/initialization',
-        'PackageConfigPage': '/package-config'
+        'PackageConfigPage': '/package-config',
+        'EDM': '/edm'
       };
       if (routeMap[key]) {
         this.$router.push(routeMap[key]);

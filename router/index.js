@@ -3,6 +3,7 @@ import Home from '../components/Home.vue';
 import DataUploadPage from '../components/DataUploadPage.vue'
 import Login from '../components/Login.vue'
 import InitializationPage from '../components/InitializationPage.vue'
+import EdmPage from '../components/EdmPage.vue'
 
 const routes = [
   {
@@ -33,6 +34,11 @@ const routes = [
         name: 'PackageConfig',
         component: () => import('../components/PackageConfig.vue'),
         meta: { requiresAuth: true }
+      },
+      {
+        path: 'edm',
+        name: 'EDM',
+        component: EdmPage
       }
     ]
   },

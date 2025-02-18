@@ -177,76 +177,8 @@ const handleInitialize = (record) => {
 
 // Add new refs
 const modalVisible = ref(false)
-const trialPackages = ref([])
 const packageLoading = ref(false)
 const packageList = ref([])
-
-const packageColumns = [
-  {
-    title: 'Trial ID',
-    dataIndex: 'trialId',
-    key: 'trialId',
-  },
-  {
-    title: 'Trial Name',
-    dataIndex: 'trialName',
-    key: 'trialName',
-  },
-  {
-    title: 'Package ID',
-    dataIndex: 'packageId',
-    key: 'packageId',
-  },
-  {
-    title: 'Customer ID',
-    dataIndex: 'customerId',
-    key: 'customerId',
-  },
-  {
-    title: 'Status',
-    dataIndex: 'active',
-    key: 'active',
-    customRender: ({ text }) => text ? 'Active' : 'Inactive'
-  },
-  {
-    title: 'Start Time',
-    dataIndex: 'startTime',
-    key: 'startTime',
-    width: 150,
-    slots: {
-      customRender: 'startTime'
-    }
-  },
-  {
-    title: 'End Time',
-    dataIndex: 'endTime',
-    key: 'endTime',
-    width: 150,
-    slots: {
-      customRender: 'endTime'
-    }
-  },
-  {
-    title: 'Invite Code',
-    dataIndex: 'inviteCode',
-    key: 'inviteCode',
-  },
-  {
-    title: 'Description',
-    dataIndex: 'description',
-    key: 'description',
-  },
-  {
-    title: 'Duration (Days)',
-    dataIndex: 'duration',
-    key: 'duration',
-  },
-  {
-    title: 'Created At',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
-  }
-]
 
 const handleDateChange = (record, field, date) => {
   if (date) {
