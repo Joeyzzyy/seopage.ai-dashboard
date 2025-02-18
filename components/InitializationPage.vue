@@ -291,7 +291,7 @@ const fetchPackageList = async () => {
     packageList.value = response.data
   } catch (error) {
     console.error('Failed to fetch package list:', error)
-    message.error('获取套餐列表失败')
+    message.error('Failed to get package list')
   }
 }
 
@@ -304,15 +304,15 @@ const handleSave = async () => {
     const updateData = {
       startTime: selectedPackage.value.startTime.format('YYYY-MM-DD'),
       endTime: selectedPackage.value.endTime.format('YYYY-MM-DD'),
-      packageId: selectedPackage.value.packageFeatureId // 添加套餐ID
+      packageFeatureId: selectedPackage.value.packageFeatureId
     }
     
     await api.updateTrialPackage(selectedPackage.value.trialId, updateData)
-    message.success('更新成功')
+    message.success('Updated successfully')
     modalVisible.value = false
   } catch (error) {
     console.error('Failed to update trial package:', error)
-    message.error('更新失败')
+    message.error('Update failed')
   } finally {
     saving.value = false
   }
