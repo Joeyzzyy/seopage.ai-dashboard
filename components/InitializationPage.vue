@@ -103,6 +103,9 @@
           </a-form-item>
         </a-form>
       </div>
+      <div v-else class="no-package-message">
+        <a-empty description="No package available for this customer" />
+      </div>
     </a-modal>
   </div>
 </template>
@@ -266,15 +269,17 @@ const handleEditPlan = async (record) => {
       page: 1,
       limit: 10
     })
-    // 假设我们只显示第一个套餐的详情
-    const packageData = response.data[0]
-    if (packageData) {
+    // 检查是否有套餐数据
+    if (response.data && response.data.length > 0) {
+      const packageData = response.data[0]
       selectedPackage.value = {
         ...packageData,
         startTime: packageData.startTime ? dayjs(packageData.startTime) : null,
         endTime: packageData.endTime ? dayjs(packageData.endTime) : null,
-        packageFeatureId: packageData.packageId // 确保使用当前客户的套餐ID
+        packageFeatureId: packageData.packageId
       }
+    } else {
+      selectedPackage.value = null
     }
   } catch (error) {
     console.error('Failed to fetch trial packages:', error)
@@ -340,5 +345,10 @@ onMounted(() => {
   max-height: 70vh;
   overflow-y: auto;
   padding: 0 16px;
+}
+
+.no-package-message {
+  text-align: center;
+  padding: 24px;
 }
 </style> 
