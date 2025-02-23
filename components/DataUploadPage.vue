@@ -74,6 +74,7 @@
                     total: totalCount[type.key],
                     current: currentPage[type.key],
                     pageSize: 10,
+                    showTotal: (total) => `${total} records in total`,
                     showSizeChanger: false,
                     onChange: (page) => handlePageChange(page, type.key)
                   }"
@@ -328,21 +329,33 @@ const fetchCustomerList = async () => {
   loading.value = true
   try {
     const response = await api.getCustomerList()
-    customers.value = Object.entries(response.data).map(([id, data]) => ({
-      id,
-      name: data.productName,
-      competeProduct: data.competeProduct
+    customers.value = response.data.map(customer => ({
+      id: customer.customerId,
+      name: customer.productName,
+      competeProduct: customer.competeProduct,
+      email: customer.email
     }))
     
-    const routeCustomerId = route.query.customerId
-    if (routeCustomerId) {
-      selectedCustomerId.value = routeCustomerId
-    } else if (customers.value.length > 0 && !selectedCustomerId.value) {
-      selectedCustomerId.value = customers.value[0].id
+    // 优先选择 websitelm1.com 客户
+    const websitelmCustomer = customers.value.find(customer => customer.name === 'websitelm.com')
+    if (websitelmCustomer) {
+      selectedCustomerId.value = websitelmCustomer.id
+    } else {
+      // 如果找不到 websitelm1.com，则按照原来的逻辑处理
+      const routeCustomerId = route.query.customerId
+      if (routeCustomerId) {
+        selectedCustomerId.value = routeCustomerId
+      } else {
+        // 选择第一个有效的 productName 的客户
+        const firstValidCustomer = customers.value.find(customer => customer.name)
+        if (firstValidCustomer) {
+          selectedCustomerId.value = firstValidCustomer.id
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to fetch customer list:', error)
-    message.error('Failed to load customer list')
+    message.error('获取客户列表失败')
   } finally {
     loading.value = false
   }
@@ -359,7 +372,7 @@ const fetchKeywordsData = async (customerId, type, page = 1) => {
       limit: 10
     })
     keywordsData.value[type] = response.data || []
-    totalCount.value[type] = response.totalCount || 0
+    totalCount.value[type] = response.total || response.totalPage * 10 || 0
     currentPage.value[type] = page
   } catch (error) {
     console.error(`Failed to fetch ${type} keywords:`, error)
