@@ -6,7 +6,7 @@
           <a-table
             :columns="initializationColumns"
             :data-source="customers"
-            :pagination="{ pageSize: 5 }"
+            :pagination="{ pageSize: 20 }"
             :loading="loading"
           >
             <template #bodyCell="{ column, record }">
