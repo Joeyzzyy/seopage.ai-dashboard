@@ -64,10 +64,16 @@ const login = async (email, password) => {
     }
 };
 
-// 新增获取用户列表接口
-const getCustomerList = async () => {
+// 获取用户列表接口
+const getCustomerList = async (params = {}) => {
     try {
-        const response = await apiClient.get('/customer/list');
+        const response = await apiClient.get('/customer/list', {
+            params: {
+                email: params.email,
+                page: params.page,
+                limit: params.limit
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Get customer list error:', error);

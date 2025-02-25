@@ -6,8 +6,9 @@
           <a-table
             :columns="initializationColumns"
             :data-source="customers"
-            :pagination="{ pageSize: 20 }"
+            :pagination="pagination"
             :loading="loading"
+            @change="handleTableChange"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
@@ -119,6 +120,14 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const loading = ref(false)
+const pagination = ref({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showTotal: total => `${total} records in total`,
+  showSizeChanger: false,
+  showQuickJumper: true,
+})
 
 const initializationColumns = [
   {
@@ -146,20 +155,27 @@ const initializationColumns = [
 const customers = ref([])
 
 // Fetch customer list data
-const fetchCustomerData = async () => {
+const fetchCustomerData = async (page = 1) => {
   loading.value = true
   try {
-    const response = await api.getCustomerList()
-    customers.value = Object.entries(response.data).map(([id, data]) => ({
-      key: id,
-      id,
-      customerId: data.customerId || '-',
-      productName: data.productName,
-      competeProduct: data.competeProduct || '-'
+    const response = await api.getCustomerList({
+      page: page,
+      limit: 10
+    })
+    customers.value = response.data.map(item => ({
+      key: item.customerId,
+      id: item.customerId,
+      customerId: item.customerId || '-',
+      productName: item.productName || '-',
+      competeProduct: item.competeProduct || '-',
+      email: item.email || '-'
     }))
+    
+    pagination.value.total = response.TotalCount
+    pagination.value.current = page
   } catch (error) {
     console.error('Failed to fetch customer list:', error)
-    message.error('Failed to fetch customer list')
+    message.error('获取客户列表失败')
   } finally {
     loading.value = false
   }
@@ -260,6 +276,12 @@ const formatCompeteProducts = (text) => {
   return text.split(',')
     .map(item => item.split('|')[0])
     .join(', ')
+}
+
+// 修改分页变化处理函数
+const handleTableChange = (pag) => {
+  pagination.value.current = pag.current
+  fetchCustomerData(pag.current)
 }
 
 onMounted(() => {
