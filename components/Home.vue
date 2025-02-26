@@ -15,20 +15,12 @@
           style="border-right: 0;"
         >
           <a-menu-item key="InitializationPage">
-            <template #icon><setting-outlined /></template>
-            Initialization
-          </a-menu-item>
-          <a-menu-item key="DashboardPage">
-            <template #icon><dashboard-outlined /></template>
-            Dashboard
-          </a-menu-item>
-          <a-menu-item key="DataUploadPage">
-            <template #icon><upload-outlined /></template>
-            Data Upload
+            <template #icon><user-outlined /></template>
+            Customer
           </a-menu-item>
           <a-menu-item key="PackageConfigPage">
-            <template #icon><tool-outlined /></template>
-            Package Config
+            <template #icon><schedule-outlined /></template>
+            Plan
           </a-menu-item>
           <a-menu-item key="EDM">
             <template #icon><mail-outlined /></template>
@@ -95,10 +87,8 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
-  SettingOutlined, 
-  DashboardOutlined, 
-  UploadOutlined, 
-  ToolOutlined,
+  UserOutlined, 
+  ScheduleOutlined, 
   LogoutOutlined,
   MailOutlined
 } from '@ant-design/icons-vue';
@@ -106,28 +96,24 @@ import axios from 'axios';
 
 export default {
   components: {
-    SettingOutlined,
-    DashboardOutlined,
-    UploadOutlined,
-    ToolOutlined,
+    UserOutlined,
+    ScheduleOutlined,
     LogoutOutlined,
     MailOutlined
   },
   setup() {
     const route = useRoute();
     const router = useRouter();
-    const currentView = ref('DashboardPage');
+    const currentView = ref('InitializationPage');
 
     // 根据路由路径设置当前视图
     const updateCurrentView = () => {
       const pathMap = {
-        '/dashboard': 'DashboardPage',
-        '/data-upload': 'DataUploadPage',
         '/initialization': 'InitializationPage',
         '/package-config': 'PackageConfigPage',
         '/edm': 'EDM'
       };
-      currentView.value = pathMap[route.path] || 'DashboardPage';
+      currentView.value = pathMap[route.path] || 'InitializationPage';
     };
 
     // 组件挂载时更新当前视图
@@ -171,8 +157,6 @@ export default {
     handleMenuClick({ key }) {
       this.currentView = key;
       const routeMap = {
-        'DashboardPage': '/dashboard',
-        'DataUploadPage': '/data-upload',
         'InitializationPage': '/initialization',
         'PackageConfigPage': '/package-config',
         'EDM': '/edm'
