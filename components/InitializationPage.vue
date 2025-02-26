@@ -146,6 +146,11 @@ const initializationColumns = [
     key: 'competeProduct',
   },
   {
+    title: 'Compete Product Site',
+    dataIndex: 'competeProductSite',
+    key: 'competeProductSite',
+  },
+  {
     title: 'Action',
     key: 'action',
   },
@@ -168,6 +173,7 @@ const fetchCustomerData = async (page = 1) => {
       customerId: item.customerId || '-',
       productName: item.productName || '-',
       competeProduct: item.competeProduct || '-',
+      competeProductSite: formatCompeteProductSites(item.competeProduct),
       email: item.email || '-'
     }))
     
@@ -276,6 +282,19 @@ const formatCompeteProducts = (text) => {
   return text.split(',')
     .map(item => item.split('|')[0])
     .join(', ')
+}
+
+// 添加新函数来格式化竞争产品网站
+const formatCompeteProductSites = (text) => {
+  if (!text) return '-'
+  const sites = text.split(',')
+    .map(item => {
+      const parts = item.split('|')
+      return parts.length > 1 ? parts[1] : ''
+    })
+    .filter(site => site) // 过滤掉空值
+  
+  return sites.length > 0 ? sites.join(', ') : '-'
 }
 
 // 修改分页变化处理函数
