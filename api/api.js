@@ -4,7 +4,7 @@ import { message } from 'ant-design-vue';
 // 创建一个 axios 实例
 const apiClient = axios.create({
   baseURL: 'https://api.websitelm.com/v1', // 替换为实际的 API 基础地址
-  timeout: 10000,
+  timeout: 300000, // 修改为5分钟 (300000毫秒)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -93,7 +93,7 @@ const uploadKeywords = async (file, customerId, keywordType) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-            timeout: 30000,
+            timeout: 300000, // 修改为5分钟
         });
         return response.data;
     } catch (error) {
@@ -137,7 +137,7 @@ const uploadTopPages = async (file, customerId, domainName) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-            timeout: 30000,
+            timeout: 300000, // 修改为5分钟
         });
         return response.data;
     } catch (error) {
@@ -176,7 +176,7 @@ const uploadTopPageKeywords = async (file, customerId, topURL) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
-            timeout: 30000,
+            timeout: 300000, // 修改为5分钟
         });
         return response.data;
     } catch (error) {
@@ -348,6 +348,43 @@ const getBatchEmailList = async (params) => {
     }
 };
 
+// 上传数据表结构接口
+const uploadTableStructure = async (file, customerId) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('customerId', customerId);
+        
+        const response = await apiClient.post('admin/table-structure', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 300000, // 5分钟超时
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Upload table structure error:', error);
+        throw error;
+    }
+};
+
+// 获取数据表结构列表接口
+const getTableStructures = async (params) => {
+    try {
+        const response = await apiClient.get('admin/table-structure', {
+            params: {
+                customerId: params.customerId,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get table structures error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -370,4 +407,6 @@ export const api = {
     updateTrialPackage,
     batchSendEmail,
     getBatchEmailList,
+    uploadTableStructure,
+    getTableStructures,
 };
