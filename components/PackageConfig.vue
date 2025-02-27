@@ -101,6 +101,7 @@
       :title="modalMode === 'add' ? 'Add Package' : 'Edit Package'"
       @ok="handleModalOk"
       @cancel="handleModalCancel"
+      width="800px"
     >
       <a-form :model="formState" :rules="rules" ref="formRef">
         <a-form-item label="Package Name" name="packageName">
@@ -115,8 +116,11 @@
             <a-select-option :value="2">Annual</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="Outline Generation Limit" name="outlineGeneratorLimit">
-          <a-input-number v-model:value="formState.outlineGeneratorLimit" :min="0" style="width: 100%;" />
+        <a-form-item label="Manual Outline Generation Limit" name="manualOutlineGeneratorLimit">
+          <a-input-number v-model:value="formState.manualOutlineGeneratorLimit" :min="0" style="width: 100%;" />
+        </a-form-item>
+        <a-form-item label="AI Outline Generation Limit" name="aiOutlineGeneratorLimit">
+          <a-input-number v-model:value="formState.aiOutlineGeneratorLimit" :min="0" style="width: 100%;" />
         </a-form-item>
         <a-form-item label="Page Generation Limit" name="pageGeneratorLimit">
           <a-input-number v-model:value="formState.pageGeneratorLimit" :min="0" style="width: 100%;" />
@@ -313,7 +317,8 @@ export default {
       packageName: '',
       packagePrice: 0,
       packageType: 1,
-      outlineGeneratorLimit: 0,
+      manualOutlineGeneratorLimit: 0,
+      aiOutlineGeneratorLimit: 0,
       pageGeneratorLimit: 0,
       freeDeploymentPageLimit: 0,
       internalLinkStorageLimit: 0,
@@ -328,7 +333,8 @@ export default {
       packageName: [{ required: true, message: '请输入套餐名称' }],
       packagePrice: [{ required: true, message: '请输入套餐价格' }],
       packageType: [{ required: true, message: '请选择套餐类型' }],
-      outlineGeneratorLimit: [{ required: true, message: '请输入大纲生成限制' }],
+      manualOutlineGeneratorLimit: [{ required: true, message: '请输入手动大纲生成限制' }],
+      aiOutlineGeneratorLimit: [{ required: true, message: '请输入AI大纲生成限制' }],
       pageGeneratorLimit: [{ required: true, message: '请输入页面生成限制' }],
       freeDeploymentPageLimit: [{ required: true, message: '请输入免费部署页面限制' }],
       internalLinkStorageLimit: [{ required: true, message: '请输入内部链接存储限制' }],
@@ -342,7 +348,8 @@ export default {
       formState.packageName = '';
       formState.packagePrice = 0;
       formState.packageType = 1;
-      formState.outlineGeneratorLimit = 0;
+      formState.manualOutlineGeneratorLimit = 0;
+      formState.aiOutlineGeneratorLimit = 0;
       formState.pageGeneratorLimit = 0;
       formState.freeDeploymentPageLimit = 0;
       formState.internalLinkStorageLimit = 0;

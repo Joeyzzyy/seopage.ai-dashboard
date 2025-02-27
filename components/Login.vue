@@ -93,12 +93,18 @@ export default defineComponent({
 
           message.success('Login successful');
           await router.push('/dashboard');
+        } else if (result?.code === 1049) {
+          message.error('Incorrect password, please try again');
         } else {
-          message.error('Login failed. Please check your credentials.');
+          message.error('Login failed, please check your credentials');
         }
       } catch (error) {
         console.error('Login error:', error);
-        message.error(`Login error: ${error.response?.data?.message || error.message}`);
+        if (error.response?.data?.code === 1049) {
+          message.error('Incorrect password, please try again');
+        } else {
+          message.error(`Login error: ${error.response?.data?.message || error.message}`);
+        }
       } finally {
         loading.value = false;
       }
