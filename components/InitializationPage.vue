@@ -1176,19 +1176,27 @@ const handleLoginAsCustomer = async (record) => {
       localStorage.setItem('intelickIsLoggedIn', 'true')
       localStorage.setItem('accessToken', response.accessToken)
       
+      let customerId = '';
+      let customerEmail = '';
+      
       if (response.data) {
-        localStorage.setItem('currentCustomerId', response.data.customerId || '')
-        localStorage.setItem('currentCustomerEmail', response.data.email || '')
+        customerId = response.data.customerId || '';
+        customerEmail = response.data.email || '';
+        localStorage.setItem('currentCustomerId', customerId)
+        localStorage.setItem('currentCustomerEmail', customerEmail)
       }
       
-      // 打开客户端网站
-      window.open('https://app.websitelm.com/dashboard', '_blank')
+      // 使用 URL 参数传递 token、customerId 和 customerEmail 进行跳转
+      const authUrl = `https://app.websitelm.com/auth?token=${encodeURIComponent(response.accessToken)}&customerId=${encodeURIComponent(customerId)}&customerEmail=${encodeURIComponent(customerEmail)}`;
       
-      message.success(`已成功以客户 ${record.productName} 身份登录`)
+      // 在新标签页中打开链接
+      window.open(authUrl, '_blank');
+      
+      message.success(`Successfully logged in as ${record.productName}`)
     }
   } catch (error) {
-    console.error('登录客户账号失败:', error)
-    message.error('登录客户账号失败')
+    console.error('Failed to login as customer:', error)
+    message.error('Failed to login as customer')
   }
 }
 
