@@ -15,11 +15,6 @@ const routes = [
         redirect: '/dashboard'
       },
       {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('../components/DashboardPage.vue')
-      },
-      {
         path: 'data-upload',
         name: 'DataUpload',
         component: DataUploadPage

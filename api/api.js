@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
     config => {
         // 检查当前请求是否在不需要 token 的列表中
         if (!noAuthUrls.includes(config.url)) {
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('adminaccesstoken');
             if (accessToken) {
                 config.headers['Authorization'] = `${accessToken}`;
             }
@@ -36,7 +36,7 @@ apiClient.interceptors.response.use(
     error => {
         if (error.response && error.response.status === 401) {
           // 只保留核心验证相关的存储项
-          localStorage.removeItem('accessToken');
+          localStorage.removeItem('adminaccesstoken');
           localStorage.removeItem('intelickIsLoggedIn');
           localStorage.removeItem('customers');
           localStorage.removeItem('currentUserId');
@@ -385,6 +385,17 @@ const getTableStructures = async (params) => {
     }
 };
 
+// 运营后台登录客户账号接口
+const adminLoginAsCustomer = async (customerId) => {
+    try {
+        const response = await apiClient.post('/admin/login', { customerId });
+        return response.data;
+    } catch (error) {
+        console.error('Admin login as customer error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -409,4 +420,5 @@ export const api = {
     getBatchEmailList,
     uploadTableStructure,
     getTableStructures,
+    adminLoginAsCustomer,
 };

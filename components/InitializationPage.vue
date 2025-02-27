@@ -20,6 +20,9 @@
                   <a-button type="default" size="small" @click="handleEditPlan(record)">
                     Edit Plan
                   </a-button>
+                  <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
+                    Login Account
+                  </a-button>
                 </a-space>
               </template>
               <template v-if="column.key === 'competeProduct'">
@@ -506,7 +509,7 @@ const fetchCustomerData = async (page = 1) => {
     pagination.value.current = page
   } catch (error) {
     console.error('Failed to fetch customer list:', error)
-    message.error('获取客户列表失败')
+    message.error('Failed to fetch customer list')
   } finally {
     loading.value = false
   }
@@ -528,12 +531,6 @@ const dashboardData = ref({
   indexingRate: 0,
   totalTokens: 0,
   totalTokenCost: 0
-})
-
-// 计算索引率
-const calculateIndexingRate = computed(() => {
-  if (!dashboardData.value.publishedPages) return 0
-  return ((dashboardData.value.indexedPages / dashboardData.value.publishedPages) * 100).toFixed(2)
 })
 
 // 加载仪表盘数据
@@ -1157,6 +1154,41 @@ const customRowHandler = (record) => {
       selectedCustomer.value = record
       loadCustomerData(record.customerId)
     }
+  }
+}
+
+// 处理登录客户账号
+const handleLoginAsCustomer = async (record) => {
+  try {
+    const response = await api.adminLoginAsCustomer(record.customerId)
+    if (response && response.accessToken) {
+      // 清除现有的本地存储数据
+      const keysToRemove = [
+        'accessToken',
+        'intelickIsLoggedIn',
+        'currentCustomerEmail',
+        'currentCustomerId',
+        'rememberedCredentials'
+      ]
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
+      // 设置新的登录信息
+      localStorage.setItem('intelickIsLoggedIn', 'true')
+      localStorage.setItem('accessToken', response.accessToken)
+      
+      if (response.data) {
+        localStorage.setItem('currentCustomerId', response.data.customerId || '')
+        localStorage.setItem('currentCustomerEmail', response.data.email || '')
+      }
+      
+      // 打开客户端网站
+      window.open('https://app.websitelm.com/dashboard', '_blank')
+      
+      message.success(`已成功以客户 ${record.productName} 身份登录`)
+    }
+  } catch (error) {
+    console.error('登录客户账号失败:', error)
+    message.error('登录客户账号失败')
   }
 }
 

@@ -81,7 +81,7 @@ export default defineComponent({
       try {
         const result = await api.login(formState.username, formState.password);
         if (result?.code === 200) {
-          localStorage.setItem('accessToken', result.accessToken);
+          localStorage.setItem('adminaccesstoken', result.accessToken);
           
           if (formState.remember) {
             localStorage.setItem('username', formState.username);
@@ -92,7 +92,7 @@ export default defineComponent({
           }
 
           message.success('Login successful');
-          await router.push('/dashboard');
+          await router.push('/initialization');
         } else if (result?.code === 1049) {
           message.error('Incorrect password, please try again');
         } else {
