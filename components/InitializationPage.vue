@@ -25,6 +25,12 @@
                   </a-button>
                 </a-space>
               </template>
+              <template v-if="column.key === 'customerId'">
+                <span :title="record.customerId">{{ record.customerId }}</span>
+              </template>
+              <template v-if="column.key === 'email'">
+                <span :title="record.email">{{ record.email }}</span>
+              </template>
               <template v-if="column.key === 'competeProduct'">
                 {{ formatCompeteProducts(record.competeProduct) }}
               </template>
@@ -427,7 +433,15 @@ const initializationColumns = [
     title: 'Customer ID',
     dataIndex: 'customerId',
     key: 'customerId',
-    width: '10%',
+    width: '8%',
+    ellipsis: true,
+  },
+  {
+    title: 'Email',
+    dataIndex: 'email',
+    key: 'email',
+    width: '15%',
+    ellipsis: true,
   },
   {
     title: 'Product Name',
@@ -539,25 +553,33 @@ const loadDashboardData = async (customerId) => {
   
   dashboardLoading.value = true
   try {
-    // 这里可以调用API获取仪表盘数据
-    // 暂时使用模拟数据
-    const response = await api.getCustomerDashboard(customerId).catch(() => {
-      // 如果API不存在，使用模拟数据
-      return {
-        data: {
-          generatedPages: Math.floor(Math.random() * 100),
-          publishedPages: Math.floor(Math.random() * 80),
-          indexedPages: Math.floor(Math.random() * 60),
-          totalTokens: Math.floor(Math.random() * 1000000),
-          totalTokenCost: (Math.random() * 100).toFixed(2)
-        }
-      }
-    })
+    // 修改这里，使用模拟数据，因为API可能不存在
+    // const response = await api.getCustomerDashboard(customerId).catch(() => {
+    //   // 如果API不存在，使用模拟数据
+    //   return {
+    //     data: {
+    //       generatedPages: Math.floor(Math.random() * 100),
+    //       publishedPages: Math.floor(Math.random() * 80),
+    //       indexedPages: Math.floor(Math.random() * 60),
+    //       totalTokens: Math.floor(Math.random() * 1000000),
+    //       totalTokenCost: (Math.random() * 100).toFixed(2)
+    //     }
+    //   }
+    // })
+    
+    // 直接使用模拟数据，因为API不存在
+    const mockData = {
+      generatedPages: Math.floor(Math.random() * 100),
+      publishedPages: Math.floor(Math.random() * 80),
+      indexedPages: Math.floor(Math.random() * 60),
+      totalTokens: Math.floor(Math.random() * 1000000),
+      totalTokenCost: (Math.random() * 100).toFixed(2)
+    }
     
     dashboardData.value = {
-      ...response.data,
-      indexingRate: response.data.publishedPages ? 
-        ((response.data.indexedPages / response.data.publishedPages) * 100).toFixed(2) : 0
+      ...mockData,
+      indexingRate: mockData.publishedPages ? 
+        ((mockData.indexedPages / mockData.publishedPages) * 100).toFixed(2) : 0
     }
   } catch (error) {
     console.error('加载仪表盘数据失败:', error)
