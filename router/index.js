@@ -12,7 +12,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/dashboard'
+        redirect: '/initialization'
       },
       {
         path: 'data-upload',
