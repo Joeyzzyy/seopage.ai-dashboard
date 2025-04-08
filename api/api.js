@@ -396,6 +396,19 @@ const adminLoginAsCustomer = async (customerId) => {
     }
 };
 
+// 获取价格列表接口
+const getPriceList = async (sync = false) => {
+    try {
+        const response = await apiClient.get('/payment/price', {
+            params: { sync }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('获取价格列表错误:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -421,4 +434,5 @@ export const api = {
     uploadTableStructure,
     getTableStructures,
     adminLoginAsCustomer,
+    getPriceList,
 };

@@ -73,6 +73,7 @@
             :columns="trialColumns" 
             :data-source="trialCodes" 
             :loading="trialLoading"
+            :pagination="pagination"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'status'">
@@ -114,6 +115,13 @@
           <a-select v-model:value="formState.packageType">
             <a-select-option :value="1">Monthly</a-select-option>
             <a-select-option :value="2">Annual</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="Price ID" name="priceId">
+          <a-select v-model:value="formState.priceId" placeholder="Select price ID">
+            <a-select-option v-for="price in priceList" :key="price.priceId" :value="price.priceId">
+              {{ price.productName }} ({{ price.productDesc }}) - ${{ (price.price / 100).toFixed(2) }}
+            </a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="Manual Outline Generation Limit" name="manualOutlineGeneratorLimit">
@@ -158,7 +166,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, h } from 'vue';
+import { ref, reactive, onMounted, h, computed } from 'vue';
 import { message, Modal, Tag } from 'ant-design-vue';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue';
 import { api } from '../api/api';
@@ -181,6 +189,15 @@ export default {
         dataIndex: 'packagePrice',
         key: 'price',
         customRender: ({ text }) => `$${text}`
+      },
+      {
+        title: 'Stripe Product',
+        dataIndex: 'priceId',
+        key: 'stripeProduct',
+        customRender: ({ text }) => {
+          const price = priceList.value.find(p => p.priceId === text);
+          return price ? `${price.productName} (${price.productDesc})` : text || 'Not linked';
+        }
       },
       {
         title: 'Status',
@@ -282,7 +299,6 @@ export default {
           limit: pagination.value.pageSize
         };
         const response = await api.getTrialPackages(params);
-        console.log('Trial codes response:', response.data);
         trialCodes.value = response.data;
         pagination.value.total = response.total;
         pagination.value.totalPage = response.totalPage;
@@ -297,26 +313,45 @@ export default {
       current: 1,
       pageSize: 10,
       total: 0,
-      totalPage: 0
+      totalPage: 0,
+      showSizeChanger: true,
+      showTotal: (total) => `Total ${total} items`,
+      onChange: (page, pageSize) => {
+        pagination.value.current = page;
+        pagination.value.pageSize = pageSize;
+        fetchTrialCodes();
+      },
+      onShowSizeChange: (current, size) => {
+        pagination.value.current = 1;
+        pagination.value.pageSize = size;
+        fetchTrialCodes();
+      }
     });
 
     const trialList = ref([]);
 
-    const handleTableChange = (pag) => {
-      pagination.value.current = pag.current;
-      pagination.value.pageSize = pag.pageSize;
-      fetchTrialCodes();
+    const priceList = ref([]);
+
+    const fetchPriceList = async () => {
+      try {
+        const response = await api.getPriceList();
+        priceList.value = response.data || [];
+      } catch (error) {
+        message.error('获取价格列表失败: ' + error.message);
+      }
     };
 
     onMounted(() => {
       fetchPackages();
       fetchTrialCodes();
+      fetchPriceList();
     });
 
     const formState = reactive({
       packageName: '',
       packagePrice: 0,
       packageType: 1,
+      priceId: undefined,
       manualOutlineGeneratorLimit: 0,
       aiOutlineGeneratorLimit: 0,
       pageGeneratorLimit: 0,
@@ -333,6 +368,7 @@ export default {
       packageName: [{ required: true, message: '请输入套餐名称' }],
       packagePrice: [{ required: true, message: '请输入套餐价格' }],
       packageType: [{ required: true, message: '请选择套餐类型' }],
+      priceId: [{ required: true, message: '请选择价格ID' }],
       manualOutlineGeneratorLimit: [{ required: true, message: '请输入手动大纲生成限制' }],
       aiOutlineGeneratorLimit: [{ required: true, message: '请输入AI大纲生成限制' }],
       pageGeneratorLimit: [{ required: true, message: '请输入页面生成限制' }],
@@ -348,6 +384,7 @@ export default {
       formState.packageName = '';
       formState.packagePrice = 0;
       formState.packageType = 1;
+      formState.priceId = undefined;
       formState.manualOutlineGeneratorLimit = 0;
       formState.aiOutlineGeneratorLimit = 0;
       formState.pageGeneratorLimit = 0;
@@ -389,16 +426,25 @@ export default {
       formRef.value.validate().then(async () => {
         try {
           if (modalMode.value === 'add') {
-            await api.createPackageFeature(formState);
+            const response = await api.createPackageFeature(formState);
+            if (response && response.code === 400) {
+              message.error('Failed to add package: ' + (response.message || 'Invalid request'));
+              return;
+            }
             message.success('Package added successfully');
           } else {
-            await api.updatePackageFeature(formState.packageFeatureId, formState);
+            const response = await api.updatePackageFeature(formState.packageFeatureId, formState);
+            if (response && response.code === 400) {
+              message.error('Failed to update package: ' + (response.message || 'Invalid request'));
+              return;
+            }
             message.success('Package updated successfully');
           }
           modalVisible.value = false;
           fetchPackages();
         } catch (error) {
-          message.error('操作失败: ' + error.message);
+          console.error('Operation failed:', error);
+          message.error('Operation failed: ' + (error.response?.data?.message || error.message || 'Unknown error'));
         }
       });
     };
@@ -463,6 +509,12 @@ export default {
       });
     };
 
+    // Add this computed property to map priceIds to product names
+    const getPriceProductName = (priceId) => {
+      const price = priceList.value.find(p => p.priceId === priceId);
+      return price ? `${price.productName} (${price.productDesc})` : 'Not linked';
+    };
+
     return {
       columns,
       packages,
@@ -487,8 +539,10 @@ export default {
       pagination,
       trialList,
       fetchTrialCodes,
-      handleTableChange,
       handleDeleteTrial,
+      priceList,
+      fetchPriceList,
+      getPriceProductName,
     };
   },
 };
