@@ -13,6 +13,7 @@
             size="small"
             :customRow="customRowHandler"
             :rowSelection="null"
+            :scroll="{ x: 1200 }"
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'action'">
@@ -21,7 +22,10 @@
                     Edit Plan
                   </a-button>
                   <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
-                    Login Account
+                    Log into WebsiteLM
+                  </a-button>
+                  <a-button type="primary" size="small" @click="handleLoginToAltpage(record)">
+                    Log into Altpage
                   </a-button>
                 </a-space>
               </template>
@@ -1219,6 +1223,48 @@ const handleLoginAsCustomer = async (record) => {
   } catch (error) {
     console.error('Failed to login as customer:', error)
     message.error('Failed to login as customer')
+  }
+}
+
+// 处理登录到Altpage
+const handleLoginToAltpage = async (record) => {
+  try {
+    const response = await api.adminLoginAsCustomer(record.customerId)
+    if (response && response.accessToken) {
+      // 清除现有的本地存储数据
+      const keysToRemove = [
+        'alternativelyAccessToken',
+        'alternativelyIsLoggedIn',
+        'alternativelyCustomerEmail',
+        'alternativelyCustomerId'
+      ]
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
+      // 设置新的登录信息
+      localStorage.setItem('alternativelyIsLoggedIn', 'true')
+      localStorage.setItem('alternativelyAccessToken', response.accessToken)
+      
+      let customerId = '';
+      let customerEmail = '';
+      
+      if (response.data) {
+        customerId = response.data.customerId || '';
+        customerEmail = response.data.email || '';
+        localStorage.setItem('alternativelyCustomerId', customerId)
+        localStorage.setItem('alternativelyCustomerEmail', customerEmail)
+      }
+      
+      // 使用正确的URL格式，不包含auth路径
+      const authUrl = `https://alternatively.websitelm.com/?accessToken=${encodeURIComponent(response.accessToken)}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(customerEmail)}`;
+      
+      // 在新标签页中打开链接
+      window.open(authUrl, '_blank');
+      
+      message.success(`Successfully logged in to Altpage as ${record.productName}`)
+    }
+  } catch (error) {
+    console.error('Failed to login to Altpage:', error)
+    message.error('Failed to login to Altpage')
   }
 }
 
