@@ -1255,7 +1255,7 @@ const handleLoginToAltpage = async (record) => {
       }
       
       // 使用正确的URL格式，不包含auth路径
-      const authUrl = `https://alternatively.websitelm.com/?accessToken=${encodeURIComponent(response.accessToken)}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(customerEmail)}`;
+      const authUrl = `https://altpage.ai/?accessToken=${encodeURIComponent(response.accessToken)}&customerId=${encodeURIComponent(customerId)}&email=${encodeURIComponent(customerEmail)}`;
       
       // 在新标签页中打开链接
       window.open(authUrl, '_blank');
