@@ -49,102 +49,6 @@
       </a-col>
     </a-row>
 
-    <a-row :gutter="[24, 24]" style="margin-top: 16px">
-        <!-- Generated Pages -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Generated Pages"
-              :value="dashboardData.generatedPages"
-              :valueStyle="{ color: '#3f8600' }"
-            >
-              <template #prefix>
-                <FileAddOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-
-        <!-- Published Pages -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Published Pages"
-              :value="dashboardData.publishedPages"
-              :valueStyle="{ color: '#1890ff' }"
-            >
-              <template #prefix>
-                <GlobalOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-
-        <!-- Indexed Pages -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Indexed Pages"
-              :value="dashboardData.indexedPages"
-              :valueStyle="{ color: '#722ed1' }"
-            >
-              <template #prefix>
-                <CheckCircleOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-
-        <!-- Indexing Rate -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Indexing Rate"
-              :value="dashboardData.indexingRate"
-              :precision="2"
-              suffix="%"
-              :valueStyle="{ color: '#1890ff' }"
-            >
-              <template #prefix>
-                <LineChartOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-
-        <!-- Total Token Usage -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Total Token Usage"
-              :value="dashboardData.totalTokens"
-              :valueStyle="{ color: '#faad14' }"
-            >
-              <template #prefix>
-                <ThunderboltOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-
-        <!-- Total Token Cost -->
-        <a-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <a-card :loading="dashboardLoading" :bordered="false">
-            <Statistic
-              title="Total Token Cost"
-              :value="dashboardData.totalTokenCost"
-              :precision="2"
-              prefix="$"
-              :valueStyle="{ color: '#cf1322' }"
-            >
-              <template #prefix>
-                <DollarOutlined />
-              </template>
-            </Statistic>
-          </a-card>
-        </a-col>
-      </a-row>
-
     <!-- 数据上传部分 - 直接放在表格下方 -->
     <div v-if="selectedCustomerId" class="data-upload-section">
       <a-row :gutter="[16, 16]" style="margin-top: 16px">
@@ -152,7 +56,7 @@
           <a-card :bordered="false">
             <a-space direction="vertical" size="middle" style="width: 100%">
               <div class="selector-header">
-                <h2>Keywords Upload For- {{ selectedCustomer?.productName || '' }}</h2>
+                <h2>Keywords Upload For- {{ selectedCustomer?.email || '' }}</h2>
                 <div class="header-actions">
                   <a-button
                     type="primary"
@@ -167,9 +71,6 @@
           </a-card>
         </a-col>
       </a-row>
-
-      <!-- Dashboard Metrics Cards -->
-     
 
       <!-- SEMrush Keywords Data Section -->
       <a-row :gutter="[16, 16]" style="margin-top: 16px">
@@ -540,65 +441,6 @@ const handleInitialize = (record) => {
   loadCustomerData(record.customerId)
 }
 
-// 仪表盘相关状态
-const dashboardLoading = ref(false)
-const dashboardData = ref({
-  generatedPages: 0,
-  publishedPages: 0,
-  indexedPages: 0,
-  indexingRate: 0,
-  totalTokens: 0,
-  totalTokenCost: 0
-})
-
-// 加载仪表盘数据
-const loadDashboardData = async (customerId) => {
-  if (!customerId) return
-  
-  dashboardLoading.value = true
-  try {
-    // 修改这里，使用模拟数据，因为API可能不存在
-    // const response = await api.getCustomerDashboard(customerId).catch(() => {
-    //   // 如果API不存在，使用模拟数据
-    //   return {
-    //     data: {
-    //       generatedPages: Math.floor(Math.random() * 100),
-    //       publishedPages: Math.floor(Math.random() * 80),
-    //       indexedPages: Math.floor(Math.random() * 60),
-    //       totalTokens: Math.floor(Math.random() * 1000000),
-    //       totalTokenCost: (Math.random() * 100).toFixed(2)
-    //     }
-    //   }
-    // })
-    
-    // 直接使用模拟数据，因为API不存在
-    const mockData = {
-      generatedPages: Math.floor(Math.random() * 100),
-      publishedPages: Math.floor(Math.random() * 80),
-      indexedPages: Math.floor(Math.random() * 60),
-      totalTokens: Math.floor(Math.random() * 1000000),
-      totalTokenCost: (Math.random() * 100).toFixed(2)
-    }
-    
-    dashboardData.value = {
-      ...mockData,
-      indexingRate: mockData.publishedPages ? 
-        ((mockData.indexedPages / mockData.publishedPages) * 100).toFixed(2) : 0
-    }
-  } catch (error) {
-    console.error('加载仪表盘数据失败:', error)
-  } finally {
-    dashboardLoading.value = false
-  }
-}
-
-// 监听选中客户变化，加载仪表盘数据
-watch(selectedCustomerId, (newValue) => {
-  if (newValue) {
-    loadDashboardData(newValue)
-  }
-})
-
 // 加载客户相关数据
 const loadCustomerData = async (customerId) => {
   // 加载所有关键词类型的数据
@@ -629,9 +471,6 @@ const loadCustomerData = async (customerId) => {
     competitors.value = []
     activeCompetitorKey.value = ''
   }
-  
-  // 加载仪表盘数据
-  await loadDashboardData(customerId)
 }
 
 // 添加新的套餐相关状态
