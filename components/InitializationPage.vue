@@ -1132,7 +1132,8 @@ const registerChartOption = computed(() => {
         fontWeight: 'bold',
         formatter: function (value) {
           if (value === HIGHLIGHT_DATE) {
-            return '{highlight|' + value + '}\n{tag|🚀 LAUNCH DAY 🚀}'
+            // 🚀 上线日 🚀
+            return '{highlight|' + value + '}\n{tag|🚀 Service First Online🚀}'
           }
           return value
         },
