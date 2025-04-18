@@ -1133,7 +1133,7 @@ const registerChartOption = computed(() => {
         formatter: function (value) {
           if (value === HIGHLIGHT_DATE) {
             // 🚀 上线日 🚀
-            return '{highlight|' + value + '}\n{tag|🚀 Service First Online🚀}'
+            return '{highlight|' + value + '}\n{tag|🚀 Service First Online}'
           }
           return value
         },
