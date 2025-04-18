@@ -11,7 +11,6 @@
               <p class="page-description">{{ description }}</p>
             </h2>
           </div>
-          <!-- 可选的右侧内容插槽 -->
           <slot name="header-right"></slot>
         </div>
       </div>

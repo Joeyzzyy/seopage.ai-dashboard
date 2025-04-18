@@ -575,8 +575,6 @@ const handleTableChange = (pag) => {
   fetchCustomerData(pag.current)
 }
 
-// 以下是从 DataUploadPage 整合的代码
-
 // Keywords types configuration
 const keywordTypes = [
   { key: 'common', label: 'Common Keywords' },

@@ -5,6 +5,4 @@ export default {
     preview: 'https://pages.websitelm.site/',
     production: 'https://pages.tachacc.com/'
   },
-  
-  // 其他配置项...
 } 

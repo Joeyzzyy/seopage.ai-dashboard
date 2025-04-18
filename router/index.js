@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../components/Home.vue';
-import DataUploadPage from '../components/DataUploadPage.vue'
 import Login from '../components/Login.vue'
 import InitializationPage from '../components/InitializationPage.vue'
 import EdmPage from '../components/EdmPage.vue'
@@ -13,11 +12,6 @@ const routes = [
       {
         path: '',
         redirect: '/initialization'
-      },
-      {
-        path: 'data-upload',
-        name: 'DataUpload',
-        component: DataUploadPage
       },
       {
         path: 'initialization',
@@ -34,6 +28,11 @@ const routes = [
         path: 'edm',
         name: 'EDM',
         component: EdmPage
+      },
+      {
+        path: 'model-config-selection',
+        name: 'ModelConfigSelection',
+        component: () => import('../components/ModelConfigSelection.vue')
       }
     ]
   },

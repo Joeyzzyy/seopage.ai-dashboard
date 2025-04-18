@@ -26,6 +26,10 @@
             <template #icon><mail-outlined /></template>
             EDM
           </a-menu-item>
+          <a-menu-item key="ModelConfigSelection">
+            <template #icon><tool-outlined /></template>
+            Model Config
+          </a-menu-item>
         </a-menu>
         
         <div class="logout-container">
@@ -90,7 +94,8 @@ import {
   UserOutlined, 
   ScheduleOutlined, 
   LogoutOutlined,
-  MailOutlined
+  MailOutlined,
+  ToolOutlined
 } from '@ant-design/icons-vue';
 import axios from 'axios';
 
@@ -99,7 +104,8 @@ export default {
     UserOutlined,
     ScheduleOutlined,
     LogoutOutlined,
-    MailOutlined
+    MailOutlined,
+    ToolOutlined
   },
   setup() {
     const route = useRoute();
@@ -159,7 +165,8 @@ export default {
       const routeMap = {
         'InitializationPage': '/initialization',
         'PackageConfigPage': '/package-config',
-        'EDM': '/edm'
+        'EDM': '/edm',
+        'ModelConfigSelection': '/model-config-selection'
       };
       if (routeMap[key]) {
         this.$router.push(routeMap[key]);
