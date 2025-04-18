@@ -1,5 +1,22 @@
 <template>
   <div class="initialization-container">
+    <!-- 注册用户折线图，放在table上方 -->
+    <a-card style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: bold; font-size: 16px;">User Registration Trend</span>
+        <a-select v-model:value="registerStatsDays" style="width: 120px;" @change="updateRegisterChartData">
+          <a-select-option :value="30">Last 30 days</a-select-option>
+          <a-select-option :value="90">Last 90 days</a-select-option>
+          <a-select-option :value="0">All</a-select-option>
+        </a-select>
+      </div>
+      <v-chart
+        :option="registerChartOption"
+        autoresize
+        style="height: 400px; margin-top: 16px;"
+      />
+    </a-card>
+
     <a-row :gutter="[12, 12]">
       <a-col :span="24">
         <a-card title="Customers Requiring Data Initialization">
@@ -320,6 +337,12 @@ import {
   LineChartOutlined
 } from '@ant-design/icons-vue'
 import { Statistic } from 'ant-design-vue'
+import { use } from "echarts/core";
+import VChart from "vue-echarts";
+import { LineChart } from "echarts/charts";
+import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+use([LineChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer]);
 
 const router = useRouter()
 const loading = ref(false)
@@ -1107,11 +1130,158 @@ const handleLoginToAltpage = async (record) => {
   }
 }
 
+// 注册用户统计相关状态
+const registerStats = ref([]) // 原始数据
+const registerStatsDays = ref(30) // 默认30天
+const registerChartData = ref([]) // 处理后的折线图数据
+
+const HIGHLIGHT_DATE = '2025-04-15'
+
+const registerChartOption = computed(() => {
+  const data = registerChartData.value.map(item => item.count)
+  const dateList = registerChartData.value.map(item => item.date)
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 40, right: 20, top: 40, bottom: 160 },
+    xAxis: {
+      type: 'category',
+      data: dateList,
+      boundaryGap: false,
+      axisLabel: {
+        rotate: 45,
+        fontSize: 16,
+        fontWeight: 'bold',
+        formatter: function (value) {
+          if (value === HIGHLIGHT_DATE) {
+            return '{highlight|' + value + '}\n{tag|🚀 LAUNCH DAY 🚀}'
+          }
+          return value
+        },
+        rich: {
+          highlight: {
+            fontWeight: 'bold',
+            fontSize: 16,
+          },
+          tag: {
+            color: '#ff4d4f',
+            fontSize: 18,
+            fontWeight: 'bold',
+            backgroundColor: '#fffbe6',
+            borderRadius: 6,
+            padding: [4, 8, 4, 8],
+            lineHeight: 28,
+          }
+        }
+      }
+    },
+    yAxis: { type: 'value', minInterval: 1, min: 0 },
+    series: [
+      {
+        name: 'Registrations',
+        type: 'line',
+        data,
+        smooth: true,
+        symbol: 'circle',
+        lineStyle: {
+          width: 3,
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
+            colorStops: [
+              { offset: 0, color: '#00c6fb' },
+              { offset: 1, color: '#005bea' }
+            ]
+          }
+        },
+        itemStyle: {
+          color: '#00c6fb',
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(0,198,251,0.3)' },
+              { offset: 1, color: 'rgba(0,91,234,0.05)' }
+            ]
+          }
+        }
+      }
+    ]
+  }
+})
+
+// 获取注册用户数据
+const fetchRegisterStats = async () => {
+  try {
+    const res = await api.getCustomerList({ page: 1, limit: 500 })
+    registerStats.value = (res.data || []).map(item => ({
+      registerTime: item.registerTime
+    }))
+    updateRegisterChartData()
+  } catch (e) {
+    message.error('Failed to fetch registration stats')
+  }
+}
+
+// 统计每天注册数
+const updateRegisterChartData = () => {
+  const days = registerStatsDays.value
+  const all = registerStats.value
+    .filter(item => !!item.registerTime)
+    .map(item => dayjs(item.registerTime).format('YYYY-MM-DD'))
+  // 统计
+  const countMap = {}
+  all.forEach(date => {
+    countMap[date] = (countMap[date] || 0) + 1
+  })
+  // 生成日期序列
+  let dateList = []
+  if (days === 0) {
+    // 全部
+    const min = all.length ? dayjs(Math.min(...all.map(d => +new Date(d)))) : dayjs()
+    const max = all.length ? dayjs(Math.max(...all.map(d => +new Date(d)))) : dayjs()
+    let cur = min
+    while (cur.isBefore(max) || cur.isSame(max, 'day')) {
+      dateList.push(cur.format('YYYY-MM-DD'))
+      cur = cur.add(1, 'day')
+    }
+  } else {
+    // 最近N天
+    const end = dayjs()
+    const start = end.subtract(days - 1, 'day')
+    let cur = start
+    while (cur.isBefore(end) || cur.isSame(end, 'day')) {
+      dateList.push(cur.format('YYYY-MM-DD'))
+      cur = cur.add(1, 'day')
+    }
+  }
+  // 保证HIGHLIGHT_DATE在dateList里
+  if (!dateList.includes(HIGHLIGHT_DATE)) {
+    dateList.push(HIGHLIGHT_DATE)
+    dateList.sort()
+  }
+  // 组装数据
+  registerChartData.value = dateList.map(date => ({
+    date,
+    count: countMap[date] || 0
+  }))
+}
+
 // 组件挂载时执行
 onMounted(async () => {
   console.log('Component mounted, fetching customer list...')
   await fetchCustomerData()
   await fetchPackageList()
+  await fetchRegisterStats()
   
   // 默认选中第一个客户
   if (customers.value.length > 0) {
