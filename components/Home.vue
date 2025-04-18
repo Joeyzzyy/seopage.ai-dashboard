@@ -117,7 +117,8 @@ export default {
       const pathMap = {
         '/initialization': 'InitializationPage',
         '/package-config': 'PackageConfigPage',
-        '/edm': 'EDM'
+        '/edm': 'EDM',
+        '/model-config-selection': 'ModelConfigSelection'
       };
       currentView.value = pathMap[route.path] || 'InitializationPage';
     };
