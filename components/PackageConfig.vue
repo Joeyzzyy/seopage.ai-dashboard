@@ -1,100 +1,104 @@
 <template>
   <div class="package-config">
-    <h2>Package Configuration</h2>
-    <div class="package-config-content">
-      <a-card>
-        <a-button type="primary" @click="showAddModal" style="margin-bottom: 16px;">
+    <div class="section-card">
+      <div class="section-header">
+        <span class="section-title">Package Configuration</span>
+        <a-button type="primary" @click="showAddModal">
           Add Package
         </a-button>
-        
-        <a-table :columns="columns" :data-source="packages" :row-key="record => record.packageFeatureId" :loading="loading">
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'action'">
-              <a-space>
-                <a-button type="link" @click="handleEdit(record)">Edit</a-button>
-                <a-button type="link" danger @click="handleDelete(record)">Delete</a-button>
-              </a-space>
-            </template>
-            <template v-if="column.key === 'active'">
-              <a-tag :color="record.active ? 'green' : 'red'">
-                {{ record.active ? 'Active' : 'Inactive' }}
-              </a-tag>
-            </template>
-            <template v-if="column.key === 'price'">
-              ${{ record.packagePrice }}
-            </template>
+      </div>
+      <a-table
+        :columns="columns"
+        :data-source="packages"
+        :row-key="record => record.packageFeatureId"
+        :loading="loading"
+        class="main-table"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'action'">
+            <a-space>
+              <a-button type="link" @click="handleEdit(record)">Edit</a-button>
+              <a-button type="link" danger @click="handleDelete(record)">Delete</a-button>
+            </a-space>
           </template>
-        </a-table>
+          <template v-if="column.key === 'active'">
+            <a-tag :color="record.active ? 'green' : 'red'">
+              {{ record.active ? 'Active' : 'Inactive' }}
+            </a-tag>
+          </template>
+          <template v-if="column.key === 'price'">
+            ${{ record.packagePrice }}
+          </template>
+        </template>
+      </a-table>
+    </div>
 
-        <!-- Add Trial Code Section -->
-        <div style="margin-top: 24px;">
-          <h3>Trial Code Management</h3>
-          
-          <!-- Create Trial Code Form -->
-          <a-form layout="inline" :model="trialForm" style="margin-bottom: 16px;">
-            <a-form-item label="Package">
-              <a-select 
-                v-model:value="trialForm.packageId" 
-                style="width: 200px;"
-                placeholder="Select package"
-              >
-                <a-select-option 
-                  v-for="pkg in packages" 
-                  :key="pkg.packageFeatureId" 
-                  :value="pkg.packageFeatureId"
-                >
-                  {{ pkg.packageName }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-            <a-form-item label="Days">
-              <a-input-number 
-                v-model:value="trialForm.days" 
-                :min="1" 
-                style="width: 100px;"
-              />
-            </a-form-item>
-            <a-form-item label="Name">
-              <a-input 
-                v-model:value="trialForm.name" 
-                placeholder="Trial name"
-                style="width: 200px;"
-              />
-            </a-form-item>
-            <a-form-item>
-              <a-button type="primary" @click="createTrialCode">
-                Generate Trial Code
-              </a-button>
-            </a-form-item>
-          </a-form>
-
-          <!-- Trial Codes Table -->
-          <a-table 
-            :columns="trialColumns" 
-            :data-source="trialCodes" 
-            :loading="trialLoading"
-            :pagination="pagination"
+    <div class="section-card" style="margin-top: 32px;">
+      <div class="section-header">
+        <span class="section-title">Trial Code Management</span>
+      </div>
+      <a-form layout="inline" :model="trialForm" class="trial-form">
+        <a-form-item label="Package">
+          <a-select 
+            v-model:value="trialForm.packageId" 
+            style="width: 200px;"
+            placeholder="Select package"
           >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'status'">
-                <a-tag :color="record.active ? 'red' : 'green'">
-                  {{ record.active ? 'Used' : 'Available' }}
-                </a-tag>
-              </template>
-              <template v-if="column.key === 'action'">
-                <a-button 
-                  type="link" 
-                  danger 
-                  @click="handleDeleteTrial(record)"
-                  :disabled="!record.active"
-                >
-                  Delete
-                </a-button>
-              </template>
-            </template>
-          </a-table>
-        </div>
-      </a-card>
+            <a-select-option 
+              v-for="pkg in packages" 
+              :key="pkg.packageFeatureId" 
+              :value="pkg.packageFeatureId"
+            >
+              {{ pkg.packageName }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="Days">
+          <a-input-number 
+            v-model:value="trialForm.days" 
+            :min="1" 
+            style="width: 100px;"
+          />
+        </a-form-item>
+        <a-form-item label="Name">
+          <a-input 
+            v-model:value="trialForm.name" 
+            placeholder="Trial name"
+            style="width: 200px;"
+          />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" @click="createTrialCode">
+            Generate Trial Code
+          </a-button>
+        </a-form-item>
+      </a-form>
+      <a-divider />
+      <a-table 
+        :columns="trialColumns" 
+        :data-source="trialCodes" 
+        :loading="trialLoading"
+        :pagination="pagination"
+        class="main-table"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'status'">
+            <a-tag :color="record.active ? 'red' : 'green'">
+              {{ record.active ? 'Used' : 'Available' }}
+            </a-tag>
+          </template>
+          <template v-if="column.key === 'action'">
+            <a-button 
+              type="link" 
+              danger 
+              @click="handleDeleteTrial(record)"
+              :disabled="!record.active"
+            >
+              Delete
+            </a-button>
+          </template>
+        </template>
+      </a-table>
     </div>
 
     <a-modal
@@ -103,8 +107,9 @@
       @ok="handleModalOk"
       @cancel="handleModalCancel"
       width="800px"
+      class="package-modal"
     >
-      <a-form :model="formState" :rules="rules" ref="formRef">
+      <a-form :model="formState" :rules="rules" ref="formRef" layout="vertical">
         <a-form-item label="Package Name" name="packageName">
           <a-input v-model:value="formState.packageName" />
         </a-form-item>
@@ -550,12 +555,49 @@ export default {
 
 <style scoped>
 .package-config {
-  padding: 24px;
+  padding: 32px 48px;
+  background: #f7f9fb;
+  min-height: 100vh;
 }
 
-.package-config-content {
+.section-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   background: #fff;
-  padding: 24px;
-  min-height: 280px;
+  padding: 24px 32px;
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 1px;
+}
+
+.trial-form {
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.main-table {
+  margin-top: 8px;
+}
+
+.package-modal :deep(.ant-modal-content) {
+  border-radius: 12px;
+}
+
+:deep(.ant-table-tbody > tr) {
+  cursor: pointer;
 }
 </style> 

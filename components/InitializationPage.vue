@@ -1,12 +1,12 @@
 <template>
   <div class="initialization-container">
-    <!-- 注册用户折线图，放在table上方 -->
-    <a-card style="margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: bold; font-size: 16px;">User Registration Trend</span>
+    <!-- Section 1: User Registration Trend -->
+    <a-card class="section-card" style="margin-bottom: 32px;">
+      <div class="section-header">
+        <span class="section-title">User Registration Trend</span>
         <a-select v-model:value="registerStatsDays" style="width: 120px;" @change="updateRegisterChartData">
-          <a-select-option :value="30">Last 30 days</a-select-option>
-          <a-select-option :value="90">Last 90 days</a-select-option>
+          <a-select-option :value="30">Last 30 Days</a-select-option>
+          <a-select-option :value="90">Last 90 Days</a-select-option>
           <a-select-option :value="0">All</a-select-option>
         </a-select>
       </div>
@@ -17,192 +17,173 @@
       />
     </a-card>
 
-    <a-row :gutter="[12, 12]">
-      <a-col :span="24">
-        <a-card title="Customers Requiring Data Initialization">
-          <a-table
-            :columns="initializationColumns"
-            :data-source="customers"
-            :pagination="pagination"
-            :loading="loading"
-            @change="handleTableChange"
-            :row-class-name="getRowClassName"
-            size="small"
-            :customRow="customRowHandler"
-            :rowSelection="null"
-            :scroll="{ x: 1200 }"
-          >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'action'">
-                <a-space>
-                  <a-button type="default" size="small" @click="handleEditPlan(record)">
-                    Edit Plan
-                  </a-button>
-                  <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
-                    Log into WebsiteLM
-                  </a-button>
-                  <a-button type="primary" size="small" @click="handleLoginToAltpage(record)">
-                    Log into Altpage
-                  </a-button>
-                </a-space>
-              </template>
-              <template v-if="column.key === 'customerId'">
-                <span :title="record.customerId">{{ record.customerId }}</span>
-              </template>
-              <template v-if="column.key === 'email'">
-                <span :title="record.email">{{ record.email }}</span>
-              </template>
-              <template v-if="column.key === 'competeProduct'">
-                {{ formatCompeteProducts(record.competeProduct) }}
-              </template>
-              <template v-if="column.key === 'keywordStatus'">
-                <a-tag :color="record.keywordStatus ? 'green' : 'red'">
-                  {{ record.keywordStatus ? 'Uploaded' : 'Not Uploaded' }}
-                </a-tag>
-              </template>
-            </template>
-          </a-table>
-        </a-card>
-      </a-col>
-    </a-row>
-
-    <!-- 数据上传部分 - 直接放在表格下方 -->
-    <div v-if="selectedCustomerId" class="data-upload-section">
-      <a-row :gutter="[16, 16]" style="margin-top: 16px">
-        <a-col :span="24">
-          <a-card :bordered="false">
-            <a-space direction="vertical" size="middle" style="width: 100%">
-              <div class="selector-header">
-                <h2>Keywords Upload For- {{ selectedCustomer?.email || '' }}</h2>
-                <div class="header-actions">
-                  <a-button
-                    type="primary"
-                    :style="{ backgroundColor: '#52c41a', borderColor: '#52c41a' }"
-                    @click="handleStartAnalysis"
-                  >
-                    Complete Data Upload and Start Analysis
-                  </a-button>
-                </div>
-              </div>
+    <!-- Section 2: Customer Initialization Table -->
+    <a-card class="section-card" style="margin-bottom: 32px;">
+      <div class="section-header">
+        <span class="section-title">Pending Customer Initialization List</span>
+      </div>
+      <a-table
+        :columns="initializationColumns"
+        :data-source="customers"
+        :pagination="pagination"
+        :loading="loading"
+        @change="handleTableChange"
+        :row-class-name="getRowClassName"
+        size="small"
+        :customRow="customRowHandler"
+        :rowSelection="null"
+        :scroll="{ x: 1200 }"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'action'">
+            <a-space>
+              <a-button type="default" size="small" @click="handleEditPlan(record)">
+                Edit Plan
+              </a-button>
+              <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
+                Log into WebsiteLM
+              </a-button>
+              <a-button type="primary" size="small" @click="handleLoginToAltpage(record)">
+                Log into Altpage
+              </a-button>
             </a-space>
-          </a-card>
-        </a-col>
-      </a-row>
+          </template>
+          <template v-if="column.key === 'customerId'">
+            <span :title="record.customerId">{{ record.customerId }}</span>
+          </template>
+          <template v-if="column.key === 'email'">
+            <span :title="record.email">{{ record.email }}</span>
+          </template>
+          <template v-if="column.key === 'competeProduct'">
+            {{ formatCompeteProducts(record.competeProduct) }}
+          </template>
+          <template v-if="column.key === 'keywordStatus'">
+            <a-tag :color="record.keywordStatus ? 'green' : 'red'">
+              {{ record.keywordStatus ? 'Uploaded' : 'Not Uploaded' }}
+            </a-tag>
+          </template>
+        </template>
+      </a-table>
+    </a-card>
 
-      <!-- SEMrush Keywords Data Section -->
-      <a-row :gutter="[16, 16]" style="margin-top: 16px">
-        <a-col :span="24">
-          <a-card title="SEMrush Keywords Data Upload" :bordered="false">
-            <!-- Keywords Type Tabs -->
-            <a-tabs v-model:activeKey="activeKeywordsType">
-              <a-tab-pane v-for="type in keywordTypes" :key="type.key">
-                <template #tab>
-                  <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    {{ type.label }}
-                    <a-badge v-if="!keywordsData[type.key]?.length" dot status="error" />
-                  </span>
-                </template>
-                <div class="upload-section">
-                  <a-upload
-                    :before-upload="(file) => beforeUploadKeywords(file, type.key)"
-                    accept=".csv,.xlsx"
-                  >
-                    <a-button type="primary">
-                      <upload-outlined /> Upload {{ type.label }} Keywords
-                    </a-button>
-                  </a-upload>
-                  <a-tag v-if="keywordsData[type.key]?.length" color="success">
-                    {{ keywordsData[type.key].length }} rows uploaded
-                  </a-tag>
-                </div>
-                
-                <!-- Keywords Data Table -->
-                <a-table
-                  :columns="keywordsColumns"
-                  :data-source="keywordsData[type.key]"
-                  :loading="keywordsLoading[type.key]"
-                  size="small"
-                  :pagination="{
-                    total: totalCount[type.key],
-                    current: currentPage[type.key],
-                    pageSize: 10,
-                    showTotal: (total) => `${total} records in total`,
-                    showSizeChanger: false,
-                    onChange: (page) => handlePageChange(page, type.key)
-                  }"
-                >
-                  <template #emptyText>
-                    <div class="empty-hint">
-                      No data available. Please upload {{ type.label }} keywords file.
-                    </div>
-                  </template>
-                </a-table>
-              </a-tab-pane>
-            </a-tabs>
-          </a-card>
-        </a-col>
-      </a-row>
-
-      <!-- Competitors Top Pages Section -->
-      <a-row :gutter="[16, 16]" style="margin-top: 16px">
-        <a-col :span="24">
-          <a-card title="Competitors Top Pages Data" :bordered="false">
-            <div v-if="competitors.length === 0" class="empty-hint">
-              No competitors added
-            </div>
-            <a-tabs v-else v-model:activeKey="activeCompetitorKey">
-              <a-tab-pane 
-                v-for="competitor in competitors" 
-                :key="competitor.name"
+    <!-- Section 3: Data Upload & Analysis -->
+    <a-card v-if="selectedCustomerId" class="section-card data-upload-section" style="margin-bottom: 32px;">
+      <div class="section-header">
+        <span class="section-title">Data Upload & Analysis</span>
+        <span class="section-subtitle">Customer Email: {{ selectedCustomer?.email || '' }}</span>
+        <a-button
+          type="primary"
+          :style="{ backgroundColor: '#52c41a', borderColor: '#52c41a' }"
+          @click="handleStartAnalysis"
+        >
+          Complete Data Upload & Start Analysis
+        </a-button>
+      </div>
+      <a-divider />
+      <!-- Keyword Upload -->
+      <a-card class="sub-section-card" title="SEMrush Keyword Data Upload" :bordered="false">
+        <a-tabs v-model:activeKey="activeKeywordsType">
+          <a-tab-pane v-for="type in keywordTypes" :key="type.key">
+            <template #tab>
+              <span style="display: inline-flex; align-items: center; gap: 4px;">
+                {{ type.label }}
+                <a-badge v-if="!keywordsData[type.key]?.length" dot status="error" />
+              </span>
+            </template>
+            <div class="upload-section">
+              <a-upload
+                :before-upload="(file) => beforeUploadKeywords(file, type.key)"
+                accept=".csv,.xlsx"
               >
-                <template #tab>
-                  <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    {{ competitor.name }}
-                    <a-badge 
-                      v-if="!competitorsData[competitor.url]?.length" 
-                      dot 
-                      status="error" 
-                    />
-                  </span>
-                </template>
-                <div class="upload-section">
-                  <a-upload
-                    :before-upload="(file) => beforeUploadCompetitors(file, competitor.url)"
-                    accept=".csv,.xlsx"
-                  >
-                    <a-button type="primary">
-                      <upload-outlined /> Upload Top Pages for {{ competitor.name }}
-                    </a-button>
-                  </a-upload>
+                <a-button type="primary">
+                  <upload-outlined /> Upload {{ type.label }} Keywords
+                </a-button>
+              </a-upload>
+              <a-tag v-if="keywordsData[type.key]?.length" color="success">
+                {{ keywordsData[type.key].length }} rows uploaded
+              </a-tag>
+            </div>
+            
+            <!-- Keywords Data Table -->
+            <a-table
+              :columns="keywordsColumns"
+              :data-source="keywordsData[type.key]"
+              :loading="keywordsLoading[type.key]"
+              size="small"
+              :pagination="{
+                total: totalCount[type.key],
+                current: currentPage[type.key],
+                pageSize: 10,
+                showTotal: (total) => `${total} records in total`,
+                showSizeChanger: false,
+                onChange: (page) => handlePageChange(page, type.key)
+              }"
+            >
+              <template #emptyText>
+                <div class="empty-hint">
+                  No data available. Please upload {{ type.label }} keywords file.
                 </div>
+              </template>
+            </a-table>
+          </a-tab-pane>
+        </a-tabs>
+      </a-card>
+      <!-- Competitor Top Pages Upload -->
+      <a-card class="sub-section-card" title="Competitor Top Pages Data" :bordered="false" style="margin-top: 24px;">
+        <div v-if="competitors.length === 0" class="empty-hint">
+          No competitors added
+        </div>
+        <a-tabs v-else v-model:activeKey="activeCompetitorKey">
+          <a-tab-pane 
+            v-for="competitor in competitors" 
+            :key="competitor.name"
+          >
+            <template #tab>
+              <span style="display: inline-flex; align-items: center; gap: 4px;">
+                {{ competitor.name }}
+                <a-badge 
+                  v-if="!competitorsData[competitor.url]?.length" 
+                  dot 
+                  status="error" 
+                />
+              </span>
+            </template>
+            <div class="upload-section">
+              <a-upload
+                :before-upload="(file) => beforeUploadCompetitors(file, competitor.url)"
+                accept=".csv,.xlsx"
+              >
+                <a-button type="primary">
+                  <upload-outlined /> Upload Top Pages for {{ competitor.name }}
+                </a-button>
+              </a-upload>
+            </div>
 
-                <!-- Competitors Data Table -->
-                <a-table
-                  :columns="competitorsColumns"
-                  :data-source="competitorsData[competitor.url] || []"
-                  :loading="competitorsLoading[competitor.url]"
-                  size="small"
-                  :pagination="{ pageSize: 20 }"
-                >
-                  <template #emptyText>
-                    <div class="empty-hint">
-                      No data available. Please upload top pages data for {{ competitor.name }}.
-                    </div>
-                  </template>
-                  <template #actions="{ record }">
-                    <a-button type="link" @click="showKeywordsModal(record.URL)">
-                      Check Keywords
-                    </a-button>
-                  </template>
-                </a-table>
-              </a-tab-pane>
-            </a-tabs>
-          </a-card>
-        </a-col>
-      </a-row>
-    </div>
+            <!-- Competitors Data Table -->
+            <a-table
+              :columns="competitorsColumns"
+              :data-source="competitorsData[competitor.url] || []"
+              :loading="competitorsLoading[competitor.url]"
+              size="small"
+              :pagination="{ pageSize: 20 }"
+            >
+              <template #emptyText>
+                <div class="empty-hint">
+                  No data available. Please upload top pages data for {{ competitor.name }}.
+                </div>
+              </template>
+              <template #actions="{ record }">
+                <a-button type="link" @click="showKeywordsModal(record.URL)">
+                  Check Keywords
+                </a-button>
+              </template>
+            </a-table>
+          </a-tab-pane>
+        </a-tabs>
+      </a-card>
+    </a-card>
 
-    <!-- Keywords Modal -->
+    <!-- Section 4: Keywords Modal -->
     <a-modal
       v-model:visible="isKeywordsModalVisible"
       title="Top Page Keywords"
@@ -239,7 +220,7 @@
       </a-table>
     </a-modal>
 
-    <!-- 套餐编辑模态框 -->
+    <!-- Section 5: Edit Package Modal -->
     <a-modal
       v-model:visible="modalVisible"
       title="Trial Package Details"
@@ -248,7 +229,7 @@
     >
       <div v-if="selectedPackage" class="package-form">
         <a-form :model="selectedPackage" layout="vertical">
-          <!-- 套餐表单内容 -->
+          <!-- Package Form Content -->
           <a-form-item label="Trial ID">
             <a-input v-model:value="selectedPackage.trialId" disabled />
           </a-form-item>
@@ -1294,30 +1275,53 @@ onMounted(async () => {
 
 <style scoped>
 .initialization-container {
-  padding: 24px;
+  padding: 32px 48px;
+  background: #f7f9fb;
+  min-height: 100vh;
 }
 
-.package-form {
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 0 16px;
+.section-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  background: #fff;
+  padding: 24px 32px;
 }
 
-.no-package-message {
-  text-align: center;
-  padding: 24px;
-}
-
-/* 添加数据上传部分的样式 */
-.data-upload-section {
-  border-top: 1px solid #f0f0f0;
-}
-
-.selector-header {
+.section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 1px;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: #888;
+  margin-left: 16px;
+}
+
+.sub-section-card {
   margin-bottom: 16px;
+  border-radius: 8px;
+  background: #fafbfc;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+  padding: 16px 24px;
+}
+
+.data-upload-section {
+  border-top: none;
+  background: #f5f7fa;
+  box-shadow: none;
+  padding: 0;
 }
 
 .upload-section {
@@ -1351,18 +1355,15 @@ onMounted(async () => {
   align-items: center;
 }
 
-/* 添加选中行的样式 */
 :deep(.selected-row) {
   background-color: #e6f7ff;
 }
 
-/* 添加激活按钮的样式 */
 .active-button {
   background-color: #1890ff;
   color: white;
 }
 
-/* 添加鼠标悬浮样式 */
 :deep(.ant-table-tbody > tr) {
   cursor: pointer;
 }
