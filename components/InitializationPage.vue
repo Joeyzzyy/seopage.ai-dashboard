@@ -49,10 +49,14 @@
             </a-space>
           </template>
           <template v-if="column.key === 'customerId'">
-            <span :title="record.customerId">{{ record.customerId }}</span>
+            <a-tooltip :title="record.customerId">
+              <span>{{ record.customerId }}</span>
+            </a-tooltip>
           </template>
           <template v-if="column.key === 'email'">
-            <span :title="record.email">{{ record.email }}</span>
+            <a-tooltip :title="record.email">
+              <span>{{ record.email }}</span>
+            </a-tooltip>
           </template>
           <template v-if="column.key === 'competeProduct'">
             {{ formatCompeteProducts(record.competeProduct) }}
@@ -339,6 +343,11 @@ const pagination = ref({
 // 初始化页面原有的列定义
 const initializationColumns = [
   {
+    title: 'Action',
+    key: 'action',
+    width: '40%',
+  },
+  {
     title: 'Customer ID',
     dataIndex: 'customerId',
     key: 'customerId',
@@ -351,6 +360,13 @@ const initializationColumns = [
     key: 'email',
     width: '15%',
     ellipsis: true,
+  },
+  {
+    title: 'Register Time',
+    dataIndex: 'registerTime',
+    key: 'registerTime',
+    width: '15%',
+    customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '-'
   },
   {
     title: 'Product Name',
@@ -380,11 +396,6 @@ const initializationColumns = [
     title: 'Keywords Status',
     dataIndex: 'keywordStatus',
     key: 'keywordStatus',
-    width: '15%',
-  },
-  {
-    title: 'Action',
-    key: 'action',
     width: '15%',
   },
 ]
@@ -425,7 +436,8 @@ const fetchCustomerData = async (page = 1) => {
       competeProduct: item.competeProduct || '-',
       competeProductSite: formatCompeteProductSites(item.competeProduct),
       email: item.email || '-',
-      keywordStatus: item.keywordStatus || false
+      keywordStatus: item.keywordStatus || false,
+      registerTime: item.registerTime || '-'
     }))
     
     pagination.value.total = response.TotalCount
