@@ -1,5 +1,45 @@
 <template>
   <div class="initialization-container">
+    <!-- 新增: Section 0: Error Monitoring -->
+    <a-card class="section-card" style="margin-bottom: 32px;">
+      <div class="section-header">
+        <span class="section-title">Error Monitoring Dashboard (Today)</span>
+      </div>
+      <div v-if="errorDashboardLoading">
+        <a-spin tip="Loading error data..." />
+      </div>
+      <div v-else-if="errorDashboardData">
+        <a-row :gutter="[16, 16]">
+          <a-col :span="8">
+            <a-statistic
+              title="Total Tasks"
+              :value="errorDashboardData.totalTasks"
+              style="text-align: center;"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-statistic
+              title="Failed Tasks"
+              :value="errorDashboardData.failedTasks"
+              :value-style="{ color: errorDashboardData.failedTasks > 0 ? '#cf1322' : '#3f8600' }"
+              style="text-align: center;"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-statistic
+              title="Failure Rate"
+              :value="errorDashboardData.failureRate"
+              :value-style="{ color: errorDashboardData.failedTasks > 0 ? '#cf1322' : '#3f8600' }"
+              style="text-align: center;"
+            />
+          </a-col>
+        </a-row>
+      </div>
+      <div v-else>
+        <a-empty description="No error data available for today" />
+      </div>
+    </a-card>
+
     <!-- Section 1: User Registration Trend -->
     <a-card class="section-card" style="margin-bottom: 32px;">
       <div class="section-header">
@@ -20,7 +60,8 @@
     <!-- Section 2: Customer Initialization Table -->
     <a-card class="section-card" style="margin-bottom: 32px;">
       <div class="section-header">
-        <span class="section-title">Pending Customer Initialization List</span>
+        <span class="section-title">Customer Management</span>
+        <!-- Add refresh button? -->
       </div>
       <a-table
         :columns="initializationColumns"
@@ -32,18 +73,19 @@
         size="small"
         :customRow="customRowHandler"
         :rowSelection="null"
-        :scroll="{ x: 1200 }"
+        :scroll="{ x: 1500 }"
+        rowKey="customerId"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'action'">
             <a-space>
-              <a-button type="default" size="small" @click="handleEditPlan(record)">
+              <a-button type="default" size="small" @click.stop="handleEditPlan(record)">
                 Edit Plan
               </a-button>
-              <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
+              <a-button type="primary" size="small" @click.stop="handleLoginAsCustomer(record)">
                 Goto WebsiteLM
               </a-button>
-              <a-button type="primary" size="small" @click="handleLoginToAltpage(record)">
+              <a-button type="primary" size="small" @click.stop="handleLoginToAltpage(record)">
                 Goto Altpage
               </a-button>
             </a-space>
@@ -67,6 +109,49 @@
             </a-tag>
           </template>
         </template>
+      </a-table>
+    </a-card>
+
+    <!-- 新增: Section 2.5: Error Logs -->
+    <a-card
+      v-if="selectedCustomerId"
+      class="section-card error-log-section"
+      style="margin-bottom: 32px;"
+    >
+      <div class="section-header">
+        <span class="section-title">Error Logs for {{ selectedCustomer?.email || 'Selected Customer' }}</span>
+        <div class="header-actions">
+           <span style="margin-right: 8px;">Date Range:</span>
+           <a-select
+             v-model:value="errorLogDays"
+             style="width: 150px;"
+             :options="errorLogDateOptions"
+             @change="handleDateRangeChange"
+           >
+             <template #suffixIcon><CalendarOutlined /></template>
+           </a-select>
+        </div>
+      </div>
+      <a-table
+        :columns="errorLogColumns"
+        :data-source="errorLogs"
+        :pagination="errorLogPagination"
+        :loading="errorLogLoading"
+        @change="handleErrorLogTableChange"
+        size="small"
+        :scroll="{ x: 800 }"
+        rowKey="id"
+      >
+        <template #emptyText>
+          <a-empty :description="`No error logs found for the selected period (${errorLogDays} days).`" />
+        </template>
+        <template #bodyCell="{ column, text }">
+            <template v-if="column.key === 'errorMessage'">
+              <a-tooltip :title="text" placement="topLeft">
+                <span>{{ text }}</span>
+              </a-tooltip>
+            </template>
+          </template>
       </a-table>
     </a-card>
 
@@ -189,7 +274,7 @@
 
     <!-- Section 4: Keywords Modal -->
     <a-modal
-      v-model:visible="isKeywordsModalVisible"
+      v-model:open="isKeywordsModalVisible"
       title="Top Page Keywords"
       width="1200px"
       :footer="null"
@@ -226,7 +311,7 @@
 
     <!-- Section 5: Edit Package Modal -->
     <a-modal
-      v-model:visible="modalVisible"
+      v-model:open="modalVisible"
       title="Trial Package Details"
       :footer="null"
       width="600px"
@@ -307,7 +392,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, h } from 'vue'
 import { message } from 'ant-design-vue'
 import { api } from '../api/api'
 import { useRouter } from 'vue-router'
@@ -319,7 +404,9 @@ import {
   ThunderboltOutlined,
   DollarOutlined,
   CheckCircleOutlined,
-  LineChartOutlined
+  LineChartOutlined,
+  CalendarOutlined,
+  WarningOutlined
 } from '@ant-design/icons-vue'
 import { Statistic } from 'ant-design-vue'
 import { use } from "echarts/core";
@@ -340,63 +427,64 @@ const pagination = ref({
   showQuickJumper: true,
 })
 
-// 初始化页面原有的列定义
+// 新增：错误仪表盘相关状态
+const errorDashboardLoading = ref(false)
+const errorDashboardData = ref(null)
+
+// 新增：获取错误仪表盘数据函数
+const fetchErrorDashboardData = async () => {
+  errorDashboardLoading.value = true
+  try {
+    // 注意：getErrorDashboard 可能需要 customerId 参数，
+    // 这里暂时不传，获取全局统计数据。
+    // 如果需要特定客户的，可以在选择客户后调用并传入 customerId
+    const response = await api.getErrorDashboard()
+    errorDashboardData.value = response.data // 假设数据在 response.data 中
+    console.log('Error Dashboard Data:', errorDashboardData.value) // 在控制台打印数据结构以便后续使用
+  } catch (error) {
+    console.error('Failed to fetch error dashboard data:', error)
+    message.error('Failed to fetch error dashboard data')
+  } finally {
+    errorDashboardLoading.value = false
+  }
+}
+
+// Customer Table Columns
 const initializationColumns = [
+  { title: 'Customer ID', dataIndex: 'customerId', key: 'customerId', width: 150, ellipsis: true },
+  { title: 'Email', dataIndex: 'email', key: 'email', width: 200, ellipsis: true },
+  { title: 'Competitors', dataIndex: 'competeProduct', key: 'competeProduct', width: 150, customRender: ({ text }) => formatCompeteProducts(text) },
+  { title: 'Keyword Status', dataIndex: 'keywordStatus', key: 'keywordStatus', width: 120 },
   {
-    title: 'Action',
-    key: 'action',
-    width: '40%',
-  },
-  {
-    title: 'Customer ID',
-    dataIndex: 'customerId',
-    key: 'customerId',
-    width: '8%',
-    ellipsis: true,
-  },
-  {
-    title: 'Email',
-    dataIndex: 'email',
-    key: 'email',
-    width: '15%',
-    ellipsis: true,
+    title: 'Recent Errors (Last 15 Days)',
+    dataIndex: 'hasRecentErrors',
+    key: 'recentErrors',
+    width: 180,
+    customRender: ({ record }) => {
+      if (record.hasRecentErrors === true) {
+        return h('span', { style: { color: '#faad14' } }, [
+          h(WarningOutlined, { style: { marginRight: '8px' } }),
+          'Errors encountered'
+        ]);
+      } else if (record.hasRecentErrors === false) {
+        return h('span', { style: { color: '#52c41a' } }, '-');
+      } else {
+        return h('span', {}, 'Checking...');
+      }
+    },
   },
   {
     title: 'Register Time',
     dataIndex: 'registerTime',
     key: 'registerTime',
-    width: '15%',
-    customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm') : '-'
+    width: 180,
+    customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
   {
-    title: 'Product Name',
-    dataIndex: 'productName',
-    key: 'productName',
-    width: '15%',
-  },
-  {
-    title: 'Product Website',
-    dataIndex: 'productWebsite',
-    key: 'productWebsite',
-    width: '15%',
-  },
-  {
-    title: 'Competing Products',
-    dataIndex: 'competeProduct',
-    key: 'competeProduct',
-    width: '15%',
-  },
-  {
-    title: 'Compete Product Site',
-    dataIndex: 'competeProductSite',
-    key: 'competeProductSite',
-    width: '15%',
-  },
-  {
-    title: 'Keywords Status',
-    dataIndex: 'keywordStatus',
-    key: 'keywordStatus',
-    width: '15%',
+    title: 'Actions',
+    key: 'action',
+    fixed: 'right',
+    width: 280,
   },
 ]
 
@@ -421,34 +509,64 @@ const onSelectChange = (selectedRowKeys) => {
 
 // 获取客户列表数据
 const fetchCustomerData = async (page = 1) => {
-  loading.value = true
+  loading.value = true;
+  selectedCustomerId.value = null; // Deselect customer when changing pages/reloading list
+  selectedCustomer.value = null;
+  errorLogs.value = []; // Clear previous logs
+
   try {
-    const response = await api.getCustomerList({
-      page: page,
-      limit: 10
-    })
-    customers.value = response.data.map(item => ({
-      key: item.customerId,
-      id: item.customerId,
-      customerId: item.customerId || '-',
-      productName: item.productName || '-',
-      productWebsite: item.productWebsite || '-',
-      competeProduct: item.competeProduct || '-',
-      competeProductSite: formatCompeteProductSites(item.competeProduct),
-      email: item.email || '-',
-      keywordStatus: item.keywordStatus || false,
-      registerTime: item.registerTime || '-'
-    }))
-    
-    pagination.value.total = response.TotalCount
-    pagination.value.current = page
+    const customerResponse = await api.getCustomerList({ page, limit: pagination.value.pageSize });
+    const rawCustomers = customerResponse.data || [];
+    pagination.value.total = customerResponse.TotalCount || 0;
+    pagination.value.current = page;
+
+    // Add temporary status to each customer
+    const customersWithStatus = rawCustomers.map(c => ({ ...c, hasRecentErrors: null })); // null indicates 'checking'
+    customers.value = customersWithStatus; // Display list quickly, show "Checking..."
+
+    // Prepare error check promises
+    const errorCheckPromises = rawCustomers.map(customer => {
+      const endTime = dayjs();
+      const startTime = endTime.subtract(15, 'day'); // Check last 15 days
+      return api.getAlternativelyErrors({
+        customerId: customer.customerId,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        page: 1,
+        limit: 1, // We only need to know if *any* error exists (count > 0)
+      }).then(response => ({
+        customerId: customer.customerId,
+        hasErrors: (response.totalCount || 0) > 0,
+      })).catch(err => {
+        console.error(`Failed to check errors for ${customer.customerId}:`, err);
+        return { customerId: customer.customerId, hasErrors: false, error: true }; // Assume no errors on failure for safety, maybe log?
+      });
+    });
+
+    // Wait for all error checks to complete
+    const errorResults = await Promise.allSettled(errorCheckPromises);
+
+    // Update customer data with error status
+    const finalCustomers = customers.value.map(customer => {
+      const result = errorResults.find(r => r.status === 'fulfilled' && r.value.customerId === customer.customerId);
+      if (result) {
+        return { ...customer, hasRecentErrors: result.value.hasErrors };
+      }
+      // Handle potential rejections if needed, though catch above defaults to false
+      return { ...customer, hasRecentErrors: false }; // Default if promise failed unexpectedly
+    });
+
+    customers.value = finalCustomers;
+
   } catch (error) {
-    console.error('Failed to fetch customer list:', error)
-    message.error('Failed to fetch customer list')
+    console.error('Failed to fetch customer list:', error);
+    message.error('Failed to load customer list');
+    customers.value = []; // Clear list on error
+    pagination.value.total = 0;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 处理初始化按钮点击
 const handleInitialize = (record) => {
@@ -459,6 +577,13 @@ const handleInitialize = (record) => {
 
 // 加载客户相关数据
 const loadCustomerData = async (customerId) => {
+  // 重置错误日志状态
+  errorLogs.value = [];
+  errorLogPagination.value.current = 1;
+  errorLogPagination.value.total = 0;
+  // 获取错误日志 (使用当前选定的日期范围)
+  await fetchErrorLogs(customerId, 1); // 默认加载第一页
+
   // 加载所有关键词类型的数据
   for (const type of keywordTypes) {
     await fetchKeywordsData(customerId, type.key)
@@ -1029,9 +1154,11 @@ const handleStartAnalysis = async () => {
 const customRowHandler = (record) => {
   return {
     onClick: () => {
-      selectedCustomerId.value = record.customerId
-      selectedCustomer.value = record
-      loadCustomerData(record.customerId)
+      if (selectedCustomerId.value !== record.customerId) { // 仅在切换客户时执行
+        selectedCustomerId.value = record.customerId
+        selectedCustomer.value = record
+        loadCustomerData(record.customerId) // 这个函数现在会加载错误日志
+      }
     }
   }
 }
@@ -1268,19 +1395,111 @@ const updateRegisterChartData = () => {
   }))
 }
 
+// 新增：错误日志相关状态
+const errorLogLoading = ref(false)
+const errorLogs = ref([])
+const errorLogPagination = ref({
+  current: 1,
+  pageSize: 5, // 每页显示5条
+  total: 0,
+  showTotal: total => `${total} records in total`,
+  showSizeChanger: false, // 不显示切换每页条数选项
+})
+const errorLogDays = ref(15) // Default to last 15 days
+const errorLogDateOptions = [
+  { value: 1, label: 'Last 1 Day' },
+  { value: 3, label: 'Last 3 Days' },
+  { value: 7, label: 'Last 7 Days' },
+  { value: 15, label: 'Last 15 Days' }, // Ensure 15 is an option
+  { value: 30, label: 'Last 30 Days' },
+]
+
+// 新增：错误日志列定义 (需要根据实际API返回字段调整)
+const errorLogColumns = [
+  {
+    title: 'Timestamp',
+    dataIndex: 'createdAt', // 假设时间字段是 createdAt
+    key: 'createdAt',
+    width: 180,
+    customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    title: 'Error Message',
+    dataIndex: 'errorMessage', // 假设错误消息字段是 errorMessage
+    key: 'errorMessage',
+    ellipsis: true, // 长消息省略
+  },
+  {
+    title: 'Error Type',
+    dataIndex: 'errorType', // 假设错误类型字段是 errorType
+    key: 'errorType',
+    width: 150,
+  },
+  {
+    title: 'Task ID', // 假设有关联的任务ID
+    dataIndex: 'taskId',
+    key: 'taskId',
+    width: 120,
+  },
+  // 可以根据需要添加更多列，例如 websiteId 等
+]
+
+// 新增：获取错误日志数据函数
+const fetchErrorLogs = async (customerId, page = 1) => {
+  if (!customerId) return;
+  errorLogLoading.value = true;
+  try {
+    const endTime = dayjs();
+    const startTime = endTime.subtract(errorLogDays.value, 'day');
+
+    const response = await api.getAlternativelyErrors({
+      customerId: customerId,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      page: page,
+      limit: errorLogPagination.value.pageSize,
+    });
+
+    errorLogs.value = response.data || [];
+    errorLogPagination.value.total = response.totalCount || 0;
+    errorLogPagination.value.current = page;
+
+  } catch (error) {
+    console.error('Failed to fetch error logs:', error);
+    message.error('Failed to fetch error logs');
+    errorLogs.value = [];
+    errorLogPagination.value.total = 0;
+  } finally {
+    errorLogLoading.value = false;
+  }
+};
+
+// 新增：处理错误日志表格分页/排序/筛选变化
+const handleErrorLogTableChange = (pagination) => {
+  fetchErrorLogs(selectedCustomerId.value, pagination.current);
+};
+
+// 新增：处理日期范围变化
+const handleDateRangeChange = () => {
+  errorLogPagination.value.current = 1;
+  fetchErrorLogs(selectedCustomerId.value, 1);
+};
+
 // 组件挂载时执行
 onMounted(async () => {
-  console.log('Component mounted, fetching customer list...')
+  console.log('Component mounted, fetching initial data...')
+  await fetchErrorDashboardData() // 调用获取错误数据函数
   await fetchCustomerData()
   await fetchPackageList()
   await fetchRegisterStats()
   
   // 默认选中第一个客户
-  if (customers.value.length > 0) {
+  if (customers.value.length > 0 && !selectedCustomerId.value) {
     selectedCustomerId.value = customers.value[0].customerId
     selectedCustomer.value = customers.value[0]
-    loadCustomerData(selectedCustomerId.value)
+    await loadCustomerData(selectedCustomerId.value) // 确保 loadCustomerData 是 async 或返回 Promise
   }
+  console.log('Initial data fetching complete.')
 })
 </script>
 
@@ -1377,5 +1596,21 @@ onMounted(async () => {
 
 :deep(.ant-table-tbody > tr) {
   cursor: pointer;
+}
+
+.error-log-section .section-header {
+  margin-bottom: 16px; /* 调整标题和表格间距 */
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 元素间距 */
+}
+
+/* 微调错误日志表格 */
+.error-log-section .ant-table-small {
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
 }
 </style>

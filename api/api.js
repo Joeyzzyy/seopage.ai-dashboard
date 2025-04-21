@@ -409,6 +409,41 @@ const getPriceList = async (sync = false) => {
     }
 };
 
+// 获取错误记录统计面板接口
+const getErrorDashboard = async (customerId) => {
+    try {
+        const params = {};
+        if (customerId) {
+            params.customerId = customerId;
+        }
+        const response = await apiClient.get('/alternatively/dashboard/errors', { params });
+        return response.data;
+    } catch (error) {
+        console.error('Get error dashboard error:', error);
+        throw error;
+    }
+};
+
+// 获取 alternatively 错误记录接口
+const getAlternativelyErrors = async (params = {}) => {
+    try {
+        const response = await apiClient.get('/alternatively/errors', {
+            params: {
+                websiteId: params.websiteId,
+                customerId: params.customerId,
+                startTime: params.startTime,
+                endTime: params.endTime,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get alternatively errors error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -435,4 +470,6 @@ export const api = {
     getTableStructures,
     adminLoginAsCustomer,
     getPriceList,
+    getErrorDashboard,
+    getAlternativelyErrors,
 };
