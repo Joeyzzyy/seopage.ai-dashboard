@@ -41,10 +41,10 @@
                 Edit Plan
               </a-button>
               <a-button type="primary" size="small" @click="handleLoginAsCustomer(record)">
-                Log into WebsiteLM
+                Goto WebsiteLM
               </a-button>
               <a-button type="primary" size="small" @click="handleLoginToAltpage(record)">
-                Log into Altpage
+                Goto Altpage
               </a-button>
             </a-space>
           </template>
