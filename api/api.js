@@ -410,13 +410,19 @@ const getPriceList = async (sync = false) => {
 };
 
 // 获取错误记录统计面板接口
-const getErrorDashboard = async (customerId) => {
+const getErrorDashboard = async (params = {}) => {
     try {
-        const params = {};
-        if (customerId) {
-            params.customerId = customerId;
+        const queryParams = {};
+        if (params.customerId) {
+            queryParams.customerId = params.customerId;
         }
-        const response = await apiClient.get('/alternatively/dashboard/errors', { params });
+        if (params.startDate) {
+            queryParams.startDate = params.startDate;
+        }
+        if (params.endDate) {
+            queryParams.endDate = params.endDate;
+        }
+        const response = await apiClient.get('/alternatively/dashboard/errors', { params: queryParams });
         return response.data;
     } catch (error) {
         console.error('Get error dashboard error:', error);

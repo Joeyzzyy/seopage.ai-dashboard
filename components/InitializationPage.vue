@@ -3,52 +3,54 @@
     <!-- 新增: Section 0: Error Monitoring -->
     <a-card class="section-card" style="margin-bottom: 32px;">
       <div class="section-header">
-        <span class="section-title">Error Monitoring Dashboard (Today)</span>
+        <span class="section-title">Error Monitoring Dashboard</span>
+        <div class="header-actions">
+           <span style="margin-right: 8px;">Date Range:</span>
+           <a-select
+             v-model:value="errorDashboardDays"
+             style="width: 150px;"
+             :options="errorDashboardDateOptions"
+             @change="handleErrorDashboardDateChange"
+           >
+             <template #suffixIcon><CalendarOutlined /></template>
+           </a-select>
+        </div>
       </div>
       <div v-if="errorDashboardLoading">
         <a-spin tip="Loading error data..." />
       </div>
-      <div v-else-if="errorDashboardData">
-        <a-row :gutter="[16, 16]">
-          <a-col :span="8">
-            <a-statistic
-              title="Total Tasks"
-              :value="errorDashboardData.totalTasks"
-              style="text-align: center;"
-            />
-          </a-col>
-          <a-col :span="8">
-            <a-statistic
-              title="Failed Tasks"
-              :value="errorDashboardData.failedTasks"
-              :value-style="{ color: errorDashboardData.failedTasks > 0 ? '#cf1322' : '#3f8600' }"
-              style="text-align: center;"
-            />
-          </a-col>
-          <a-col :span="8">
-            <a-statistic
-              title="Failure Rate"
-              :value="errorDashboardData.failureRate"
-              :value-style="{ color: errorDashboardData.failedTasks > 0 ? '#cf1322' : '#3f8600' }"
-              style="text-align: center;"
-            />
-          </a-col>
-        </a-row>
+      <div v-else-if="errorDashboardData && errorDashboardData.length > 0">
+        <v-chart
+          :option="errorDashboardChartOption"
+          autoresize
+          style="height: 400px; margin-top: 16px;"
+        />
       </div>
       <div v-else>
-        <a-empty description="No error data available for today" />
+        <a-empty :description="`No error data available for the last ${errorDashboardDays} day(s)`" />
       </div>
     </a-card>
 
     <!-- Section 1: User Registration Trend -->
     <a-card class="section-card" style="margin-bottom: 32px;">
       <div class="section-header">
-        <span class="section-title">User Registration Trend</span>
-        <a-select v-model:value="registerStatsDays" style="width: 120px;" @change="updateRegisterChartData">
-          <a-select-option :value="30">Last 30 Days</a-select-option>
-          <a-select-option :value="90">Last 90 Days</a-select-option>
-          <a-select-option :value="0">All</a-select-option>
-        </a-select>
+        <!-- 新增: 包裹标题和统计 -->
+        <div class="title-and-summary">
+          <span class="section-title">User Registration Trend</span>
+          <!-- 移动: 统计信息移到这里 -->
+          <div class="registration-summary">
+            Total Registrations Since {{ HIGHLIGHT_DATE }}:
+            <span class="count">{{ totalRegistrationsAfterHighlight }}</span>
+          </div>
+        </div>
+        <!-- 修改: header-actions 只包含选择器 -->
+        <div class="header-actions">
+          <a-select v-model:value="registerStatsDays" style="width: 120px;" @change="updateRegisterChartData">
+            <a-select-option :value="30">Last 30 Days</a-select-option>
+            <a-select-option :value="90">Last 90 Days</a-select-option>
+            <a-select-option :value="0">All</a-select-option>
+          </a-select>
+        </div>
       </div>
       <v-chart
         :option="registerChartOption"
@@ -430,24 +432,149 @@ const pagination = ref({
 // 新增：错误仪表盘相关状态
 const errorDashboardLoading = ref(false)
 const errorDashboardData = ref(null)
+const errorDashboardDays = ref(1) // 新增: 默认显示最近1天的数据
+const errorDashboardDateOptions = [ // 新增: 日期选项
+  { value: 1, label: 'Last 1 Day' },
+  { value: 3, label: 'Last 3 Days' },
+  { value: 7, label: 'Last 7 Days' },
+  { value: 15, label: 'Last 15 Days' },
+  { value: 30, label: 'Last 30 Days' },
+]
 
 // 新增：获取错误仪表盘数据函数
 const fetchErrorDashboardData = async () => {
   errorDashboardLoading.value = true
   try {
-    // 注意：getErrorDashboard 可能需要 customerId 参数，
-    // 这里暂时不传，获取全局统计数据。
-    // 如果需要特定客户的，可以在选择客户后调用并传入 customerId
-    const response = await api.getErrorDashboard()
-    errorDashboardData.value = response.data // 假设数据在 response.data 中
-    console.log('Error Dashboard Data:', errorDashboardData.value) // 在控制台打印数据结构以便后续使用
+    // 计算开始和结束日期
+    const endDate = dayjs()
+    const startDate = endDate.subtract(errorDashboardDays.value, 'day')
+
+    // 调用 api.getErrorDashboard 并传入 YYYY-MM-DD 格式的日期参数
+    // api.getErrorDashboard 返回的是 { code, message, data: [...] } 结构
+    const response = await api.getErrorDashboard({
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+    })
+
+    // 修改: 从返回的对象中提取 data 属性（这才是真正的数组）
+    // 确保 response 存在并且 response.data 是一个数组
+    const actualDataArray = response && Array.isArray(response.data) ? response.data : [];
+
+    errorDashboardData.value = actualDataArray;
+    console.log('Error Dashboard Data (final):', errorDashboardData.value) // 添加日志确认最终值
+
   } catch (error) {
     console.error('Failed to fetch error dashboard data:', error)
     message.error('Failed to fetch error dashboard data')
+    errorDashboardData.value = [] // 出错时设置为空数组
   } finally {
     errorDashboardLoading.value = false
   }
 }
+
+// 新增: 处理错误仪表盘日期范围变化的函数
+const handleErrorDashboardDateChange = () => {
+  fetchErrorDashboardData() // 重新获取数据
+}
+
+// 新增: 错误仪表盘图表配置
+const errorDashboardChartOption = computed(() => {
+  const data = errorDashboardData.value || [];
+  const dateList = data.map(item => item.date);
+  const totalTasksList = data.map(item => item.totalTasks);
+  const failedTasksList = data.map(item => item.failedTasks);
+  // 失败率可以作为提示信息显示，或者使用双 Y 轴（更复杂）
+  // const failureRateList = data.map(item => parseFloat(item.failureRate) || 0);
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => { // 自定义 tooltip 显示内容
+        let tooltipStr = `${params[0].axisValueLabel}<br/>`;
+        params.forEach(item => {
+          const seriesName = item.seriesName;
+          const value = item.value;
+          // 查找原始数据以获取失败率
+          const originalData = data.find(d => d.date === item.axisValueLabel);
+          let rateStr = '';
+          if (seriesName === 'Failed Tasks' && originalData) {
+            rateStr = ` (${originalData.failureRate})`;
+          } else if (seriesName === 'Total Tasks' && originalData && originalData.totalTasks > 0) {
+             // 可选：如果需要在 Total Tasks 旁边也显示失败率
+             // rateStr = ` (Failure Rate: ${originalData.failureRate})`;
+          }
+          tooltipStr += `${item.marker}${seriesName}: ${value}${rateStr}<br/>`;
+        });
+        return tooltipStr;
+      }
+    },
+    legend: { // 添加图例
+      data: ['Total Tasks', 'Failed Tasks'],
+      top: 'bottom', // 图例放在底部
+      padding: [20, 0, 0, 0] // 增加底部内边距给图例空间
+    },
+    grid: { left: 50, right: 20, top: 40, bottom: 60 }, // 调整 grid 留出图例空间
+    xAxis: {
+      type: 'category',
+      data: dateList,
+      boundaryGap: false,
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1, // 保证 Y 轴刻度是整数
+      min: 0
+    },
+    series: [
+      {
+        name: 'Total Tasks',
+        type: 'line',
+        data: totalTasksList,
+        smooth: true,
+        symbol: 'circle',
+        lineStyle: { color: '#5470c6' }, // 蓝色系
+        itemStyle: { color: '#5470c6' }
+      },
+      {
+        name: 'Failed Tasks',
+        type: 'line',
+        data: failedTasksList,
+        smooth: true,
+        symbol: 'circle',
+        lineStyle: { color: '#ee6666' }, // 红色系
+        itemStyle: { color: '#ee6666' }
+      }
+      // 如果需要显示失败率作为单独的线（可能需要双 Y 轴）
+      // {
+      //   name: 'Failure Rate',
+      //   type: 'line',
+      //   yAxisIndex: 1, // 需要配置第二个 Y 轴
+      //   data: failureRateList,
+      //   smooth: true,
+      //   symbol: 'circle',
+      //   lineStyle: { color: '#91cc75' }, // 绿色系
+      //   itemStyle: { color: '#91cc75' }
+      // }
+    ]
+    // 如果需要双 Y 轴，取消注释下面的 yAxis 配置
+    // yAxis: [
+    //   { // 第一个 Y 轴（任务数）
+    //     type: 'value',
+    //     name: 'Tasks',
+    //     minInterval: 1,
+    //     min: 0
+    //   },
+    //   { // 第二个 Y 轴（失败率）
+    //     type: 'value',
+    //     name: 'Failure Rate (%)',
+    //     min: 0,
+    //     max: 100, // 假设失败率最大为 100%
+    //     axisLabel: {
+    //       formatter: '{value} %'
+    //     }
+    //   }
+    // ],
+  };
+});
 
 // Customer Table Columns
 const initializationColumns = [
@@ -530,8 +657,8 @@ const fetchCustomerData = async (page = 1) => {
       const startTime = endTime.subtract(15, 'day'); // Check last 15 days
       return api.getAlternativelyErrors({
         customerId: customer.customerId,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+        startTime: startTime.format('YYYY-MM-DD'),
+        endTime: endTime.format('YYYY-MM-DD'),
         page: 1,
         limit: 1, // We only need to know if *any* error exists (count > 0)
       }).then(response => ({
@@ -1252,6 +1379,7 @@ const handleLoginToAltpage = async (record) => {
 const registerStats = ref([]) // 原始数据
 const registerStatsDays = ref(30) // 默认30天
 const registerChartData = ref([]) // 处理后的折线图数据
+const totalRegistrationsAfterHighlight = ref(0) // 新增: 415之后注册总数
 
 const HIGHLIGHT_DATE = '2025-04-15'
 
@@ -1362,6 +1490,18 @@ const updateRegisterChartData = () => {
   all.forEach(date => {
     countMap[date] = (countMap[date] || 0) + 1
   })
+
+  // 新增: 计算 HIGHLIGHT_DATE 之后的总注册数
+  let countAfterHighlight = 0;
+  const highlightDayjs = dayjs(HIGHLIGHT_DATE);
+  all.forEach(dateStr => {
+    if (dayjs(dateStr).isAfter(highlightDayjs)) {
+      countAfterHighlight++;
+    }
+  });
+  totalRegistrationsAfterHighlight.value = countAfterHighlight;
+  // --- 计算结束 ---
+
   // 生成日期序列
   let dateList = []
   if (days === 0) {
@@ -1454,8 +1594,8 @@ const fetchErrorLogs = async (customerId, page = 1) => {
 
     const response = await api.getAlternativelyErrors({
       customerId: customerId,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
+      startTime: startTime.format('YYYY-MM-DD'),
+      endTime: endTime.format('YYYY-MM-DD'),
       page: page,
       limit: errorLogPagination.value.pageSize,
     });
@@ -1488,7 +1628,7 @@ const handleDateRangeChange = () => {
 // 组件挂载时执行
 onMounted(async () => {
   console.log('Component mounted, fetching initial data...')
-  await fetchErrorDashboardData() // 调用获取错误数据函数
+  await fetchErrorDashboardData() // 调用获取错误数据函数 (使用默认日期范围)
   await fetchCustomerData()
   await fetchPackageList()
   await fetchRegisterStats()
@@ -1519,11 +1659,18 @@ onMounted(async () => {
 
 .section-header {
   display: flex;
-  align-items: center;
+  align-items: center; /* 垂直居中对齐 */
   justify-content: space-between;
   margin-bottom: 18px;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 8px;
+}
+
+/* 新增: 标题和统计的容器样式 */
+.title-and-summary {
+  display: flex;
+  align-items: baseline; /* 基线对齐，让文字底部对齐 */
+  gap: 16px; /* 标题和统计之间的间距 */
 }
 
 .section-title {
@@ -1531,6 +1678,8 @@ onMounted(async () => {
   font-weight: 700;
   color: #222;
   letter-spacing: 1px;
+  /* 可选: 如果标题和统计垂直位置不理想，可以移除或调整 */
+  /* line-height: 1; */
 }
 
 .section-subtitle {
@@ -1581,36 +1730,29 @@ onMounted(async () => {
 
 .header-actions {
   display: flex;
-  gap: 16px;
   align-items: center;
+  gap: 16px; /* 调整间距 */
+  /* 这个容器现在只包含右侧元素 */
+}
+
+/* 修改: 注册统计摘要样式 */
+.registration-summary {
+  font-size: 14px;
+  color: #555;
+  background-color: #f0f2f5;
+  padding: 4px 10px;
+  border-radius: 4px;
+  /* 移除 margin-right: auto; */
+}
+
+.registration-summary .count {
+  font-weight: bold; /* 保持加粗 */
+  color: #1890ff; /* 保持蓝色 */
+  margin-left: 6px;
+  font-size: 24px; /* 再次增大字体大小 */
 }
 
 :deep(.selected-row) {
   background-color: #e6f7ff;
-}
-
-.active-button {
-  background-color: #1890ff;
-  color: white;
-}
-
-:deep(.ant-table-tbody > tr) {
-  cursor: pointer;
-}
-
-.error-log-section .section-header {
-  margin-bottom: 16px; /* 调整标题和表格间距 */
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* 元素间距 */
-}
-
-/* 微调错误日志表格 */
-.error-log-section .ant-table-small {
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
 }
 </style>
