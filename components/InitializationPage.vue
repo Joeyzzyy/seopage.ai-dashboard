@@ -41,6 +41,14 @@
           <div class="registration-summary">
             Total Registrations Since {{ HIGHLIGHT_DATE }}:
             <span class="count">{{ totalRegistrationsAfterHighlight }}</span>
+            <!-- 新增：邀请码统计 -->
+            <span style="margin-left: 24px;">
+              <template v-for="(count, code) in inviteCodeStats" :key="code">
+                <span style="margin-right: 12px;">
+                  {{ code }}: {{ count }}
+                </span>
+              </template>
+            </span>
           </div>
         </div>
         <!-- 修改: header-actions 只包含选择器 -->
@@ -109,6 +117,11 @@
             <a-tag :color="record.keywordStatus ? 'green' : 'red'">
               {{ record.keywordStatus ? 'Uploaded' : 'Not Uploaded' }}
             </a-tag>
+          </template>
+          <template v-if="column.key === 'inviteCode'">
+            <a-tooltip :title="record.inviteCode">
+              <span>{{ record.inviteCode }}</span>
+            </a-tooltip>
           </template>
         </template>
       </a-table>
@@ -432,7 +445,7 @@ const pagination = ref({
 // 新增：错误仪表盘相关状态
 const errorDashboardLoading = ref(false)
 const errorDashboardData = ref(null)
-const errorDashboardDays = ref(1) // 新增: 默认显示最近1天的数据
+const errorDashboardDays = ref(15) // 默认显示最近15天的数据
 const errorDashboardDateOptions = [ // 新增: 日期选项
   { value: 1, label: 'Last 1 Day' },
   { value: 3, label: 'Last 3 Days' },
@@ -580,39 +593,44 @@ const errorDashboardChartOption = computed(() => {
 const initializationColumns = [
   { title: 'Customer ID', dataIndex: 'customerId', key: 'customerId', width: 150, ellipsis: true },
   { title: 'Email', dataIndex: 'email', key: 'email', width: 200, ellipsis: true },
-  { title: 'Competitors', dataIndex: 'competeProduct', key: 'competeProduct', width: 150, customRender: ({ text }) => formatCompeteProducts(text) },
-  { title: 'Keyword Status', dataIndex: 'keywordStatus', key: 'keywordStatus', width: 120 },
-  {
-    title: 'Recent Errors (Last 15 Days)',
-    dataIndex: 'hasRecentErrors',
-    key: 'recentErrors',
-    width: 180,
-    customRender: ({ record }) => {
-      if (record.hasRecentErrors === true) {
-        return h('span', { style: { color: '#faad14' } }, [
-          h(WarningOutlined, { style: { marginRight: '8px' } }),
-          'Errors encountered'
-        ]);
-      } else if (record.hasRecentErrors === false) {
-        return h('span', { style: { color: '#52c41a' } }, '-');
-      } else {
-        return h('span', {}, 'Checking...');
-      }
-    },
-  },
+  { title: 'Product Name', dataIndex: 'productName', key: 'productName', width: 150, ellipsis: true },
+  { title: 'Product Website', dataIndex: 'productWebsite', key: 'productWebsite', width: 150, ellipsis: true },
   {
     title: 'Register Time',
     dataIndex: 'registerTime',
     key: 'registerTime',
     width: 180,
     customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+    sorter: (a, b) => dayjs(a.registerTime).unix() - dayjs(b.registerTime).unix(),
+    defaultSortOrder: 'descend'
   },
   {
-    title: 'Actions',
-    key: 'action',
-    fixed: 'right',
-    width: 280,
+    title: 'Competitors',
+    dataIndex: 'competeProduct',
+    key: 'competeProduct',
+    width: 200,
+    ellipsis: true,
+    customRender: ({ text }) => {
+      if (!text) return '-'
+      const competitors = text.split(',').map(c => {
+        const parts = c.split('|')
+        return parts.length === 2 ? { name: parts[0], url: parts[1] } : { name: c, url: null }
+      })
+      return h(
+        'div',
+        competitors.map(comp =>
+          h(
+            'div',
+            { style: { marginBottom: '4px' } },
+            comp.url ? h('a', { href: `http://${comp.url}`, target: '_blank' }, comp.name) : comp.name
+          )
+        )
+      )
+    }
   },
+  { title: 'Invite Code', dataIndex: 'inviteCode', key: 'inviteCode', width: 120 },
+  { title: 'Keyword Status', dataIndex: 'keywordStatus', key: 'keywordStatus', width: 120 },
+  { title: 'Actions', key: 'actions', width: 250, fixed: 'right' }
 ]
 
 // 客户列表数据
@@ -1471,7 +1489,8 @@ const fetchRegisterStats = async () => {
   try {
     const res = await api.getCustomerList({ page: 1, limit: 500 })
     registerStats.value = (res.data || []).map(item => ({
-      registerTime: item.registerTime
+      registerTime: item.registerTime,
+      inviteCode: item.inviteCode
     }))
     updateRegisterChartData()
   } catch (e) {
@@ -1491,15 +1510,17 @@ const updateRegisterChartData = () => {
     countMap[date] = (countMap[date] || 0) + 1
   })
 
-  // 新增: 计算 HIGHLIGHT_DATE 之后的总注册数
+  // --- 修改: 计算 HIGHLIGHT_DATE 之后的总注册数 ---
   let countAfterHighlight = 0;
   const highlightDayjs = dayjs(HIGHLIGHT_DATE);
-  all.forEach(dateStr => {
-    if (dayjs(dateStr).isAfter(highlightDayjs)) {
+  // 直接遍历原始数据 registerStats 来比较完整时间戳
+  registerStats.value.forEach(item => {
+    // 使用 isAfter 比较完整时间戳，这样会包含 HIGHLIGHT_DATE 当天的注册
+    if (item.registerTime && dayjs(item.registerTime).isAfter(highlightDayjs)) {
       countAfterHighlight++;
     }
   });
-  totalRegistrationsAfterHighlight.value = countAfterHighlight;
+  totalRegistrationsAfterHighlight.value = countAfterHighlight; // 这里现在应该会得到 18
   // --- 计算结束 ---
 
   // 生成日期序列
@@ -1534,6 +1555,20 @@ const updateRegisterChartData = () => {
     count: countMap[date] || 0
   }))
 }
+
+// 新增：邀请码注册数量统计
+const inviteCodeStats = computed(() => {
+  const stats = {};
+  const highlightDayjs = dayjs(HIGHLIGHT_DATE);
+  registerStats.value.forEach(item => {
+    // 只统计 2025-04-15 之后的注册 (使用 isAfter 比较完整时间戳)
+    if (item.registerTime && dayjs(item.registerTime).isAfter(highlightDayjs)) {
+      const code = item.inviteCode || '(No Invite Code)';
+      stats[code] = (stats[code] || 0) + 1;
+    }
+  });
+  return stats; // 这里应该得到 { '(No Invite Code)': 17, 'LBYALTPAGE': 1 }
+});
 
 // 新增：错误日志相关状态
 const errorLogLoading = ref(false)
