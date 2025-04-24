@@ -414,16 +414,9 @@ import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { 
   UploadOutlined,
-  FileAddOutlined,
-  GlobalOutlined,
-  ThunderboltOutlined,
-  DollarOutlined,
-  CheckCircleOutlined,
-  LineChartOutlined,
   CalendarOutlined,
   WarningOutlined
 } from '@ant-design/icons-vue'
-import { Statistic } from 'ant-design-vue'
 import { use } from "echarts/core";
 import VChart from "vue-echarts";
 import { LineChart } from "echarts/charts";
@@ -431,7 +424,6 @@ import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from
 import { CanvasRenderer } from "echarts/renderers";
 use([LineChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer]);
 
-const router = useRouter()
 const loading = ref(false)
 const pagination = ref({
   current: 1,
@@ -445,7 +437,7 @@ const pagination = ref({
 // 新增：错误仪表盘相关状态
 const errorDashboardLoading = ref(false)
 const errorDashboardData = ref(null)
-const errorDashboardDays = ref(15) // 默认显示最近15天的数据
+const errorDashboardDays = ref(15) // 新增: 默认显示最近1天的数据
 const errorDashboardDateOptions = [ // 新增: 日期选项
   { value: 1, label: 'Last 1 Day' },
   { value: 3, label: 'Last 3 Days' },
@@ -593,44 +585,40 @@ const errorDashboardChartOption = computed(() => {
 const initializationColumns = [
   { title: 'Customer ID', dataIndex: 'customerId', key: 'customerId', width: 150, ellipsis: true },
   { title: 'Email', dataIndex: 'email', key: 'email', width: 200, ellipsis: true },
-  { title: 'Product Name', dataIndex: 'productName', key: 'productName', width: 150, ellipsis: true },
-  { title: 'Product Website', dataIndex: 'productWebsite', key: 'productWebsite', width: 150, ellipsis: true },
+  { title: 'Invite Code', dataIndex: 'inviteCode', key: 'inviteCode', width: 120 },
+  {
+    title: 'Recent Errors (Last 15 Days)',
+    dataIndex: 'hasRecentErrors',
+    key: 'recentErrors',
+    width: 180,
+    customRender: ({ record }) => {
+      if (record.hasRecentErrors === true) {
+        return h('span', { style: { color: '#faad14' } }, [
+          h(WarningOutlined, { style: { marginRight: '8px' } }),
+          'Errors encountered'
+        ]);
+      } else if (record.hasRecentErrors === false) {
+        return h('span', { style: { color: '#52c41a' } }, '-');
+      } else {
+        return h('span', {}, 'Checking...');
+      }
+    },
+  },
   {
     title: 'Register Time',
     dataIndex: 'registerTime',
     key: 'registerTime',
     width: 180,
     customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
-    sorter: (a, b) => dayjs(a.registerTime).unix() - dayjs(b.registerTime).unix(),
-    defaultSortOrder: 'descend'
   },
-  {
-    title: 'Competitors',
-    dataIndex: 'competeProduct',
-    key: 'competeProduct',
-    width: 200,
-    ellipsis: true,
-    customRender: ({ text }) => {
-      if (!text) return '-'
-      const competitors = text.split(',').map(c => {
-        const parts = c.split('|')
-        return parts.length === 2 ? { name: parts[0], url: parts[1] } : { name: c, url: null }
-      })
-      return h(
-        'div',
-        competitors.map(comp =>
-          h(
-            'div',
-            { style: { marginBottom: '4px' } },
-            comp.url ? h('a', { href: `http://${comp.url}`, target: '_blank' }, comp.name) : comp.name
-          )
-        )
-      )
-    }
-  },
-  { title: 'Invite Code', dataIndex: 'inviteCode', key: 'inviteCode', width: 120 },
+  { title: 'Competitors', dataIndex: 'competeProduct', key: 'competeProduct', width: 150, customRender: ({ text }) => formatCompeteProducts(text) },
   { title: 'Keyword Status', dataIndex: 'keywordStatus', key: 'keywordStatus', width: 120 },
-  { title: 'Actions', key: 'actions', width: 250, fixed: 'right' }
+  {
+    title: 'Actions',
+    key: 'action',
+    fixed: 'right',
+    width: 280,
+  },
 ]
 
 // 客户列表数据
