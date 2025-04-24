@@ -74,6 +74,7 @@
         <!-- Add refresh button? -->
       </div>
       <a-table
+        class="customer-table"
         :columns="initializationColumns"
         :data-source="customers"
         :pagination="pagination"
@@ -141,7 +142,7 @@
              v-model:value="errorLogDays"
              style="width: 150px;"
              :options="errorLogDateOptions"
-             @change="handleDateRangeChange"
+             @change="handleErrorLogDateChange"
            >
              <template #suffixIcon><CalendarOutlined /></template>
            </a-select>
@@ -408,7 +409,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed, h } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, Tooltip as ATooltip } from 'ant-design-vue'
 import { api } from '../api/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -1577,59 +1578,83 @@ const errorLogDateOptions = [
   { value: 30, label: 'Last 30 Days' },
 ]
 
-// 新增：错误日志列定义 (需要根据实际API返回字段调整)
+// 新增: 错误日志表格列定义
 const errorLogColumns = [
   {
-    title: 'Timestamp',
-    dataIndex: 'createdAt', // 假设时间字段是 createdAt
+    title: 'Time',
+    dataIndex: 'createdAt',
     key: 'createdAt',
     width: 180,
     customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+    sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+    defaultSortOrder: 'descend' // 默认按时间降序
   },
   {
-    title: 'Error Message',
-    dataIndex: 'errorMessage', // 假设错误消息字段是 errorMessage
-    key: 'errorMessage',
-    ellipsis: true, // 长消息省略
-  },
-  {
-    title: 'Error Type',
-    dataIndex: 'errorType', // 假设错误类型字段是 errorType
-    key: 'errorType',
+    title: 'Module',
+    dataIndex: 'module',
+    key: 'module',
     width: 150,
+    ellipsis: true,
   },
   {
-    title: 'Task ID', // 假设有关联的任务ID
-    dataIndex: 'taskId',
-    key: 'taskId',
-    width: 120,
+    title: 'Operation',
+    dataIndex: 'operation',
+    key: 'operation',
+    width: 200,
+    ellipsis: true,
   },
-  // 可以根据需要添加更多列，例如 websiteId 等
-]
+  {
+    title: 'Website ID',
+    dataIndex: 'websiteId',
+    key: 'websiteId',
+    width: 250,
+    ellipsis: true,
+  },
+  {
+    title: 'Error Details',
+    dataIndex: 'errorDetail',
+    key: 'errorDetail',
+    ellipsis: true, // 使用 antd 的省略号功能
+    customRender: ({ text }) => h(
+      ATooltip,
+      { title: text }, // 鼠标悬浮时显示完整内容
+      () => h('span', text) // 表格单元格内显示省略的文本
+    )
+  },
+  // 可以选择性地添加 errorId 列，如果需要的话
+  // {
+  //   title: 'Error ID',
+  //   dataIndex: 'errorId',
+  //   key: 'errorId',
+  //   width: 250,
+  //   ellipsis: true,
+  // },
+];
 
-// 新增：获取错误日志数据函数
+// 获取错误日志数据
 const fetchErrorLogs = async (customerId, page = 1) => {
   if (!customerId) return;
   errorLogLoading.value = true;
   try {
-    const endTime = dayjs();
-    const startTime = endTime.subtract(errorLogDays.value, 'day');
+    const endDate = dayjs();
+    const startDate = endDate.subtract(errorLogDays.value, 'day'); // 使用 errorLogDays 控制范围
 
     const response = await api.getAlternativelyErrors({
       customerId: customerId,
-      startTime: startTime.format('YYYY-MM-DD'),
-      endTime: endTime.format('YYYY-MM-DD'),
+      startTime: startDate.format('YYYY-MM-DD'),
+      endTime: endDate.format('YYYY-MM-DD'),
       page: page,
       limit: errorLogPagination.value.pageSize,
     });
 
+    // 修正：确保分页 total 和 data 数量一致
     errorLogs.value = response.data || [];
-    errorLogPagination.value.total = response.totalCount || 0;
+    errorLogPagination.value.total = response.totalCount || errorLogs.value.length;
     errorLogPagination.value.current = page;
 
   } catch (error) {
-    console.error('Failed to fetch error logs:', error);
-    message.error('Failed to fetch error logs');
+    console.error(`Failed to fetch error logs for ${customerId}:`, error);
+    message.error('Failed to load error logs');
     errorLogs.value = [];
     errorLogPagination.value.total = 0;
   } finally {
@@ -1637,15 +1662,29 @@ const fetchErrorLogs = async (customerId, page = 1) => {
   }
 };
 
-// 新增：处理错误日志表格分页/排序/筛选变化
-const handleErrorLogTableChange = (pagination) => {
-  fetchErrorLogs(selectedCustomerId.value, pagination.current);
+// 新增: 处理错误日志表格分页/排序变化
+const handleErrorLogTableChange = (pagination, filters, sorter) => {
+  // 更新分页信息
+  errorLogPagination.value.current = pagination.current;
+  errorLogPagination.value.pageSize = pagination.pageSize;
+
+  // 如果需要处理排序，可以在这里添加逻辑
+  // const { field, order } = sorter;
+  // console.log('Sorter:', field, order);
+
+  // 重新获取当前页数据
+  if (selectedCustomerId.value) {
+    fetchErrorLogs(selectedCustomerId.value, pagination.current);
+  }
 };
 
-// 新增：处理日期范围变化
-const handleDateRangeChange = () => {
+// 新增: 处理错误日志日期范围变化
+const handleErrorLogDateChange = () => {
+  // 重置到第一页并重新获取数据
   errorLogPagination.value.current = 1;
-  fetchErrorLogs(selectedCustomerId.value, 1);
+  if (selectedCustomerId.value) {
+    fetchErrorLogs(selectedCustomerId.value, 1);
+  }
 };
 
 // 组件挂载时执行
@@ -1667,6 +1706,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.customer-table :deep(.ant-table-row) {
+  cursor: pointer;
+}
+    
 .initialization-container {
   padding: 32px 48px;
   background: #f7f9fb;
