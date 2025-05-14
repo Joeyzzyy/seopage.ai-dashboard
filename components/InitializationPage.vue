@@ -71,7 +71,17 @@
     <a-card class="section-card" style="margin-bottom: 32px;">
       <div class="section-header">
         <span class="section-title">Customer Management</span>
-        <!-- Add refresh button? -->
+        <!-- 新增: 搜索框 -->
+        <div class="header-actions">
+          <a-input-search
+            v-model:value="searchEmail"
+            placeholder="Search by email"
+            style="width: 250px;"
+            @search="handleSearch"
+            @change="handleSearchChange"
+            allowClear
+          />
+        </div>
       </div>
       <a-table
         class="customer-table"
@@ -641,22 +651,30 @@ const onSelectChange = (selectedRowKeys) => {
   }
 }
 
-// 获取客户列表数据
+// 在 script setup 中添加以下代码
+const searchEmail = ref('') // 搜索关键词
+const originalCustomers = ref([]) // 保存原始客户数据
+
+// 修改 fetchCustomerData 函数
 const fetchCustomerData = async (page = 1) => {
   loading.value = true;
-  selectedCustomerId.value = null; // Deselect customer when changing pages/reloading list
+  selectedCustomerId.value = null;
   selectedCustomer.value = null;
-  errorLogs.value = []; // Clear previous logs
+  errorLogs.value = [];
 
   try {
-    const customerResponse = await api.getCustomerList({ page, limit: pagination.value.pageSize });
+    const customerResponse = await api.getCustomerList({ 
+      page, 
+      limit: pagination.value.pageSize,
+      email: searchEmail.value // 添加 email 参数
+    });
     const rawCustomers = customerResponse.data || [];
     pagination.value.total = customerResponse.TotalCount || 0;
     pagination.value.current = page;
 
-    // Add temporary status to each customer
-    const customersWithStatus = rawCustomers.map(c => ({ ...c, hasRecentErrors: null })); // null indicates 'checking'
-    customers.value = customersWithStatus; // Display list quickly, show "Checking..."
+    const customersWithStatus = rawCustomers.map(c => ({ ...c, hasRecentErrors: null }));
+    originalCustomers.value = customersWithStatus; // 保存原始数据
+    customers.value = customersWithStatus;
 
     // Prepare error check promises
     const errorCheckPromises = rawCustomers.map(customer => {
@@ -695,10 +713,25 @@ const fetchCustomerData = async (page = 1) => {
   } catch (error) {
     console.error('Failed to fetch customer list:', error);
     message.error('Failed to load customer list');
-    customers.value = []; // Clear list on error
+    customers.value = [];
+    originalCustomers.value = [];
     pagination.value.total = 0;
   } finally {
     loading.value = false;
+  }
+};
+
+// 修改: 处理搜索
+const handleSearch = () => {
+  pagination.value.current = 1; // 重置到第一页
+  fetchCustomerData(1);
+};
+
+// 修改: 处理搜索框值变化
+const handleSearchChange = (e) => {
+  if (!e.target.value) {
+    searchEmail.value = '';
+    fetchCustomerData(1);
   }
 };
 
