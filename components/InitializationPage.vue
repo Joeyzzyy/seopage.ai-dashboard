@@ -103,9 +103,6 @@
               <a-button type="default" size="small" @click.stop="handleEditPlan(record)">
                 Edit Plan
               </a-button>
-              <a-button type="primary" size="small" @click.stop="handleLoginAsCustomer(record)">
-                Goto WebsiteLM
-              </a-button>
               <a-button type="primary" size="small" @click.stop="handleLoginToAltpage(record)">
                 Goto Altpage
               </a-button>
@@ -120,14 +117,6 @@
             <a-tooltip :title="record.email">
               <span>{{ record.email }}</span>
             </a-tooltip>
-          </template>
-          <template v-if="column.key === 'competeProduct'">
-            {{ formatCompeteProducts(record.competeProduct) }}
-          </template>
-          <template v-if="column.key === 'keywordStatus'">
-            <a-tag :color="record.keywordStatus ? 'green' : 'red'">
-              {{ record.keywordStatus ? 'Uploaded' : 'Not Uploaded' }}
-            </a-tag>
           </template>
           <template v-if="column.key === 'inviteCode'">
             <a-tooltip :title="record.inviteCode">
@@ -622,13 +611,11 @@ const initializationColumns = [
     width: 180,
     customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
   },
-  { title: 'Competitors', dataIndex: 'competeProduct', key: 'competeProduct', width: 150, customRender: ({ text }) => formatCompeteProducts(text) },
-  { title: 'Keyword Status', dataIndex: 'keywordStatus', key: 'keywordStatus', width: 120 },
   {
     title: 'Actions',
     key: 'action',
     fixed: 'right',
-    width: 280,
+    width: 200,
   },
 ]
 
