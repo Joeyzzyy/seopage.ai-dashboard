@@ -1,148 +1,192 @@
 <template>
   <div class="edm-container">
-    <a-row :gutter="24" class="mb-24">
-      <!-- Left Form Section -->
-      <a-col :span="8">
-        <a-card title="Email Template Configuration">
-          <a-form
-            :model="formState"
-            layout="vertical"
-          >
-            <a-form-item label="Subject">
-              <a-input v-model:value="formState.subject" />
-            </a-form-item>
-            
-            <a-form-item label="Email Title">
-              <a-input v-model:value="formState.emailTitle" />
-            </a-form-item>
-            
-            <a-form-item label="Email Content">
-              <a-textarea
-                v-model:value="formState.emailContent"
-                :rows="4"
-              />
-            </a-form-item>
-            
-            <a-form-item label="HTML Content">
-              <a-textarea
-                v-model:value="formState.htmlContent"
-                :rows="8"
-                :placeholder="'Paste your HTML code here or write custom HTML content\nExample:\n<div style=\'color: blue;\'>\n  <h1>Hello</h1>\n  <img src=\'https://example.com/image.jpg\' />\n</div>'"
-              />
-            </a-form-item>
-            
-            <a-form-item label="Sender Name">
-              <a-input v-model:value="formState.senderName" />
-            </a-form-item>
-            
-            <a-form-item label="Sender Email">
-              <a-input v-model:value="formState.senderEmail" />
-            </a-form-item>
-
-            <a-form-item label="Recipients (One email per line)">
-              <a-textarea
-                v-model:value="formState.recipients"
-                :rows="4"
-                placeholder="Enter email addresses, one per line"
-              />
-            </a-form-item>
-
-            <a-form-item>
-              <div class="button-group">
-                <a-button 
-                  class="action-button"
-                  @click="handlePreview"
-                >
-                  Preview
-                </a-button>
-                <a-button 
-                  class="action-button"
-                  @click="handleSave"
-                >
-                  Save
-                </a-button>
-                <a-button 
-                  type="primary" 
-                  class="action-button"
-                  @click="handleSend"
-                  :loading="sending"
-                >
-                  Send
-                </a-button>
-              </div>
-            </a-form-item>
-          </a-form>
-        </a-card>
-      </a-col>
-
-      <!-- Right Preview Section -->
-      <a-col :span="16">
-        <a-card title="Email Preview">
-          <div class="preview-container">
-            <iframe
-              :srcdoc="previewHtml"
-              frameborder="0"
-              style="width: 100%; height: 800px;"
-            ></iframe>
-          </div>
-        </a-card>
-      </a-col>
-    </a-row>
-
-    <!-- Email Records Table -->
-    <a-card title="Email Records" class="mt-24">
-      <a-table
-        :columns="columns"
-        :data-source="emailList"
-        :loading="tableLoading"
-        :pagination="pagination"
-        @change="handleTableChange"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'sendStatus'">
-            <a-tag :color="record.sendStatus === 'sent' ? 'success' : 'error'">
-              {{ record.sendStatus }}
-            </a-tag>
-          </template>
-          <template v-if="column.key === 'delivered_status'">
-            <a-tag :color="record.delivered_status === 'delivered' ? 'success' : 'warning'">
-              {{ record.delivered_status }}
-            </a-tag>
-          </template>
-          <template v-if="column.key === 'open_status'">
-            <a-tag :color="record.open_status === 'opened' ? 'success' : 'default'">
-              {{ record.open_status || 'unopened' }}
-            </a-tag>
-          </template>
-          <template v-if="column.key === 'content'">
-            <a-button type="link" @click="showContent(record)">
-              View Content
-            </a-button>
-          </template>
-        </template>
-      </a-table>
-    </a-card>
-
-    <!-- Content Modal -->
+    <!-- Mobile Block Modal - 改为非阻塞式 -->
     <a-modal
-      v-model:visible="contentModalVisible"
-      title="Email Content"
-      width="800px"
-      :footer="null"
+      v-model:visible="showMobileBlock"
+      title="建议使用PC端访问"
+      :closable="true"
+      :maskClosable="true"
+      centered
+      width="400px"
     >
-      <div class="email-content-preview">
-        <iframe
-          :srcdoc="selectedContent"
-          frameborder="0"
-          style="width: 100%; height: 600px;"
-        ></iframe>
+      <template #footer>
+        <a-button @click="showMobileBlock = false">我知道了</a-button>
+        <a-button type="primary" @click="continueMobile">继续使用</a-button>
+      </template>
+      <div class="mobile-block-content">
+        <div class="mobile-icon">
+          📱 ➡️ 💻
+        </div>
+        <p>EDM邮件管理功能在PC端使用体验更佳。</p>
+        <div class="mobile-tips">
+          <p><strong>PC端优势：</strong></p>
+          <ul>
+            <li>更大的编辑区域</li>
+            <li>更好的预览效果</li>
+            <li>完整的功能支持</li>
+          </ul>
+        </div>
+        <p class="mobile-note">您也可以继续在移动端使用基础功能。</p>
       </div>
     </a-modal>
+
+    <!-- Mobile Warning Banner -->
+    <div v-if="isMobile && !showMobileBlock && !hideMobileWarning" class="mobile-warning-banner">
+      <div class="warning-content">
+        <span class="warning-icon">⚠️</span>
+        <span class="warning-text">当前为移动端，建议使用PC端获得更佳体验</span>
+        <a-button size="small" type="text" @click="hideMobileWarning = true" class="close-warning">
+          ✕
+        </a-button>
+      </div>
+    </div>
+
+    <!-- Original content - 移动端也显示，但添加提示 -->
+    <div>
+      <a-row :gutter="isMobile ? [16, 16] : 24" class="mb-24">
+        <!-- Left Form Section -->
+        <a-col :span="isMobile ? 24 : 8">
+          <a-card title="Email Template Configuration">
+            <a-form
+              :model="formState"
+              layout="vertical"
+            >
+              <a-form-item label="Subject">
+                <a-input v-model:value="formState.subject" />
+              </a-form-item>
+              
+              <a-form-item label="Email Title">
+                <a-input v-model:value="formState.emailTitle" />
+              </a-form-item>
+              
+              <a-form-item label="Email Content">
+                <a-textarea
+                  v-model:value="formState.emailContent"
+                  :rows="4"
+                />
+              </a-form-item>
+              
+              <a-form-item label="HTML Content">
+                <a-textarea
+                  v-model:value="formState.htmlContent"
+                  :rows="8"
+                  :placeholder="'Paste your HTML code here or write custom HTML content\nExample:\n<div style=\'color: blue;\'>\n  <h1>Hello</h1>\n  <img src=\'https://example.com/image.jpg\' />\n</div>'"
+                />
+              </a-form-item>
+              
+              <a-form-item label="Sender Name">
+                <a-input v-model:value="formState.senderName" />
+              </a-form-item>
+              
+              <a-form-item label="Sender Email">
+                <a-input v-model:value="formState.senderEmail" />
+              </a-form-item>
+
+              <a-form-item label="Recipients (One email per line)">
+                <a-textarea
+                  v-model:value="formState.recipients"
+                  :rows="4"
+                  placeholder="Enter email addresses, one per line"
+                />
+              </a-form-item>
+
+              <a-form-item>
+                <div class="button-group">
+                  <a-button 
+                    class="action-button"
+                    @click="handlePreview"
+                  >
+                    Preview
+                  </a-button>
+                  <a-button 
+                    class="action-button"
+                    @click="handleSave"
+                  >
+                    Save
+                  </a-button>
+                  <a-button 
+                    type="primary" 
+                    class="action-button"
+                    @click="handleSend"
+                    :loading="sending"
+                  >
+                    Send
+                  </a-button>
+                </div>
+              </a-form-item>
+            </a-form>
+          </a-card>
+        </a-col>
+
+        <!-- Right Preview Section -->
+        <a-col :span="isMobile ? 24 : 16">
+          <a-card title="Email Preview">
+            <div class="preview-container">
+              <iframe
+                :srcdoc="previewHtml"
+                frameborder="0"
+                :style="isMobile ? 'width: 100%; height: 400px;' : 'width: 100%; height: 800px;'"
+              ></iframe>
+            </div>
+          </a-card>
+        </a-col>
+      </a-row>
+
+      <!-- Email Records Table -->
+      <a-card title="Email Records" class="mt-24">
+        <a-table
+          :columns="columns"
+          :data-source="emailList"
+          :loading="tableLoading"
+          :pagination="pagination"
+          @change="handleTableChange"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'sendStatus'">
+              <a-tag :color="record.sendStatus === 'sent' ? 'success' : 'error'">
+                {{ record.sendStatus }}
+              </a-tag>
+            </template>
+            <template v-if="column.key === 'delivered_status'">
+              <a-tag :color="record.delivered_status === 'delivered' ? 'success' : 'warning'">
+                {{ record.delivered_status }}
+              </a-tag>
+            </template>
+            <template v-if="column.key === 'open_status'">
+              <a-tag :color="record.open_status === 'opened' ? 'success' : 'default'">
+                {{ record.open_status || 'unopened' }}
+              </a-tag>
+            </template>
+            <template v-if="column.key === 'content'">
+              <a-button type="link" @click="showContent(record)">
+                View Content
+              </a-button>
+            </template>
+          </template>
+        </a-table>
+      </a-card>
+
+      <!-- Content Modal -->
+      <a-modal
+        v-model:visible="contentModalVisible"
+        title="Email Content"
+        width="800px"
+        :footer="null"
+      >
+        <div class="email-content-preview">
+          <iframe
+            :srcdoc="selectedContent"
+            frameborder="0"
+            style="width: 100%; height: 600px;"
+          ></iframe>
+        </div>
+      </a-modal>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { api } from '../api/api'
 
@@ -178,7 +222,7 @@ const baseHtml = ref(`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional/
   >
     WebsiteLM Email Verification
     <div>
-       ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿
+       ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿
     </div>
   </div>
   <body style="background-color:#fff;color:#212121">
@@ -450,9 +494,47 @@ const handleTableChange = (pag) => {
   getEmailList()
 }
 
+// Mobile detection
+const isMobile = ref(false)
+const showMobileBlock = ref(false)
+const hideMobileWarning = ref(false)
+
+// Check if device is mobile
+const checkMobile = () => {
+  const userAgent = navigator.userAgent.toLowerCase()
+  const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone']
+  const isMobileDevice = mobileKeywords.some(keyword => userAgent.includes(keyword))
+  const isSmallScreen = window.innerWidth < 1024
+  
+  const wasMobile = isMobile.value
+  isMobile.value = isMobileDevice || isSmallScreen
+  
+  // 只在首次检测到移动端时显示提示
+  if (isMobile.value && !wasMobile && !localStorage.getItem('edmMobileWarningShown')) {
+    showMobileBlock.value = true
+  }
+}
+
+// Continue using mobile
+const continueMobile = () => {
+  showMobileBlock.value = false
+  localStorage.setItem('edmMobileWarningShown', 'true')
+}
+
+// Handle window resize
+const handleResize = () => {
+  checkMobile()
+}
+
 // Fetch data on component mount
 onMounted(() => {
-  getEmailList()
+  checkMobile()
+  window.addEventListener('resize', handleResize)
+  getEmailList() // 移动端也加载数据
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 
 // Add these new refs
@@ -504,5 +586,100 @@ const showContent = (record) => {
 /* Add some styles for the HTML content textarea */
 :deep(.ant-input) {
   font-family: 'Courier New', Courier, monospace;
+}
+
+.mobile-block-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.mobile-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+}
+
+.mobile-block-content p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.mobile-tips {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.mobile-tips p {
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.mobile-tips ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.mobile-tips li {
+  color: #666;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.mobile-note {
+  font-size: 12px;
+  color: #999;
+  margin-top: 12px;
+}
+
+.mobile-warning-banner {
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning-icon {
+  font-size: 16px;
+}
+
+.warning-text {
+  flex: 1;
+  font-size: 13px;
+  color: #d46b08;
+}
+
+.close-warning {
+  padding: 0;
+  height: auto;
+  line-height: 1;
+  color: #d46b08;
+}
+
+/* 移动端适配 */
+@media (max-width: 1023px) {
+  .edm-container {
+    padding: 16px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .action-button {
+    width: 100%;
+  }
 }
 </style> 

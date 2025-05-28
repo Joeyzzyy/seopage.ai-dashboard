@@ -1,14 +1,16 @@
 <template>
   <div class="initialization-container">
-    <!-- 新增: Section 0: Error Monitoring -->
-    <a-card class="section-card" style="margin-bottom: 32px;">
+    <!-- Error Monitoring Dashboard -->
+    <a-card class="section-card">
       <div class="section-header">
-        <span class="section-title">Error Monitoring Dashboard</span>
-        <div class="header-actions">
-           <span style="margin-right: 8px;">Date Range:</span>
+        <div class="section-title-mobile">
+          <span class="section-title">错误监控仪表盘</span>
+        </div>
+        <div class="header-actions-mobile">
+           <span class="date-label">日期范围:</span>
            <a-select
              v-model:value="errorDashboardDays"
-             style="width: 150px;"
+             class="mobile-select"
              :options="errorDashboardDateOptions"
              @change="handleErrorDashboardDateChange"
            >
@@ -16,74 +18,138 @@
            </a-select>
         </div>
       </div>
-      <div v-if="errorDashboardLoading">
-        <a-spin tip="Loading error data..." />
+      <div v-if="errorDashboardLoading" class="loading-container">
+        <a-spin tip="加载错误数据中..." />
       </div>
       <div v-else-if="errorDashboardData && errorDashboardData.length > 0">
         <v-chart
           :option="errorDashboardChartOption"
           autoresize
-          style="height: 400px; margin-top: 16px;"
+          class="mobile-chart"
         />
       </div>
-      <div v-else>
-        <a-empty :description="`No error data available for the last ${errorDashboardDays} day(s)`" />
+      <div v-else class="empty-container">
+        <a-empty :description="`最近 ${errorDashboardDays} 天内无错误数据`" />
       </div>
     </a-card>
 
-    <!-- Section 1: User Registration Trend -->
-    <a-card class="section-card" style="margin-bottom: 32px;">
+    <!-- User Registration Trend -->
+    <a-card class="section-card">
       <div class="section-header">
-        <!-- 新增: 包裹标题和统计 -->
-        <div class="title-and-summary">
-          <span class="section-title">User Registration Trend</span>
-          <!-- 移动: 统计信息移到这里 -->
-          <div class="registration-summary">
-            Total Registrations Since {{ HIGHLIGHT_DATE }}:
+        <div class="title-and-summary-mobile">
+          <span class="section-title">用户注册趋势</span>
+          <div class="registration-summary-mobile">
+            自 {{ HIGHLIGHT_DATE }} 以来总注册数:
             <span class="count">{{ totalRegistrationsAfterHighlight }}</span>
-            <!-- 新增：邀请码统计 -->
-            <span style="margin-left: 24px;">
-              <template v-for="(count, code) in inviteCodeStats" :key="code">
-                <span style="margin-right: 12px;">
-                  {{ code }}: {{ count }}
-                </span>
-              </template>
-            </span>
+          </div>
+          <!-- 邀请码统计 - 移动端换行显示 -->
+          <div class="invite-code-stats-mobile">
+            <template v-for="(count, code) in inviteCodeStats" :key="code">
+              <span class="invite-code-item">
+                {{ code }}: {{ count }}
+              </span>
+            </template>
           </div>
         </div>
-        <!-- 修改: header-actions 只包含选择器 -->
-        <div class="header-actions">
-          <a-select v-model:value="registerStatsDays" style="width: 120px;" @change="updateRegisterChartData">
-            <a-select-option :value="30">Last 30 Days</a-select-option>
-            <a-select-option :value="90">Last 90 Days</a-select-option>
-            <a-select-option :value="0">All</a-select-option>
+        <div class="header-actions-mobile">
+          <a-select v-model:value="registerStatsDays" class="mobile-select" @change="updateRegisterChartData">
+            <a-select-option :value="30">最近30天</a-select-option>
+            <a-select-option :value="90">最近90天</a-select-option>
+            <a-select-option :value="0">全部</a-select-option>
           </a-select>
         </div>
       </div>
       <v-chart
         :option="registerChartOption"
         autoresize
-        style="height: 400px; margin-top: 16px;"
+        class="mobile-chart"
       />
     </a-card>
 
-    <!-- Section 2: Customer Initialization Table -->
-    <a-card class="section-card" style="margin-bottom: 32px;">
+    <!-- Customer Management -->
+    <a-card class="section-card">
       <div class="section-header">
-        <span class="section-title">Customer Management</span>
-        <!-- 新增: 搜索框 -->
-        <div class="header-actions">
+        <span class="section-title">客户管理</span>
+        <div class="header-actions-mobile">
           <a-input-search
             v-model:value="searchEmail"
-            placeholder="Search by email"
-            style="width: 250px;"
+            placeholder="搜索邮箱"
+            class="mobile-search"
             @search="handleSearch"
             @change="handleSearchChange"
             allowClear
           />
         </div>
       </div>
+      
+      <!-- 移动端使用卡片列表替代表格 -->
+      <div class="mobile-customer-list" v-if="isMobile">
+        <div v-if="loading" class="loading-container">
+          <a-spin tip="加载客户数据中..." />
+        </div>
+        <div v-else>
+          <div 
+            v-for="customer in customers" 
+            :key="customer.customerId"
+            class="customer-card"
+            :class="{ 'selected': customer.customerId === selectedCustomerId }"
+            @click="handleCustomerSelect(customer)"
+          >
+            <div class="customer-header">
+              <div class="customer-email">{{ customer.email }}</div>
+              <div class="customer-status">
+                <span v-if="customer.hasRecentErrors === true" class="error-indicator">
+                  <WarningOutlined />
+                  有错误
+                </span>
+                <span v-else-if="customer.hasRecentErrors === false" class="no-error-indicator">
+                  正常
+                </span>
+              </div>
+            </div>
+            <div class="customer-details">
+              <div class="detail-item">
+                <span class="label">客户ID:</span>
+                <span class="value">{{ customer.customerId }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">邀请码:</span>
+                <span class="value">{{ customer.inviteCode || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">注册时间:</span>
+                <span class="value">{{ customer.registerTime ? dayjs(customer.registerTime).format('YYYY-MM-DD HH:mm') : '-' }}</span>
+              </div>
+            </div>
+            <div class="customer-actions">
+              <a-button type="default" size="small" @click.stop="handleEditPlan(customer)">
+                编辑计划
+              </a-button>
+              <a-button type="primary" size="small" @click.stop="handleLoginToAltpage(customer)">
+                前往Altpage
+              </a-button>
+            </div>
+          </div>
+          
+          <!-- 移动端分页 -->
+          <div class="mobile-pagination">
+            <a-pagination
+              v-model:current="pagination.current"
+              :total="pagination.total"
+              :pageSize="pagination.pageSize"
+              :showSizeChanger="false"
+              :showQuickJumper="false"
+              :showTotal="(total) => `共 ${total} 条`"
+              @change="handleTableChange"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <!-- 桌面端保持原有表格 -->
       <a-table
+        v-else
         class="customer-table"
         :columns="initializationColumns"
         :data-source="customers"
@@ -93,7 +159,6 @@
         :row-class-name="getRowClassName"
         size="small"
         :customRow="customRowHandler"
-        :rowSelection="null"
         :scroll="{ x: 1500 }"
         rowKey="customerId"
       >
@@ -127,19 +192,20 @@
       </a-table>
     </a-card>
 
-    <!-- 新增: Section 2.5: Error Logs -->
+    <!-- Error Logs -->
     <a-card
       v-if="selectedCustomerId"
       class="section-card error-log-section"
-      style="margin-bottom: 32px;"
     >
       <div class="section-header">
-        <span class="section-title">Error Logs for {{ selectedCustomer?.email || 'Selected Customer' }}</span>
-        <div class="header-actions">
-           <span style="margin-right: 8px;">Date Range:</span>
+        <div class="section-title-mobile">
+          <span class="section-title">{{ selectedCustomer?.email || '选中客户' }} 的错误日志</span>
+        </div>
+        <div class="header-actions-mobile">
+           <span class="date-label">日期范围:</span>
            <a-select
              v-model:value="errorLogDays"
-             style="width: 150px;"
+             class="mobile-select"
              :options="errorLogDateOptions"
              @change="handleErrorLogDateChange"
            >
@@ -147,7 +213,53 @@
            </a-select>
         </div>
       </div>
+      
+      <!-- 移动端错误日志列表 -->
+      <div class="mobile-error-list" v-if="isMobile">
+        <div v-if="errorLogLoading" class="loading-container">
+          <a-spin tip="加载错误日志中..." />
+        </div>
+        <div v-else-if="errorLogs.length > 0">
+          <div v-for="log in errorLogs" :key="log.id" class="error-log-card">
+            <div class="error-header">
+              <span class="error-time">{{ dayjs(log.createdAt).format('MM-DD HH:mm') }}</span>
+              <span class="error-module">{{ log.module }}</span>
+            </div>
+            <div class="error-operation">{{ log.operation }}</div>
+            <div class="error-website" v-if="log.websiteId">
+              <span class="label">网站ID:</span>
+              <span class="value">{{ log.websiteId }}</span>
+            </div>
+            <div class="error-detail">
+              <a-typography-paragraph 
+                :ellipsis="{ rows: 2, expandable: true, symbol: '展开' }"
+                :content="log.errorDetail"
+              />
+            </div>
+          </div>
+          
+          <!-- 移动端错误日志分页 -->
+          <div class="mobile-pagination">
+            <a-pagination
+              v-model:current="errorLogPagination.current"
+              :total="errorLogPagination.total"
+              :pageSize="errorLogPagination.pageSize"
+              :showSizeChanger="false"
+              :showQuickJumper="false"
+              :showTotal="(total) => `共 ${total} 条`"
+              @change="handleErrorLogTableChange"
+              size="small"
+            />
+          </div>
+        </div>
+        <div v-else class="empty-container">
+          <a-empty :description="`选定时间段内无错误日志 (${errorLogDays} 天)`" />
+        </div>
+      </div>
+      
+      <!-- 桌面端保持原有表格 -->
       <a-table
+        v-else
         :columns="errorLogColumns"
         :data-source="errorLogs"
         :pagination="errorLogPagination"
@@ -170,166 +282,13 @@
       </a-table>
     </a-card>
 
-    <!-- Section 3: Data Upload & Analysis -->
-    <a-card v-if="selectedCustomerId" class="section-card data-upload-section" style="margin-bottom: 32px;">
-      <div class="section-header">
-        <span class="section-title">Data Upload & Analysis</span>
-        <span class="section-subtitle">Customer Email: {{ selectedCustomer?.email || '' }}</span>
-        <a-button
-          type="primary"
-          :style="{ backgroundColor: '#52c41a', borderColor: '#52c41a' }"
-          @click="handleStartAnalysis"
-        >
-          Complete Data Upload & Start Analysis
-        </a-button>
-      </div>
-      <a-divider />
-      <!-- Keyword Upload -->
-      <a-card class="sub-section-card" title="SEMrush Keyword Data Upload" :bordered="false">
-        <a-tabs v-model:activeKey="activeKeywordsType">
-          <a-tab-pane v-for="type in keywordTypes" :key="type.key">
-            <template #tab>
-              <span style="display: inline-flex; align-items: center; gap: 4px;">
-                {{ type.label }}
-                <a-badge v-if="!keywordsData[type.key]?.length" dot status="error" />
-              </span>
-            </template>
-            <div class="upload-section">
-              <a-upload
-                :before-upload="(file) => beforeUploadKeywords(file, type.key)"
-                accept=".csv,.xlsx"
-              >
-                <a-button type="primary">
-                  <upload-outlined /> Upload {{ type.label }} Keywords
-                </a-button>
-              </a-upload>
-              <a-tag v-if="keywordsData[type.key]?.length" color="success">
-                {{ keywordsData[type.key].length }} rows uploaded
-              </a-tag>
-            </div>
-            
-            <!-- Keywords Data Table -->
-            <a-table
-              :columns="keywordsColumns"
-              :data-source="keywordsData[type.key]"
-              :loading="keywordsLoading[type.key]"
-              size="small"
-              :pagination="{
-                total: totalCount[type.key],
-                current: currentPage[type.key],
-                pageSize: 10,
-                showTotal: (total) => `${total} records in total`,
-                showSizeChanger: false,
-                onChange: (page) => handlePageChange(page, type.key)
-              }"
-            >
-              <template #emptyText>
-                <div class="empty-hint">
-                  No data available. Please upload {{ type.label }} keywords file.
-                </div>
-              </template>
-            </a-table>
-          </a-tab-pane>
-        </a-tabs>
-      </a-card>
-      <!-- Competitor Top Pages Upload -->
-      <a-card class="sub-section-card" title="Competitor Top Pages Data" :bordered="false" style="margin-top: 24px;">
-        <div v-if="competitors.length === 0" class="empty-hint">
-          No competitors added
-        </div>
-        <a-tabs v-else v-model:activeKey="activeCompetitorKey">
-          <a-tab-pane 
-            v-for="competitor in competitors" 
-            :key="competitor.name"
-          >
-            <template #tab>
-              <span style="display: inline-flex; align-items: center; gap: 4px;">
-                {{ competitor.name }}
-                <a-badge 
-                  v-if="!competitorsData[competitor.url]?.length" 
-                  dot 
-                  status="error" 
-                />
-              </span>
-            </template>
-            <div class="upload-section">
-              <a-upload
-                :before-upload="(file) => beforeUploadCompetitors(file, competitor.url)"
-                accept=".csv,.xlsx"
-              >
-                <a-button type="primary">
-                  <upload-outlined /> Upload Top Pages for {{ competitor.name }}
-                </a-button>
-              </a-upload>
-            </div>
-
-            <!-- Competitors Data Table -->
-            <a-table
-              :columns="competitorsColumns"
-              :data-source="competitorsData[competitor.url] || []"
-              :loading="competitorsLoading[competitor.url]"
-              size="small"
-              :pagination="{ pageSize: 20 }"
-            >
-              <template #emptyText>
-                <div class="empty-hint">
-                  No data available. Please upload top pages data for {{ competitor.name }}.
-                </div>
-              </template>
-              <template #actions="{ record }">
-                <a-button type="link" @click="showKeywordsModal(record.URL)">
-                  Check Keywords
-                </a-button>
-              </template>
-            </a-table>
-          </a-tab-pane>
-        </a-tabs>
-      </a-card>
-    </a-card>
-
-    <!-- Section 4: Keywords Modal -->
-    <a-modal
-      v-model:open="isKeywordsModalVisible"
-      title="Top Page Keywords"
-      width="1200px"
-      :footer="null"
-    >
-      <div class="url-display">
-        <strong>URL:</strong> {{ currentTopPageUrl }}
-      </div>
-      
-      <div class="upload-section">
-        <a-upload
-          :before-upload="handleTopPageKeywordsUpload"
-          accept=".csv,.xlsx"
-        >
-          <a-button type="primary">
-            <upload-outlined /> Upload Keywords
-          </a-button>
-        </a-upload>
-      </div>
-
-      <a-table
-        :columns="topPageKeywordsColumns"
-        :data-source="topPageKeywords"
-        :loading="topPageKeywordsLoading"
-        :pagination="topPageKeywordsPagination"
-        @change="handleTopPageKeywordsTableChange"
-      >
-        <template #emptyText>
-          <div class="empty-hint">
-            No keywords data available. Please upload keywords file.
-          </div>
-        </template>
-      </a-table>
-    </a-modal>
-
-    <!-- Section 5: Edit Package Modal -->
+    <!-- Edit Package Modal -->
     <a-modal
       v-model:open="modalVisible"
-      title="Trial Package Details"
+      title="试用套餐详情"
       :footer="null"
-      width="600px"
+      :width="isMobile ? '95%' : '600px'"
+      :centered="isMobile"
     >
       <div v-if="selectedPackage" class="package-form">
         <a-form :model="selectedPackage" layout="vertical">
@@ -407,13 +366,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, h } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, h } from 'vue'
 import { message, Tooltip as ATooltip } from 'ant-design-vue'
 import { api } from '../api/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { 
-  UploadOutlined,
   CalendarOutlined,
   WarningOutlined
 } from '@ant-design/icons-vue'
@@ -737,35 +695,6 @@ const loadCustomerData = async (customerId) => {
   errorLogPagination.value.total = 0;
   // 获取错误日志 (使用当前选定的日期范围)
   await fetchErrorLogs(customerId, 1); // 默认加载第一页
-
-  // 加载所有关键词类型的数据
-  for (const type of keywordTypes) {
-    await fetchKeywordsData(customerId, type.key)
-  }
-  
-  // 加载竞争对手数据
-  const selectedCustomer = customers.value.find(c => c.customerId === customerId)
-  if (selectedCustomer?.competeProduct) {
-    const competitorsList = selectedCustomer.competeProduct.split(',').map(item => {
-      const [name, url] = item.split('|')
-      return { name, url }
-    })
-    
-    competitors.value = competitorsList
-    if (competitorsList.length > 0) {
-      activeCompetitorKey.value = competitorsList[0].name
-      for (const competitor of competitorsList) {
-        try {
-          await fetchCompetitorData(competitor.url)
-        } catch (error) {
-          console.error(`Failed to fetch data for competitor ${competitor.name}:`, error)
-        }
-      }
-    }
-  } else {
-    competitors.value = []
-    activeCompetitorKey.value = ''
-  }
 }
 
 // 添加新的套餐相关状态
@@ -1707,138 +1636,435 @@ const handleErrorLogDateChange = () => {
   }
 };
 
+// 添加移动端检测
+const isMobile = ref(false)
+
+// 检测设备类型
+const checkDevice = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 处理客户选择（移动端）
+const handleCustomerSelect = (customer) => {
+  if (selectedCustomerId.value !== customer.customerId) {
+    selectedCustomerId.value = customer.customerId
+    selectedCustomer.value = customer
+    loadCustomerData(customer.customerId)
+  }
+}
+
 // 组件挂载时执行
 onMounted(async () => {
+  checkDevice()
+  window.addEventListener('resize', checkDevice)
+  
   console.log('Component mounted, fetching initial data...')
-  await fetchErrorDashboardData() // 调用获取错误数据函数 (使用默认日期范围)
+  await fetchErrorDashboardData()
   await fetchCustomerData()
   await fetchPackageList()
   await fetchRegisterStats()
   
-  // 默认选中第一个客户
   if (customers.value.length > 0 && !selectedCustomerId.value) {
     selectedCustomerId.value = customers.value[0].customerId
     selectedCustomer.value = customers.value[0]
-    await loadCustomerData(selectedCustomerId.value) // 确保 loadCustomerData 是 async 或返回 Promise
+    await loadCustomerData(selectedCustomerId.value)
   }
   console.log('Initial data fetching complete.')
+})
+
+// 清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', checkDevice)
 })
 </script>
 
 <style scoped>
-.customer-table :deep(.ant-table-row) {
-  cursor: pointer;
-}
-    
 .initialization-container {
-  padding: 32px 48px;
+  padding: 16px;
   background: #f7f9fb;
   min-height: 100vh;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .initialization-container {
+    padding: 12px 8px;
+  }
 }
 
 .section-card {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   background: #fff;
-  padding: 24px 32px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .section-card {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+  }
 }
 
 .section-header {
   display: flex;
-  align-items: center; /* 垂直居中对齐 */
-  justify-content: space-between;
-  margin-bottom: 18px;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
 }
 
-/* 新增: 标题和统计的容器样式 */
-.title-and-summary {
+@media (min-width: 769px) {
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.section-title-mobile {
   display: flex;
-  align-items: baseline; /* 基线对齐，让文字底部对齐 */
-  gap: 16px; /* 标题和统计之间的间距 */
+  flex-direction: column;
+  gap: 8px;
 }
 
 .section-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #222;
-  letter-spacing: 1px;
-  /* 可选: 如果标题和统计垂直位置不理想，可以移除或调整 */
-  /* line-height: 1; */
+  letter-spacing: 0.5px;
 }
 
-.section-subtitle {
-  font-size: 14px;
-  color: #888;
-  margin-left: 16px;
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 16px;
+  }
 }
 
-.sub-section-card {
-  margin-bottom: 16px;
-  border-radius: 8px;
-  background: #fafbfc;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
-  padding: 16px 24px;
-}
-
-.data-upload-section {
-  border-top: none;
-  background: #f5f7fa;
-  box-shadow: none;
-  padding: 0;
-}
-
-.upload-section {
-  margin-bottom: 16px;
+.header-actions-mobile {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.empty-hint {
-  text-align: center;
-  padding: 24px;
-  color: #999;
+.date-label {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
 }
 
-.ant-card {
-  border-radius: 8px;
+.mobile-select {
+  min-width: 120px;
+  flex: 1;
 }
 
-.url-display {
-  margin-bottom: 16px;
-  padding: 8px;
-  background-color: #f5f5f5;
+@media (max-width: 768px) {
+  .mobile-select {
+    min-width: 100px;
+  }
+}
+
+.mobile-search {
+  width: 100%;
+  max-width: 250px;
+}
+
+.title-and-summary-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.registration-summary-mobile {
+  font-size: 13px;
+  color: #555;
+  background-color: #f0f2f5;
+  padding: 6px 10px;
   border-radius: 4px;
+}
+
+.registration-summary-mobile .count {
+  font-weight: bold;
+  color: #1890ff;
+  margin-left: 6px;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .registration-summary-mobile .count {
+    font-size: 18px;
+  }
+}
+
+.invite-code-stats-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.invite-code-item {
+  background-color: #e6f7ff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #1890ff;
+}
+
+/* 移动端图表样式 */
+.mobile-chart {
+  height: 300px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .mobile-chart {
+    height: 250px;
+  }
+}
+
+/* 移动端客户列表样式 */
+.mobile-customer-list {
+  margin-top: 16px;
+}
+
+.customer-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.customer-card:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+}
+
+.customer-card.selected {
+  border-color: #1890ff;
+  background-color: #e6f7ff;
+}
+
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.customer-email {
+  font-weight: 600;
+  color: #222;
+  font-size: 14px;
+}
+
+.customer-status {
+  font-size: 12px;
+}
+
+.error-indicator {
+  color: #faad14;
+}
+
+.no-error-indicator {
+  color: #52c41a;
+}
+
+.customer-details {
+  margin-bottom: 12px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.detail-item .label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-item .value {
+  color: #333;
   word-break: break-all;
 }
 
-.header-actions {
+.customer-actions {
   display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.customer-actions .ant-btn {
+  font-size: 12px;
+  height: 28px;
+  padding: 0 8px;
+}
+
+/* 移动端错误日志样式 */
+.mobile-error-list {
+  margin-top: 16px;
+}
+
+.error-log-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+
+.error-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px; /* 调整间距 */
-  /* 这个容器现在只包含右侧元素 */
+  margin-bottom: 8px;
 }
 
-/* 修改: 注册统计摘要样式 */
-.registration-summary {
-  font-size: 14px;
+.error-time {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.error-module {
+  font-size: 12px;
+  background-color: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #333;
+}
+
+.error-operation {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.error-website {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.error-website .label {
+  color: #666;
+  margin-right: 4px;
+}
+
+.error-website .value {
+  color: #333;
+  word-break: break-all;
+}
+
+.error-detail {
+  font-size: 12px;
   color: #555;
-  background-color: #f0f2f5;
-  padding: 4px 10px;
-  border-radius: 4px;
-  /* 移除 margin-right: auto; */
+  line-height: 1.4;
 }
 
-.registration-summary .count {
-  font-weight: bold; /* 保持加粗 */
-  color: #1890ff; /* 保持蓝色 */
-  margin-left: 6px;
-  font-size: 24px; /* 再次增大字体大小 */
+/* 移动端分页样式 */
+.mobile-pagination {
+  margin-top: 16px;
+  text-align: center;
 }
 
+.mobile-pagination :deep(.ant-pagination) {
+  justify-content: center;
+}
+
+.mobile-pagination :deep(.ant-pagination-item) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  font-size: 12px;
+}
+
+/* 加载和空状态样式 */
+.loading-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+@media (max-width: 768px) {
+  .loading-container,
+  .empty-container {
+    padding: 30px 15px;
+  }
+}
+
+/* 隐藏桌面端表格在移动端 */
+@media (max-width: 768px) {
+  .customer-table {
+    display: none;
+  }
+}
+
+/* 隐藏移动端列表在桌面端 */
+@media (min-width: 769px) {
+  .mobile-customer-list,
+  .mobile-error-list {
+    display: none;
+  }
+}
+
+/* 保持原有桌面端样式 */
+@media (min-width: 769px) {
+  .initialization-container {
+    padding: 32px 48px;
+  }
+  
+  .section-card {
+    padding: 24px 32px;
+    margin-bottom: 32px;
+  }
+  
+  .section-header {
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+  
+  .title-and-summary-mobile {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 16px;
+  }
+  
+  .registration-summary-mobile .count {
+    font-size: 24px;
+  }
+}
+
+/* 响应式图表配置 */
+:deep(.echarts) {
+  width: 100% !important;
+}
+
+/* 选中行样式 */
 :deep(.selected-row) {
   background-color: #e6f7ff;
+}
+
+/* 表格行点击样式 */
+.customer-table :deep(.ant-table-row) {
+  cursor: pointer;
 }
 </style>

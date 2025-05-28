@@ -28,11 +28,6 @@ const routes = [
         path: 'edm',
         name: 'EDM',
         component: EdmPage
-      },
-      {
-        path: 'model-config-selection',
-        name: 'ModelConfigSelection',
-        component: () => import('../components/ModelConfigSelection.vue')
       }
     ]
   },

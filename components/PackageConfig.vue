@@ -1,13 +1,62 @@
 <template>
-  <div class="package-config">
+  <div class="package-config" :class="{ 'mobile-layout': isMobile }">
     <div class="section-card">
       <div class="section-header">
-        <span class="section-title">Package Configuration</span>
-        <a-button type="primary" @click="showAddModal">
-          Add Package
+        <span class="section-title">套餐配置</span>
+        <a-button type="primary" @click="showAddModal" :size="isMobile ? 'middle' : 'default'">
+          <PlusOutlined />
+          添加套餐
         </a-button>
       </div>
+      <div v-if="isMobile" class="mobile-package-list">
+        <div v-if="loading" class="loading-container">
+          <a-spin tip="加载套餐数据中..." />
+        </div>
+        <div v-else>
+          <div 
+            v-for="pkg in packages" 
+            :key="pkg.packageFeatureId"
+            class="package-card"
+          >
+            <div class="package-header">
+              <div class="package-name">{{ pkg.packageName }}</div>
+              <div class="package-price">${{ pkg.packagePrice }}</div>
+            </div>
+            
+            <div class="package-details">
+              <div class="detail-row">
+                <span class="label">类型:</span>
+                <span class="value">{{ pkg.packageType === 1 ? '月付' : '年付' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Stripe产品:</span>
+                <span class="value">{{ getPriceProductName(pkg.priceId) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">状态:</span>
+                <a-tag :color="pkg.active ? 'green' : 'red'">
+                  {{ pkg.active ? '激活' : '未激活' }}
+                </a-tag>
+              </div>
+              <div class="detail-row">
+                <span class="label">更新时间:</span>
+                <span class="value">{{ new Date(pkg.updatedAt).toLocaleDateString('zh-CN') }}</span>
+              </div>
+            </div>
+            
+            <div class="package-actions">
+              <a-button type="default" size="small" @click="handleEdit(pkg)">
+                编辑
+              </a-button>
+              <a-button type="primary" danger size="small" @click="handleDelete(pkg)">
+                删除
+              </a-button>
+            </div>
+          </div>
+        </div>
+      </div>
       <a-table
+        v-else
         :columns="columns"
         :data-source="packages"
         :row-key="record => record.packageFeatureId"
@@ -17,13 +66,13 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'action'">
             <a-space>
-              <a-button type="link" @click="handleEdit(record)">Edit</a-button>
-              <a-button type="link" danger @click="handleDelete(record)">Delete</a-button>
+              <a-button type="link" @click="handleEdit(record)">编辑</a-button>
+              <a-button type="link" danger @click="handleDelete(record)">删除</a-button>
             </a-space>
           </template>
           <template v-if="column.key === 'active'">
             <a-tag :color="record.active ? 'green' : 'red'">
-              {{ record.active ? 'Active' : 'Inactive' }}
+              {{ record.active ? '激活' : '未激活' }}
             </a-tag>
           </template>
           <template v-if="column.key === 'price'">
@@ -35,14 +84,56 @@
 
     <div class="section-card" style="margin-top: 32px;">
       <div class="section-header">
-        <span class="section-title">Trial Code Management</span>
+        <span class="section-title">试用码管理</span>
       </div>
-      <a-form layout="inline" :model="trialForm" class="trial-form">
-        <a-form-item label="Package">
+      <div v-if="isMobile" class="mobile-trial-form">
+        <div class="form-group">
+          <label>套餐</label>
+          <a-select 
+            v-model:value="trialForm.packageId" 
+            placeholder="选择套餐"
+            style="width: 100%;"
+          >
+            <a-select-option 
+              v-for="pkg in packages" 
+              :key="pkg.packageFeatureId" 
+              :value="pkg.packageFeatureId"
+            >
+              {{ pkg.packageName }}
+            </a-select-option>
+          </a-select>
+        </div>
+        
+        <div class="form-group">
+          <label>天数</label>
+          <a-input-number 
+            v-model:value="trialForm.days" 
+            :min="1" 
+            style="width: 100%;"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>名称</label>
+          <a-input 
+            v-model:value="trialForm.name" 
+            placeholder="试用名称"
+            style="width: 100%;"
+          />
+        </div>
+        
+        <div class="form-group">
+          <a-button type="primary" @click="createTrialCode" block>
+            生成试用码
+          </a-button>
+        </div>
+      </div>
+      <a-form v-else layout="inline" :model="trialForm" class="trial-form">
+        <a-form-item label="套餐">
           <a-select 
             v-model:value="trialForm.packageId" 
             style="width: 200px;"
-            placeholder="Select package"
+            placeholder="选择套餐"
           >
             <a-select-option 
               v-for="pkg in packages" 
@@ -53,28 +144,92 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="Days">
+        <a-form-item label="天数">
           <a-input-number 
             v-model:value="trialForm.days" 
             :min="1" 
             style="width: 100px;"
           />
         </a-form-item>
-        <a-form-item label="Name">
+        <a-form-item label="名称">
           <a-input 
             v-model:value="trialForm.name" 
-            placeholder="Trial name"
+            placeholder="试用名称"
             style="width: 200px;"
           />
         </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="createTrialCode">
-            Generate Trial Code
+            生成试用码
           </a-button>
         </a-form-item>
       </a-form>
       <a-divider />
+      <div v-if="isMobile" class="mobile-trial-list">
+        <div v-if="trialLoading" class="loading-container">
+          <a-spin tip="加载试用码中..." />
+        </div>
+        <div v-else>
+          <div 
+            v-for="trial in trialCodes" 
+            :key="trial.trialId"
+            class="trial-card"
+          >
+            <div class="trial-header">
+              <div class="trial-code">{{ trial.inviteCode }}</div>
+              <a-tag :color="trial.active ? 'green' : 'red'">
+                {{ trial.active ? '可用' : '已使用' }}
+              </a-tag>
+            </div>
+            
+            <div class="trial-details">
+              <div class="detail-row">
+                <span class="label">试用名称:</span>
+                <span class="value">{{ trial.trialName }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">天数:</span>
+                <span class="value">{{ trial.duration }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">描述:</span>
+                <span class="value">{{ trial.description || '-' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">创建时间:</span>
+                <span class="value">{{ new Date(trial.created_at).toLocaleDateString('zh-CN') }}</span>
+              </div>
+            </div>
+            
+            <div class="trial-actions">
+              <a-button 
+                type="primary" 
+                danger 
+                size="small"
+                @click="handleDeleteTrial(trial)"
+                :disabled="!trial.active"
+              >
+                删除
+              </a-button>
+            </div>
+          </div>
+          
+          <div class="mobile-pagination">
+            <a-pagination
+              v-model:current="pagination.current"
+              :total="pagination.total"
+              :pageSize="pagination.pageSize"
+              :showSizeChanger="false"
+              :showQuickJumper="false"
+              :showTotal="(total) => `共 ${total} 条`"
+              @change="handlePaginationChange"
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
       <a-table 
+        v-else
         :columns="trialColumns" 
         :data-source="trialCodes" 
         :loading="trialLoading"
@@ -83,8 +238,8 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.active ? 'red' : 'green'">
-              {{ record.active ? 'Used' : 'Available' }}
+            <a-tag :color="record.active ? 'green' : 'red'">
+              {{ record.active ? '可用' : '已使用' }}
             </a-tag>
           </template>
           <template v-if="column.key === 'action'">
@@ -94,7 +249,7 @@
               @click="handleDeleteTrial(record)"
               :disabled="!record.active"
             >
-              Delete
+              删除
             </a-button>
           </template>
         </template>
@@ -103,75 +258,98 @@
 
     <a-modal
       v-model:open="modalVisible"
-      :title="modalMode === 'add' ? 'Add Package' : 'Edit Package'"
+      :title="modalMode === 'add' ? '添加套餐' : '编辑套餐'"
       @ok="handleModalOk"
       @cancel="handleModalCancel"
-      width="800px"
+      :width="isMobile ? '95%' : '800px'"
       class="package-modal"
+      :class="{ 'mobile-modal': isMobile }"
     >
-      <a-form :model="formState" :rules="rules" ref="formRef" layout="vertical">
-        <a-form-item label="Package Name" name="packageName">
-          <a-input v-model:value="formState.packageName" />
-        </a-form-item>
-        <a-form-item label="Package Price" name="packagePrice">
-          <a-input-number v-model:value="formState.packagePrice" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Package Type" name="packageType">
-          <a-select v-model:value="formState.packageType">
-            <a-select-option :value="1">Monthly</a-select-option>
-            <a-select-option :value="2">Annual</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="Price ID" name="priceId">
-          <a-select v-model:value="formState.priceId" placeholder="Select price ID">
-            <a-select-option v-for="price in priceList" :key="price.priceId" :value="price.priceId">
-              {{ price.productName }} ({{ price.productDesc }}) - ${{ (price.price / 100).toFixed(2) }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="Manual Outline Generation Limit" name="manualOutlineGeneratorLimit">
-          <a-input-number v-model:value="formState.manualOutlineGeneratorLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="AI Outline Generation Limit" name="aiOutlineGeneratorLimit">
-          <a-input-number v-model:value="formState.aiOutlineGeneratorLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Page Generation Limit" name="pageGeneratorLimit">
-          <a-input-number v-model:value="formState.pageGeneratorLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Free Deployment Page Limit" name="freeDeploymentPageLimit">
-          <a-input-number v-model:value="formState.freeDeploymentPageLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Internal Link Storage Limit" name="internalLinkStorageLimit">
-          <a-input-number v-model:value="formState.internalLinkStorageLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Image Storage Limit" name="imageStorageLimit">
-          <a-input-number v-model:value="formState.imageStorageLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Video Storage Limit" name="videoStorageLimit">
-          <a-input-number v-model:value="formState.videoStorageLimit" :min="0" style="width: 100%;" />
-        </a-form-item>
-        <a-form-item label="Package Description" name="packageDescription">
-          <a-textarea v-model:value="formState.packageDescription" placeholder="Enter package features, one per line" />
-        </a-form-item>
-        <a-form-item label="Additional Benefits" name="additionalBenefits">
-          <a-button type="dashed" @click="addBenefit" block>
-            <plus-outlined /> Add Benefit
-          </a-button>
-          <div v-for="(benefit, index) in formState.additionalBenefits" :key="index" style="margin-top: 8px;">
-            <a-input v-model:value="formState.additionalBenefits[index]">
-              <template #suffix>
-                <minus-circle-outlined @click="removeBenefit(index)" style="cursor: pointer" />
-              </template>
-            </a-input>
+      <div class="modal-content" :class="{ 'mobile-modal-content': isMobile }">
+        <a-form :model="formState" :rules="rules" ref="formRef" layout="vertical">
+          <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+            <a-form-item label="套餐名称" name="packageName">
+              <a-input v-model:value="formState.packageName" />
+            </a-form-item>
+            <a-form-item label="套餐价格" name="packagePrice">
+              <a-input-number v-model:value="formState.packagePrice" :min="0" style="width: 100%;" />
+            </a-form-item>
           </div>
-        </a-form-item>
-      </a-form>
+          
+          <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+            <a-form-item label="套餐类型" name="packageType">
+              <a-select v-model:value="formState.packageType">
+                <a-select-option :value="1">月付</a-select-option>
+                <a-select-option :value="2">年付</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="价格ID" name="priceId">
+              <a-select v-model:value="formState.priceId" placeholder="选择价格ID">
+                <a-select-option v-for="price in priceList" :key="price.priceId" :value="price.priceId">
+                  {{ price.productName }} ({{ price.productDesc }}) - ${{ (price.price / 100).toFixed(2) }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </div>
+          
+          <div class="limits-section">
+            <h4>功能限制配置</h4>
+            <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+              <a-form-item label="手动大纲生成限制" name="manualOutlineGeneratorLimit">
+                <a-input-number v-model:value="formState.manualOutlineGeneratorLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+              <a-form-item label="AI大纲生成限制" name="aiOutlineGeneratorLimit">
+                <a-input-number v-model:value="formState.aiOutlineGeneratorLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+            </div>
+            
+            <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+              <a-form-item label="页面生成限制" name="pageGeneratorLimit">
+                <a-input-number v-model:value="formState.pageGeneratorLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+              <a-form-item label="免费部署页面限制" name="freeDeploymentPageLimit">
+                <a-input-number v-model:value="formState.freeDeploymentPageLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+            </div>
+            
+            <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+              <a-form-item label="内部链接存储限制" name="internalLinkStorageLimit">
+                <a-input-number v-model:value="formState.internalLinkStorageLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+              <a-form-item label="图片存储限制" name="imageStorageLimit">
+                <a-input-number v-model:value="formState.imageStorageLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
+            </div>
+            
+            <a-form-item label="视频存储限制" name="videoStorageLimit">
+              <a-input-number v-model:value="formState.videoStorageLimit" :min="0" style="width: 100%;" />
+            </a-form-item>
+          </div>
+          
+          <a-form-item label="套餐描述" name="packageDescription">
+            <a-textarea v-model:value="formState.packageDescription" placeholder="输入套餐功能，每行一个" :rows="isMobile ? 3 : 4" />
+          </a-form-item>
+          
+          <a-form-item label="额外福利" name="additionalBenefits">
+            <a-button type="dashed" @click="addBenefit" block>
+              <plus-outlined /> 添加福利
+            </a-button>
+            <div v-for="(benefit, index) in formState.additionalBenefits" :key="index" style="margin-top: 8px;">
+              <a-input v-model:value="formState.additionalBenefits[index]">
+                <template #suffix>
+                  <minus-circle-outlined @click="removeBenefit(index)" style="cursor: pointer" />
+                </template>
+              </a-input>
+            </div>
+          </a-form-item>
+        </a-form>
+      </div>
     </a-modal>
   </div>
 </template>
 
 <script>
-import { ref, reactive, onMounted, h, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, h, computed } from 'vue';
 import { message, Modal, Tag } from 'ant-design-vue';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue';
 import { api } from '../api/api';
@@ -183,6 +361,24 @@ export default {
     MinusCircleOutlined,
   },
   setup() {
+    const isMobile = ref(false);
+
+    const checkDevice = () => {
+      isMobile.value = window.innerWidth <= 768;
+    };
+
+    onMounted(() => {
+      checkDevice();
+      window.addEventListener('resize', checkDevice);
+      fetchPackages();
+      fetchTrialCodes();
+      fetchPriceList();
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', checkDevice);
+    });
+
     const columns = [
       {
         title: 'Package Name',
@@ -346,12 +542,6 @@ export default {
       }
     };
 
-    onMounted(() => {
-      fetchPackages();
-      fetchTrialCodes();
-      fetchPriceList();
-    });
-
     const formState = reactive({
       packageName: '',
       packagePrice: 0,
@@ -514,10 +704,15 @@ export default {
       });
     };
 
-    // Add this computed property to map priceIds to product names
     const getPriceProductName = (priceId) => {
       const price = priceList.value.find(p => p.priceId === priceId);
       return price ? `${price.productName} (${price.productDesc})` : 'Not linked';
+    };
+
+    const handlePaginationChange = (page, pageSize) => {
+      pagination.value.current = page;
+      pagination.value.pageSize = pageSize;
+      fetchTrialCodes();
     };
 
     return {
@@ -548,6 +743,8 @@ export default {
       priceList,
       fetchPriceList,
       getPriceProductName,
+      isMobile,
+      handlePaginationChange,
     };
   },
 };
@@ -599,5 +796,260 @@ export default {
 
 :deep(.ant-table-tbody > tr) {
   cursor: pointer;
+}
+
+.mobile-layout {
+  padding: 0;
+}
+
+.mobile-layout .section-card {
+  margin: 0 0 16px 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 8px solid #f5f5f5;
+}
+
+.mobile-package-list {
+  margin-top: 16px;
+}
+
+.package-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.package-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.package-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.package-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.package-details {
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.detail-row .label {
+  color: #666;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.detail-row .value {
+  color: #333;
+  text-align: right;
+  word-break: break-all;
+}
+
+.package-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.mobile-trial-form {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #333;
+}
+
+.mobile-trial-list {
+  margin-top: 16px;
+}
+
+.trial-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.trial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.trial-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.trial-details {
+  margin-bottom: 16px;
+}
+
+.trial-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mobile-pagination {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.mobile-pagination :deep(.ant-pagination) {
+  justify-content: center;
+}
+
+.mobile-pagination :deep(.ant-pagination-item) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  font-size: 12px;
+}
+
+.mobile-modal {
+  margin: 0;
+  padding-top: 20px;
+  max-width: none;
+}
+
+.mobile-modal :deep(.ant-modal-content) {
+  margin: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.mobile-modal-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mobile-form-row {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.limits-section {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background: #fafafa;
+}
+
+.limits-section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .section-header .ant-btn {
+    width: 100%;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .main-table {
+    display: none;
+  }
+  
+  .trial-form {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-package-list,
+  .mobile-trial-form,
+  .mobile-trial-list {
+    display: none;
+  }
+}
+
+.section-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.main-table {
+  margin-top: 16px;
+}
+
+.trial-form {
+  margin-bottom: 20px;
+}
+
+.package-modal :deep(.ant-modal-content) {
+  border-radius: 12px;
 }
 </style> 
