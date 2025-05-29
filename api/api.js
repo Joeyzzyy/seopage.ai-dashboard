@@ -450,6 +450,21 @@ const getAlternativelyErrors = async (params = {}) => {
     }
 };
 
+// 获取订阅计数接口
+const getSubscriptionCount = async (apiKey) => {
+    try {
+        const response = await apiClient.get('/events/subscription/count', {
+            headers: {
+                'api-key': apiKey
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get subscription count error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -478,4 +493,5 @@ export const api = {
     getPriceList,
     getErrorDashboard,
     getAlternativelyErrors,
+    getSubscriptionCount,
 };

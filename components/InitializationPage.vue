@@ -1,5 +1,43 @@
 <template>
   <div class="initialization-container">
+    <!-- SSE Connection Status -->
+    <a-card class="section-card">
+      <div class="section-header">
+        <div class="section-title-mobile">
+          <span class="section-title">任务连接状态</span>
+        </div>
+        <div class="header-actions-mobile">
+          <a-button 
+            type="primary" 
+            size="small" 
+            :loading="sseStatusLoading"
+            @click="fetchSSEStatus"
+          >
+            刷新状态
+          </a-button>
+        </div>
+      </div>
+      <div v-if="sseStatusLoading" class="loading-container">
+        <a-spin tip="获取SSE连接状态中..." />
+      </div>
+      <div v-else class="sse-status-content">
+        <div class="status-item">
+          <span class="status-label">当前活跃任务链接数:</span>
+          <span class="status-value active-connections">{{ sseConnectionCount }}</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">最后更新时间:</span>
+          <span class="status-value">{{ lastSSEUpdateTime }}</span>
+        </div>
+        <div class="status-indicator" :class="{ 'online': sseConnectionCount > 0, 'offline': sseConnectionCount === 0 }">
+          <span class="indicator-dot"></span>
+          <span class="indicator-text">
+            {{ sseConnectionCount > 0 ? '服务正常' : '无活跃连接' }}
+          </span>
+        </div>
+      </div>
+    </a-card>
+
     <!-- Error Monitoring Dashboard -->
     <a-card class="section-card">
       <div class="section-header">
@@ -1653,12 +1691,40 @@ const handleCustomerSelect = (customer) => {
   }
 }
 
+// 新增：SSE连接状态相关状态
+const sseStatusLoading = ref(false)
+const sseConnectionCount = ref(0)
+const lastSSEUpdateTime = ref('')
+
+// 新增：获取SSE连接状态
+const fetchSSEStatus = async () => {
+  sseStatusLoading.value = true
+  try {
+    // 假设API密钥从环境变量或配置中获取
+    const apiKey = 'Mz7bHCyjvSqzOTfWHjUe6VO9kkSVnQvoxI2zgw3O894' // 这里需要替换为实际的API密钥
+    const response = await api.getSubscriptionCount(apiKey)
+    
+    sseConnectionCount.value = response.connected_total || 0
+    lastSSEUpdateTime.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
+    
+    console.log('SSE Status:', response)
+  } catch (error) {
+    console.error('Failed to fetch SSE status:', error)
+    message.error('获取SSE连接状态失败')
+    sseConnectionCount.value = 0
+    lastSSEUpdateTime.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
+  } finally {
+    sseStatusLoading.value = false
+  }
+}
+
 // 组件挂载时执行
 onMounted(async () => {
   checkDevice()
   window.addEventListener('resize', checkDevice)
   
   console.log('Component mounted, fetching initial data...')
+  await fetchSSEStatus() // 新增：获取SSE状态
   await fetchErrorDashboardData()
   await fetchCustomerData()
   await fetchPackageList()
@@ -2066,5 +2132,117 @@ onUnmounted(() => {
 /* 表格行点击样式 */
 .customer-table :deep(.ant-table-row) {
   cursor: pointer;
+}
+
+/* SSE状态样式 */
+.sse-status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 769px) {
+  .sse-status-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.status-value {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.active-connections {
+  font-size: 18px;
+  color: #1890ff;
+  background-color: #e6f7ff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid #91d5ff;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.online {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.status-indicator.offline {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.online .indicator-dot {
+  background-color: #52c41a;
+  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+}
+
+.status-indicator.offline .indicator-dot {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+}
+
+.indicator-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-indicator.online .indicator-text {
+  color: #52c41a;
+}
+
+.status-indicator.offline .indicator-text {
+  color: #ff4d4f;
+}
+
+@media (max-width: 768px) {
+  .sse-status-content {
+    gap: 8px;
+  }
+  
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .active-connections {
+    font-size: 16px;
+  }
+  
+  .status-indicator {
+    align-self: stretch;
+    justify-content: center;
+  }
 }
 </style>
