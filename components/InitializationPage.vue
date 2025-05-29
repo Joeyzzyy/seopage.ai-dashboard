@@ -150,6 +150,51 @@
       <div class="section-header">
         <span class="section-title">客户管理</span>
         <div class="header-actions-mobile">
+          <!-- 新增：筛选条件 -->
+          <div class="filter-section">
+            <div class="filter-row">
+              <span class="filter-label">任务状态筛选:</span>
+              <a-select
+                v-model:value="taskStatusFilter"
+                class="filter-select"
+                placeholder="选择任务状态"
+                allowClear
+                @change="handleFilterChange"
+              >
+                <a-select-option value="all">全部客户</a-select-option>
+                <a-select-option value="hasTask">有发起过任务</a-select-option>
+                <a-select-option value="noTask">未发起过任务</a-select-option>
+              </a-select>
+            </div>
+            <div class="filter-row">
+              <span class="filter-label">页面生成筛选:</span>
+              <a-select
+                v-model:value="resultStatusFilter"
+                class="filter-select"
+                placeholder="选择生成状态"
+                allowClear
+                @change="handleFilterChange"
+              >
+                <a-select-option value="all">全部客户</a-select-option>
+                <a-select-option value="hasResult">有生成成功页面</a-select-option>
+                <a-select-option value="noResult">未生成成功页面</a-select-option>
+              </a-select>
+            </div>
+            <div class="filter-row">
+              <span class="filter-label">部署状态筛选:</span>
+              <a-select
+                v-model:value="deployStatusFilter"
+                class="filter-select"
+                placeholder="选择部署状态"
+                allowClear
+                @change="handleFilterChange"
+              >
+                <a-select-option value="all">全部客户</a-select-option>
+                <a-select-option value="hasDeploy">有部署过页面</a-select-option>
+                <a-select-option value="noDeploy">未部署过页面</a-select-option>
+              </a-select>
+            </div>
+          </div>
           <a-input-search
             v-model:value="searchEmail"
             placeholder="搜索邮箱"
@@ -679,7 +724,12 @@ const onSelectChange = (selectedRowKeys) => {
 const searchEmail = ref('') // 搜索关键词
 const originalCustomers = ref([]) // 保存原始客户数据
 
-// 修改 fetchCustomerData 函数
+// 新增：筛选条件状态
+const taskStatusFilter = ref('all')
+const resultStatusFilter = ref('all')
+const deployStatusFilter = ref('all')
+
+// 修改 fetchCustomerData 函数，添加筛选参数
 const fetchCustomerData = async (page = 1) => {
   loading.value = true;
   selectedCustomerId.value = null;
@@ -687,17 +737,22 @@ const fetchCustomerData = async (page = 1) => {
   errorLogs.value = [];
 
   try {
+    // 构建筛选参数
+    const filterParams = buildFilterParams();
+    
     const customerResponse = await api.getCustomerList({ 
       page, 
       limit: pagination.value.pageSize,
-      email: searchEmail.value // 添加 email 参数
+      email: searchEmail.value,
+      ...filterParams // 添加筛选参数
     });
+    
     const rawCustomers = customerResponse.data || [];
     pagination.value.total = customerResponse.TotalCount || 0;
     pagination.value.current = page;
 
     const customersWithStatus = rawCustomers.map(c => ({ ...c, hasRecentErrors: null }));
-    originalCustomers.value = customersWithStatus; // 保存原始数据
+    originalCustomers.value = customersWithStatus;
     customers.value = customersWithStatus;
 
     // Prepare error check promises
@@ -743,6 +798,43 @@ const fetchCustomerData = async (page = 1) => {
   } finally {
     loading.value = false;
   }
+};
+
+// 新增：构建筛选参数的函数
+const buildFilterParams = () => {
+  const params = {};
+  
+  // 任务状态筛选
+  if (taskStatusFilter.value === 'hasTask') {
+    params.minWebsiteCount = 1; // 至少有1个任务
+  } else if (taskStatusFilter.value === 'noTask') {
+    params.minWebsiteCount = 0; // 最小0个任务
+    params.maxWebsiteCount = 0; // 最大0个任务
+  }
+  
+  // 页面生成状态筛选
+  if (resultStatusFilter.value === 'hasResult') {
+    params.minResultCount = 1; // 至少有1个生成成功的页面
+  } else if (resultStatusFilter.value === 'noResult') {
+    params.minResultCount = 0; // 最小0个生成页面
+    params.maxResultCount = 0; // 最大0个生成页面
+  }
+  
+  // 部署状态筛选
+  if (deployStatusFilter.value === 'hasDeploy') {
+    params.minDeployCount = 1; // 至少有1个部署
+  } else if (deployStatusFilter.value === 'noDeploy') {
+    params.minDeployCount = 0; // 最小0个部署
+    params.maxDeployCount = 0; // 最大0个部署
+  }
+  
+  return params;
+};
+
+// 新增：处理筛选条件变化
+const handleFilterChange = () => {
+  pagination.value.current = 1; // 重置到第一页
+  fetchCustomerData(1);
 };
 
 // 修改: 处理搜索
@@ -2425,5 +2517,64 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 700;
   color: #1890ff;
+}
+
+/* 筛选条件样式 */
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+@media (min-width: 769px) {
+  .filter-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 0;
+    margin-right: 16px;
+  }
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.filter-select {
+  min-width: 140px;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .filter-select {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .header-actions-mobile {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 </style>

@@ -71,7 +71,13 @@ const getCustomerList = async (params = {}) => {
             params: {
                 email: params.email,
                 page: params.page,
-                limit: params.limit
+                limit: params.limit,
+                minWebsiteCount: params.minWebsiteCount,
+                maxWebsiteCount: params.maxWebsiteCount,
+                minResultCount: params.minResultCount,
+                maxResultCount: params.maxResultCount,
+                minDeployCount: params.minDeployCount,
+                maxDeployCount: params.maxDeployCount
             }
         });
         return response.data;
