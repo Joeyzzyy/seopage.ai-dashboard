@@ -1425,7 +1425,7 @@ const registerChartOption = computed(() => {
 // 获取注册用户数据
 const fetchRegisterStats = async () => {
   try {
-    const res = await api.getCustomerList({ page: 1, limit: 1000 })
+    const res = await api.getCustomerList({ page: 1, limit: 2000 })
     registerStats.value = (res.data || []).map(item => ({
       registerTime: item.registerTime,
       inviteCode: item.inviteCode
