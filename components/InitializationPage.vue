@@ -1,10 +1,51 @@
 <template>
   <div class="initialization-container">
+    <!-- 新增：客户统计信息 -->
+    <a-card class="section-card">
+      <div class="section-header">
+        <div class="section-title-mobile">
+          <span class="section-title">客户统计信息</span>
+        </div>
+        <div class="header-actions-mobile">
+          <a-button 
+            type="primary" 
+            size="small" 
+            :loading="customerStatisticLoading"
+            @click="fetchCustomerStatistic"
+          >
+            刷新统计
+          </a-button>
+        </div>
+      </div>
+      <div v-if="customerStatisticLoading" class="loading-container">
+        <a-spin tip="获取客户统计信息中..." />
+      </div>
+      <div v-else-if="customerStatisticData && customerStatisticData.data" class="statistic-content">
+        <!-- 移动端使用卡片布局 -->
+        <div class="statistic-grid-mobile" v-if="isMobile">
+          <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-card-mobile">
+            <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
+            <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
+          </div>
+        </div>
+        <!-- 桌面端使用网格布局 -->
+        <div class="statistic-grid-desktop" v-else>
+          <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-item-desktop">
+            <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
+            <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty-container">
+        <a-empty description="暂无统计数据" />
+      </div>
+    </a-card>
+
     <!-- SSE Connection Status -->
     <a-card class="section-card">
       <div class="section-header">
         <div class="section-title-mobile">
-          <span class="section-title">任务连接状态</span>
+          <span class="section-title">系统状态监控</span>
         </div>
         <div class="header-actions-mobile">
           <a-button 
@@ -17,25 +58,25 @@
           </a-button>
         </div>
       </div>
-      <div v-if="sseStatusLoading" class="loading-container">
-        <a-spin tip="获取SSE连接状态中..." />
-      </div>
-      <div v-else class="sse-status-content">
+      
+      <div class="sse-status-content">
         <div class="status-item">
-          <span class="status-label">当前活跃任务链接数:</span>
-          <span class="status-value active-connections">{{ sseConnectionCount }}</span>
+          <span class="status-label">SSE连接数:</span>
+          <span class="active-connections">{{ sseConnectionCount }}</span>
         </div>
         <div class="status-item">
-          <span class="status-label">最后更新时间:</span>
+          <span class="status-label">最后更新:</span>
           <span class="status-value">{{ lastSSEUpdateTime }}</span>
         </div>
-        <div class="status-indicator" :class="{ 'online': sseConnectionCount > 0, 'offline': sseConnectionCount === 0 }">
-          <span class="indicator-dot"></span>
-          <span class="indicator-text">
-            {{ sseConnectionCount > 0 ? '服务正常' : '无活跃连接' }}
-          </span>
+        <div class="status-item">
+          <div :class="['status-indicator', sseConnectionCount > 0 ? 'online' : 'offline']">
+            <span class="indicator-dot"></span>
+            <span class="indicator-text">{{ sseConnectionCount > 0 ? '服务在线' : '服务离线' }}</span>
+          </div>
         </div>
       </div>
+      
+      <!-- 移除重复的通知偏好统计显示 -->
     </a-card>
 
     <!-- Error Monitoring Dashboard -->
@@ -1718,13 +1759,52 @@ const fetchSSEStatus = async () => {
   }
 }
 
-// 组件挂载时执行
+// 新增：客户统计相关状态
+const customerStatisticLoading = ref(false)
+const customerStatisticData = ref(null)
+
+// 新增：获取客户统计信息
+const fetchCustomerStatistic = async () => {
+  customerStatisticLoading.value = true
+  try {
+    const response = await api.getCustomerStatistic()
+    customerStatisticData.value = response
+    console.log('Customer Statistic Data:', response)
+  } catch (error) {
+    console.error('Failed to fetch customer statistic:', error)
+    message.error('获取客户统计信息失败')
+    customerStatisticData.value = null
+  } finally {
+    customerStatisticLoading.value = false
+  }
+}
+
+// 新增：格式化统计标签
+const formatStatisticLabel = (key) => {
+  const labelMap = {
+    unsubscribeDeployOne: '未订阅，有部署页面的客户数',
+    unsubscribeTaskOne: '未订阅，有成功生成页面的客户数', 
+    unsubscribedNoTask: '未订阅，未跑过一次任务的客户数',
+  }
+  return labelMap[key] || key
+}
+
+// 新增：格式化统计值
+const formatStatisticValue = (value) => {
+  if (typeof value === 'number') {
+    return value.toLocaleString() // 添加千分位分隔符
+  }
+  return value || '-'
+}
+
+// 修改组件挂载时的初始化逻辑
 onMounted(async () => {
   checkDevice()
   window.addEventListener('resize', checkDevice)
   
   console.log('Component mounted, fetching initial data...')
-  await fetchSSEStatus() // 新增：获取SSE状态
+  await fetchCustomerStatistic() // 新增：获取客户统计
+  await fetchSSEStatus()
   await fetchErrorDashboardData()
   await fetchCustomerData()
   await fetchPackageList()
@@ -2244,5 +2324,106 @@ onUnmounted(() => {
     align-self: stretch;
     justify-content: center;
   }
+}
+
+/* 客户统计样式 */
+.statistic-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.statistic-grid-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.statistic-grid-desktop {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.statistic-card-mobile {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.statistic-item-desktop {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 20px 24px;
+  text-align: center;
+  min-width: 180px;
+}
+
+.statistic-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.statistic-value {
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .statistic-value {
+    font-size: 20px;
+  }
+  
+  .statistic-card-mobile {
+    padding: 12px;
+  }
+}
+
+/* 通知统计样式 */
+.notification-stats-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.stats-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.notification-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.notification-stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1890ff;
 }
 </style>

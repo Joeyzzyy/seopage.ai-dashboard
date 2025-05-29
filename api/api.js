@@ -465,6 +465,17 @@ const getSubscriptionCount = async (apiKey) => {
     }
 };
 
+// 新增：获取用户任务统计信息（管理员接口）
+const getCustomerStatistic = async () => {
+    try {
+      const response = await apiClient.get('/admin/customer/statistic');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get customer statistic:', error);
+      return null;
+    }
+  };
+
 // 修改导出对象
 export const api = {
     login,
@@ -494,4 +505,5 @@ export const api = {
     getErrorDashboard,
     getAlternativelyErrors,
     getSubscriptionCount,
+    getCustomerStatistic
 };
