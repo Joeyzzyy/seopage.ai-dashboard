@@ -172,55 +172,144 @@
       <div class="section-header">
         <span class="section-title">客户管理</span>
         <div class="header-actions-mobile">
-          <!-- 新增：筛选条件 -->
-          <div class="filter-section">
-            <div class="filter-row">
-              <span class="filter-label">任务状态筛选:</span>
-              <a-select
-                v-model:value="taskStatusFilter"
-                class="filter-select"
-                placeholder="选择任务状态"
-                allowClear
-                @change="handleFilterChange"
-              >
-                <a-select-option value="all">全部客户</a-select-option>
-                <a-select-option value="hasTask">有发起过任务</a-select-option>
-                <a-select-option value="noTask">未发起过任务</a-select-option>
-              </a-select>
+          <!-- 优化：筛选器 -->
+          <div class="filter-container">
+            <div class="filter-header">
+              <span class="filter-title">
+                <FilterOutlined />
+                筛选条件
+              </span>
+              <div class="filter-header-actions">
+                <a-button size="small" @click="clearFilters" :disabled="!hasActiveFilters">
+                  清空
+                </a-button>
+                <a-button 
+                  type="primary" 
+                  size="small" 
+                  @click="applyFilters"
+                  :loading="loading"
+                >
+                  应用
+                </a-button>
+              </div>
             </div>
-            <div class="filter-row">
-              <span class="filter-label">页面生成筛选:</span>
-              <a-select
-                v-model:value="resultStatusFilter"
-                class="filter-select"
-                placeholder="选择生成状态"
-                allowClear
-                @change="handleFilterChange"
-              >
-                <a-select-option value="all">全部客户</a-select-option>
-                <a-select-option value="hasResult">有生成成功页面</a-select-option>
-                <a-select-option value="noResult">未生成成功页面</a-select-option>
-              </a-select>
-            </div>
-            <div class="filter-row">
-              <span class="filter-label">部署状态筛选:</span>
-              <a-select
-                v-model:value="deployStatusFilter"
-                class="filter-select"
-                placeholder="选择部署状态"
-                allowClear
-                @change="handleFilterChange"
-              >
-                <a-select-option value="all">全部客户</a-select-option>
-                <a-select-option value="hasDeploy">有部署过页面</a-select-option>
-                <a-select-option value="noDeploy">未部署过页面</a-select-option>
-              </a-select>
+            
+            <div class="filter-content">
+              <!-- 任务数量筛选 -->
+              <div class="filter-group">
+                <div class="filter-group-header">
+                  <a-checkbox 
+                    v-model:checked="enableWebsiteCountFilter"
+                    @change="handleFilterChange"
+                    class="filter-checkbox"
+                  >
+                    <span class="filter-group-title">任务数量</span>
+                  </a-checkbox>
+                </div>
+                <div class="filter-group-content" :class="{ disabled: !enableWebsiteCountFilter }">
+                  <div class="range-inputs">
+                    <a-input-number
+                      v-model:value="minWebsiteCount"
+                      class="range-input"
+                      placeholder="最小"
+                      :min="0"
+                      :disabled="!enableWebsiteCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                    <span class="range-separator">至</span>
+                    <a-input-number
+                      v-model:value="maxWebsiteCount"
+                      class="range-input"
+                      placeholder="最大"
+                      :min="0"
+                      :disabled="!enableWebsiteCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 生成页面数筛选 -->
+              <div class="filter-group">
+                <div class="filter-group-header">
+                  <a-checkbox 
+                    v-model:checked="enableResultCountFilter"
+                    @change="handleFilterChange"
+                    class="filter-checkbox"
+                  >
+                    <span class="filter-group-title">生成页面数</span>
+                  </a-checkbox>
+                </div>
+                <div class="filter-group-content" :class="{ disabled: !enableResultCountFilter }">
+                  <div class="range-inputs">
+                    <a-input-number
+                      v-model:value="minResultCount"
+                      class="range-input"
+                      placeholder="最小"
+                      :min="0"
+                      :disabled="!enableResultCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                    <span class="range-separator">至</span>
+                    <a-input-number
+                      v-model:value="maxResultCount"
+                      class="range-input"
+                      placeholder="最大"
+                      :min="0"
+                      :disabled="!enableResultCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 部署数量筛选 -->
+              <div class="filter-group">
+                <div class="filter-group-header">
+                  <a-checkbox 
+                    v-model:checked="enableDeployCountFilter"
+                    @change="handleFilterChange"
+                    class="filter-checkbox"
+                  >
+                    <span class="filter-group-title">部署数量</span>
+                  </a-checkbox>
+                </div>
+                <div class="filter-group-content" :class="{ disabled: !enableDeployCountFilter }">
+                  <div class="range-inputs">
+                    <a-input-number
+                      v-model:value="minDeployCount"
+                      class="range-input"
+                      placeholder="最小"
+                      :min="0"
+                      :disabled="!enableDeployCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                    <span class="range-separator">至</span>
+                    <a-input-number
+                      v-model:value="maxDeployCount"
+                      class="range-input"
+                      placeholder="最大"
+                      :min="0"
+                      :disabled="!enableDeployCountFilter"
+                      @change="handleFilterChange"
+                      size="small"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- 搜索框 -->
           <a-input-search
             v-model:value="searchEmail"
             placeholder="搜索邮箱"
-            class="mobile-search"
+            class="search-input"
             @search="handleSearch"
             @change="handleSearchChange"
             allowClear
@@ -519,7 +608,8 @@ import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { 
   CalendarOutlined,
-  WarningOutlined
+  WarningOutlined,
+  FilterOutlined
 } from '@ant-design/icons-vue'
 import { use } from "echarts/core";
 import VChart from "vue-echarts";
@@ -751,6 +841,19 @@ const taskStatusFilter = ref('all')
 const resultStatusFilter = ref('all')
 const deployStatusFilter = ref('all')
 
+// 新增：筛选开关状态
+const enableWebsiteCountFilter = ref(false)
+const enableResultCountFilter = ref(false)
+const enableDeployCountFilter = ref(false)
+
+// 数字范围筛选条件状态
+const minWebsiteCount = ref(null)
+const maxWebsiteCount = ref(null)
+const minResultCount = ref(null)
+const maxResultCount = ref(null)
+const minDeployCount = ref(null)
+const maxDeployCount = ref(null)
+
 // 修改 fetchCustomerData 函数，添加筛选参数
 const fetchCustomerData = async (page = 1) => {
   loading.value = true;
@@ -822,40 +925,77 @@ const fetchCustomerData = async (page = 1) => {
   }
 };
 
-// 新增：构建筛选参数的函数
+// 修改：构建筛选参数的函数
 const buildFilterParams = () => {
   const params = {};
   
-  // 任务状态筛选
-  if (taskStatusFilter.value === 'hasTask') {
-    params.minWebsiteCount = 1; // 至少有1个任务
-  } else if (taskStatusFilter.value === 'noTask') {
-    params.minWebsiteCount = 0; // 最小0个任务
-    params.maxWebsiteCount = 0; // 最大0个任务
+  // 任务数量筛选 - 只有开启时才传递参数
+  if (enableWebsiteCountFilter.value) {
+    if (minWebsiteCount.value !== null && minWebsiteCount.value !== undefined) {
+      params.minWebsiteCount = minWebsiteCount.value;
+    }
+    if (maxWebsiteCount.value !== null && maxWebsiteCount.value !== undefined) {
+      params.maxWebsiteCount = maxWebsiteCount.value;
+    }
   }
   
-  // 页面生成状态筛选
-  if (resultStatusFilter.value === 'hasResult') {
-    params.minResultCount = 1; // 至少有1个生成成功的页面
-  } else if (resultStatusFilter.value === 'noResult') {
-    params.minResultCount = 0; // 最小0个生成页面
-    params.maxResultCount = 0; // 最大0个生成页面
+  // 生成页面数筛选 - 只有开启时才传递参数
+  if (enableResultCountFilter.value) {
+    if (minResultCount.value !== null && minResultCount.value !== undefined) {
+      params.minResultCount = minResultCount.value;
+    }
+    if (maxResultCount.value !== null && maxResultCount.value !== undefined) {
+      params.maxResultCount = maxResultCount.value;
+    }
   }
   
-  // 部署状态筛选
-  if (deployStatusFilter.value === 'hasDeploy') {
-    params.minDeployCount = 1; // 至少有1个部署
-  } else if (deployStatusFilter.value === 'noDeploy') {
-    params.minDeployCount = 0; // 最小0个部署
-    params.maxDeployCount = 0; // 最大0个部署
+  // 部署数量筛选 - 只有开启时才传递参数
+  if (enableDeployCountFilter.value) {
+    if (minDeployCount.value !== null && minDeployCount.value !== undefined) {
+      params.minDeployCount = minDeployCount.value;
+    }
+    if (maxDeployCount.value !== null && maxDeployCount.value !== undefined) {
+      params.maxDeployCount = maxDeployCount.value;
+    }
   }
   
   return params;
 };
 
-// 新增：处理筛选条件变化
+// 修改：处理筛选条件变化（防抖处理）
+let filterTimeout = null;
 const handleFilterChange = () => {
-  pagination.value.current = 1; // 重置到第一页
+  if (filterTimeout) {
+    clearTimeout(filterTimeout);
+  }
+  filterTimeout = setTimeout(() => {
+    pagination.value.current = 1; // 重置到第一页
+    fetchCustomerData(1);
+  }, 500); // 500ms 防抖
+};
+
+// 新增：清空筛选条件
+const clearFilters = () => {
+  // 关闭所有筛选开关
+  enableWebsiteCountFilter.value = false;
+  enableResultCountFilter.value = false;
+  enableDeployCountFilter.value = false;
+  
+  // 清空所有数值
+  minWebsiteCount.value = null;
+  maxWebsiteCount.value = null;
+  minResultCount.value = null;
+  maxResultCount.value = null;
+  minDeployCount.value = null;
+  maxDeployCount.value = null;
+  
+  pagination.value.current = 1;
+  fetchCustomerData(1);
+};
+
+// 新增：应用筛选条件
+const applyFilters = () => {
+  pagination.value.current = 1;
   fetchCustomerData(1);
 };
 
@@ -1897,7 +2037,7 @@ const fetchCustomerStatistic = async () => {
 const formatStatisticLabel = (key) => {
   const labelMap = {
     unsubscribeDeployOne: '未订阅，有部署页面的客户数',
-    unsubscribeTaskOne: '未订阅，有成功生成页面的客户数', 
+    unsubscribeTaskOne: '未订阅，有开启过任务的客户数', 
     unsubscribedNoTask: '未订阅，未跑过一次任务的客户数',
   }
   return labelMap[key] || key
@@ -1940,6 +2080,13 @@ onMounted(async () => {
 // 清理事件监听器
 onUnmounted(() => {
   window.removeEventListener('resize', checkDevice)
+})
+
+// 新增：检查是否有激活的筛选条件
+const hasActiveFilters = computed(() => {
+  return enableWebsiteCountFilter.value || 
+         enableResultCountFilter.value || 
+         enableDeployCountFilter.value
 })
 </script>
 
@@ -2550,19 +2697,16 @@ onUnmounted(() => {
 .filter-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 12px;
-  padding: 12px;
+  padding: 16px;
   background-color: #f8f9fa;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #e8e8e8;
 }
 
 @media (min-width: 769px) {
   .filter-section {
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
     margin-bottom: 0;
     margin-right: 16px;
   }
@@ -2572,36 +2716,60 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .filter-label {
   font-size: 13px;
   color: #666;
-  white-space: nowrap;
   font-weight: 500;
+  margin-left: 4px;
 }
 
-.filter-select {
-  min-width: 140px;
-  flex: 1;
+.filter-input {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.filter-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.filter-separator {
+  color: #999;
+  font-weight: 500;
+  margin: 0 4px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e8e8e8;
 }
 
 @media (max-width: 768px) {
   .filter-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
   }
   
-  .filter-select {
-    width: 100%;
-    min-width: auto;
+  .filter-row:last-of-type {
+    border-bottom: none;
   }
   
-  .header-actions-mobile {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+  :deep(.ant-checkbox-wrapper) {
+    margin-bottom: 4px;
+  }
+  
+  .filter-input {
+    width: 100px;
   }
 }
 
@@ -2638,5 +2806,282 @@ onUnmounted(() => {
   color: white;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 筛选器容器样式 */
+.filter-container {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.filter-title .anticon {
+  color: #1890ff;
+}
+
+.filter-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-content {
+  padding: 16px;
+}
+
+/* 筛选组样式 */
+.filter-group {
+  margin-bottom: 16px;
+}
+
+.filter-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-group-header {
+  margin-bottom: 8px;
+}
+
+.filter-checkbox {
+  font-weight: 500;
+}
+
+.filter-group-title {
+  color: #333;
+  font-size: 13px;
+}
+
+.filter-group-content {
+  padding-left: 24px;
+  transition: all 0.3s ease;
+}
+
+.filter-group-content.disabled {
+  opacity: 0.5;
+}
+
+/* 范围输入样式 */
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.range-input {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.range-separator {
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 搜索框样式 */
+.search-input {
+  max-width: 280px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .header-actions-mobile {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .filter-container {
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .filter-header {
+    padding: 10px 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .filter-title {
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .filter-header-actions {
+    justify-content: center;
+  }
+
+  .filter-content {
+    padding: 12px;
+  }
+
+  .filter-group {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+  }
+
+  .filter-group-content {
+    padding-left: 16px;
+  }
+
+  .range-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .range-input {
+    width: 100%;
+  }
+
+  .range-separator {
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  .search-input {
+    max-width: none;
+  }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+  .filter-header {
+    padding: 8px 10px;
+  }
+
+  .filter-content {
+    padding: 10px;
+  }
+
+  .filter-group {
+    padding: 6px;
+    margin-bottom: 8px;
+  }
+
+  .filter-group-content {
+    padding-left: 12px;
+  }
+
+  .filter-title {
+    font-size: 12px;
+  }
+
+  .filter-group-title {
+    font-size: 12px;
+  }
+}
+
+/* 桌面端优化 */
+@media (min-width: 769px) {
+  .header-actions-mobile {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .filter-container {
+    min-width: 400px;
+    max-width: 500px;
+  }
+
+  .filter-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .filter-group {
+    margin-bottom: 0;
+  }
+
+  .range-inputs {
+    max-width: 200px;
+  }
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1200px) {
+  .filter-content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .filter-container {
+    max-width: 800px;
+  }
+}
+
+/* 禁用状态样式 */
+.range-input:disabled {
+  background-color: #f5f5f5;
+  border-color: #d9d9d9;
+  cursor: not-allowed;
+}
+
+/* 复选框样式优化 */
+:deep(.ant-checkbox-wrapper) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.ant-checkbox) {
+  margin-right: 6px;
+}
+
+:deep(.ant-checkbox-checked .ant-checkbox-inner) {
+  background-color: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 按钮样式优化 */
+.filter-header-actions .ant-btn {
+  border-radius: 6px;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
+}
+
+.filter-header-actions .ant-btn:disabled {
+  opacity: 0.5;
+}
+
+/* 动画效果 */
+.filter-group-content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-container {
+  transition: box-shadow 0.3s ease;
+}
+
+.filter-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
