@@ -77,7 +77,8 @@ const getCustomerList = async (params = {}) => {
                 minResultCount: params.minResultCount,
                 maxResultCount: params.maxResultCount,
                 minDeployCount: params.minDeployCount,
-                maxDeployCount: params.maxDeployCount
+                maxDeployCount: params.maxDeployCount,
+                subscribeFilter: params.subscribeFilter
             }
         });
         return response.data;
@@ -482,6 +483,22 @@ const getCustomerStatistic = async () => {
     }
   };
 
+// 新增：获取用户注册统计信息接口
+const getCustomerRegisterStatistic = async (params = {}) => {
+    try {
+        const response = await apiClient.get('/admin/customer/register-statistic', {
+            params: {
+                startTime: params.startTime,
+                endTime: params.endTime
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get customer register statistic error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -511,5 +528,6 @@ export const api = {
     getErrorDashboard,
     getAlternativelyErrors,
     getSubscriptionCount,
-    getCustomerStatistic
+    getCustomerStatistic,
+    getCustomerRegisterStatistic
 };

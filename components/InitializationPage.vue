@@ -28,11 +28,6 @@
             <div class="statistic-label">总注册用户数</div>
             <div class="statistic-value">{{ totalRegistrations }}</div>
           </div>
-          <!-- 自指定日期以来的注册数 -->
-          <div class="statistic-card-mobile">
-            <div class="statistic-label">自 {{ HIGHLIGHT_DATE }} 以来注册数</div>
-            <div class="statistic-value">{{ totalRegistrationsAfterHighlight }}</div>
-          </div>
           <!-- 原有统计数据 -->
           <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-card-mobile">
             <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
@@ -45,11 +40,6 @@
           <div class="statistic-item-desktop">
             <div class="statistic-label">总注册用户数</div>
             <div class="statistic-value">{{ totalRegistrations }}</div>
-          </div>
-          <!-- 自指定日期以来的注册数 -->
-          <div class="statistic-item-desktop">
-            <div class="statistic-label">自 {{ HIGHLIGHT_DATE }} 以来注册数</div>
-            <div class="statistic-value">{{ totalRegistrationsAfterHighlight }}</div>
           </div>
           <!-- 原有统计数据 -->
           <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-item-desktop">
@@ -139,10 +129,7 @@
       <div class="section-header">
         <div class="title-and-summary-mobile">
           <span class="section-title">用户注册趋势</span>
-          <div class="registration-summary-mobile">
-            自 {{ HIGHLIGHT_DATE }} 以来总注册数:
-            <span class="count">{{ totalRegistrationsAfterHighlight }}</span>
-          </div>
+          <!-- 移除：注册数汇总显示 -->
           <!-- 邀请码统计 - 移动端换行显示 -->
           <div class="invite-code-stats-mobile">
             <template v-for="(count, code) in inviteCodeStats" :key="code">
@@ -217,109 +204,116 @@
           </div>
           
           <div class="filter-content">
-            <!-- 任务数量筛选 -->
+            <!-- 新增：订阅状态筛选组 -->
+            <div class="filter-group">
+              <div class="filter-group-header">
+                <div class="filter-group-title">订阅状态筛选</div>
+              </div>
+              <div class="filter-group-content">
+                <a-radio-group v-model:value="subscribeFilter" @change="handleFilterChange">
+                  <a-radio :value="true">仅显示未订阅用户</a-radio>
+                  <a-radio :value="false">仅显示订阅用户</a-radio>
+                </a-radio-group>
+              </div>
+            </div>
+
+            <!-- 任务数量筛选组 -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
-                  v-model:checked="enableWebsiteCountFilter"
+                  v-model:checked="enableWebsiteCountFilter" 
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">任务数量</span>
+                  <span class="filter-group-title">任务数量筛选</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableWebsiteCountFilter }">
                 <div class="range-inputs">
                   <a-input-number
                     v-model:value="minWebsiteCount"
-                    class="range-input"
-                    placeholder="最小"
-                    :min="0"
                     :disabled="!enableWebsiteCountFilter"
+                    placeholder="最小值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                   <span class="range-separator">至</span>
                   <a-input-number
                     v-model:value="maxWebsiteCount"
-                    class="range-input"
-                    placeholder="最大"
-                    :min="0"
                     :disabled="!enableWebsiteCountFilter"
+                    placeholder="最大值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                 </div>
               </div>
             </div>
 
-            <!-- 生成页面数筛选 -->
+            <!-- 生成页面数筛选组 -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
-                  v-model:checked="enableResultCountFilter"
+                  v-model:checked="enableResultCountFilter" 
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">生成页面数</span>
+                  <span class="filter-group-title">生成页面数筛选</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableResultCountFilter }">
                 <div class="range-inputs">
                   <a-input-number
                     v-model:value="minResultCount"
-                    class="range-input"
-                    placeholder="最小"
-                    :min="0"
                     :disabled="!enableResultCountFilter"
+                    placeholder="最小值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                   <span class="range-separator">至</span>
                   <a-input-number
                     v-model:value="maxResultCount"
-                    class="range-input"
-                    placeholder="最大"
-                    :min="0"
                     :disabled="!enableResultCountFilter"
+                    placeholder="最大值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                 </div>
               </div>
             </div>
 
-            <!-- 部署数量筛选 -->
+            <!-- 部署数量筛选组 -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
-                  v-model:checked="enableDeployCountFilter"
+                  v-model:checked="enableDeployCountFilter" 
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">部署数量</span>
+                  <span class="filter-group-title">部署数量筛选</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableDeployCountFilter }">
                 <div class="range-inputs">
                   <a-input-number
                     v-model:value="minDeployCount"
-                    class="range-input"
-                    placeholder="最小"
-                    :min="0"
                     :disabled="!enableDeployCountFilter"
+                    placeholder="最小值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                   <span class="range-separator">至</span>
                   <a-input-number
                     v-model:value="maxDeployCount"
-                    class="range-input"
-                    placeholder="最大"
-                    :min="0"
                     :disabled="!enableDeployCountFilter"
+                    placeholder="最大值"
+                    :min="0"
+                    class="range-input"
                     @change="handleFilterChange"
-                    size="small"
                   />
                 </div>
               </div>
@@ -851,6 +845,7 @@ const originalCustomers = ref([]) // 保存原始客户数据
 const taskStatusFilter = ref('all')
 const resultStatusFilter = ref('all')
 const deployStatusFilter = ref('all')
+const subscribeFilter = ref(true) // 新增：订阅状态筛选，默认为true（只显示订阅用户）
 
 // 新增：筛选开关状态
 const enableWebsiteCountFilter = ref(false)
@@ -876,12 +871,19 @@ const fetchCustomerData = async (page = 1) => {
     // 构建筛选参数
     const filterParams = buildFilterParams();
     
-    const customerResponse = await api.getCustomerList({ 
+    // 构建请求参数，只有当email有值时才包含email参数
+    const requestParams = { 
       page, 
       limit: pagination.value.pageSize,
-      email: searchEmail.value,
       ...filterParams // 添加筛选参数
-    });
+    };
+    
+    // 只有当searchEmail有值时才添加email参数
+    if (searchEmail.value && searchEmail.value.trim()) {
+      requestParams.email = searchEmail.value.trim();
+    }
+    
+    const customerResponse = await api.getCustomerList(requestParams);
     
     const rawCustomers = customerResponse.data || [];
     pagination.value.total = customerResponse.TotalCount || 0;
@@ -940,6 +942,9 @@ const fetchCustomerData = async (page = 1) => {
 const buildFilterParams = () => {
   const params = {};
   
+  // 订阅状态筛选 - 始终传递此参数
+  params.subscribeFilter = subscribeFilter.value;
+  
   // 任务数量筛选 - 只有开启时才传递参数
   if (enableWebsiteCountFilter.value) {
     if (minWebsiteCount.value !== null && minWebsiteCount.value !== undefined) {
@@ -991,6 +996,9 @@ const clearFilters = () => {
   enableWebsiteCountFilter.value = false;
   enableResultCountFilter.value = false;
   enableDeployCountFilter.value = false;
+  
+  // 重置订阅筛选为默认值
+  subscribeFilter.value = true;
   
   // 清空所有数值
   minWebsiteCount.value = null;
@@ -1679,15 +1687,24 @@ const handleLoginToAltpage = async (record) => {
 const registerStats = ref([]) // 原始数据
 const registerStatsDays = ref(30) // 默认30天
 const registerChartData = ref([]) // 处理后的折线图数据
-const totalRegistrationsAfterHighlight = ref(0) // 新增: 415之后注册总数
 
 const HIGHLIGHT_DATE = '2025-04-15'
 
+// 修改：基于新接口数据的图表配置
 const registerChartOption = computed(() => {
-  const data = registerChartData.value.map(item => item.count)
-  const dateList = registerChartData.value.map(item => item.date)
+  const data = customerRegisterStatisticData.value?.data || [];
+  const dateList = data.map(item => item.date);
+  const countList = data.map(item => item.count);
+  
   return {
-    tooltip: { trigger: 'axis' },
+    tooltip: { 
+      trigger: 'axis',
+      formatter: (params) => {
+        const date = params[0].axisValueLabel;
+        const count = params[0].value;
+        return `${date}<br/>注册数: ${count}`;
+      }
+    },
     grid: { left: 40, right: 20, top: 40, bottom: 160 },
     xAxis: {
       type: 'category',
@@ -1699,7 +1716,6 @@ const registerChartOption = computed(() => {
         fontWeight: 'bold',
         formatter: function (value) {
           if (value === HIGHLIGHT_DATE) {
-            // 🚀 上线日 🚀
             return '{highlight|' + value + '}\n{tag|🚀 Service First Online}'
           }
           return value
@@ -1726,7 +1742,7 @@ const registerChartOption = computed(() => {
       {
         name: 'Registrations',
         type: 'line',
-        data,
+        data: countList,
         smooth: true,
         symbol: 'circle',
         lineStyle: {
@@ -1766,90 +1782,27 @@ const registerChartOption = computed(() => {
   }
 })
 
-// 获取注册用户数据
-const fetchRegisterStats = async () => {
+// 新增：获取客户注册统计信息
+const fetchCustomerRegisterStatistic = async () => {
+  customerRegisterStatisticLoading.value = true
   try {
-    const res = await api.getCustomerList({ page: 1, limit: 2000 })
-    registerStats.value = (res.data || []).map(item => ({
-      registerTime: item.registerTime,
-      inviteCode: item.inviteCode
-    }))
-    updateRegisterChartData()
-  } catch (e) {
-    message.error('Failed to fetch registration stats')
+    const response = await api.getCustomerRegisterStatistic()
+    customerRegisterStatisticData.value = response
+    console.log('Customer Register Statistic Data:', response)
+  } catch (error) {
+    console.error('Failed to fetch customer register statistic:', error)
+    message.error('获取客户注册统计信息失败')
+    customerRegisterStatisticData.value = null
+  } finally {
+    customerRegisterStatisticLoading.value = false
   }
-}
-
-// 统计每天注册数
-const updateRegisterChartData = () => {
-  const days = registerStatsDays.value
-  const all = registerStats.value
-    .filter(item => !!item.registerTime)
-    .map(item => dayjs(item.registerTime).format('YYYY-MM-DD'))
-  // 统计
-  const countMap = {}
-  all.forEach(date => {
-    countMap[date] = (countMap[date] || 0) + 1
-  })
-
-  // --- 修改: 计算 HIGHLIGHT_DATE 之后的总注册数 ---
-  let countAfterHighlight = 0;
-  const highlightDayjs = dayjs(HIGHLIGHT_DATE);
-  // 直接遍历原始数据 registerStats 来比较完整时间戳
-  registerStats.value.forEach(item => {
-    // 使用 isAfter 比较完整时间戳，这样会包含 HIGHLIGHT_DATE 当天的注册
-    if (item.registerTime && dayjs(item.registerTime).isAfter(highlightDayjs)) {
-      countAfterHighlight++;
-    }
-  });
-  totalRegistrationsAfterHighlight.value = countAfterHighlight; // 这里现在应该会得到 18
-  // --- 计算结束 ---
-
-  // 生成日期序列
-  let dateList = []
-  if (days === 0) {
-    // 全部
-    const min = all.length ? dayjs(Math.min(...all.map(d => +new Date(d)))) : dayjs()
-    const max = all.length ? dayjs(Math.max(...all.map(d => +new Date(d)))) : dayjs()
-    let cur = min
-    while (cur.isBefore(max) || cur.isSame(max, 'day')) {
-      dateList.push(cur.format('YYYY-MM-DD'))
-      cur = cur.add(1, 'day')
-    }
-  } else {
-    // 最近N天
-    const end = dayjs()
-    const start = end.subtract(days - 1, 'day')
-    let cur = start
-    while (cur.isBefore(end) || cur.isSame(end, 'day')) {
-      dateList.push(cur.format('YYYY-MM-DD'))
-      cur = cur.add(1, 'day')
-    }
-  }
-  // 保证HIGHLIGHT_DATE在dateList里
-  if (!dateList.includes(HIGHLIGHT_DATE)) {
-    dateList.push(HIGHLIGHT_DATE)
-    dateList.sort()
-  }
-  // 组装数据
-  registerChartData.value = dateList.map(date => ({
-    date,
-    count: countMap[date] || 0
-  }))
 }
 
 // 新增：邀请码注册数量统计
 const inviteCodeStats = computed(() => {
-  const stats = {};
-  const highlightDayjs = dayjs(HIGHLIGHT_DATE);
-  registerStats.value.forEach(item => {
-    // 只统计 2025-04-15 之后的注册 (使用 isAfter 比较完整时间戳)
-    if (item.registerTime && dayjs(item.registerTime).isAfter(highlightDayjs)) {
-      const code = item.inviteCode || '(No Invite Code)';
-      stats[code] = (stats[code] || 0) + 1;
-    }
-  });
-  return stats; // 这里应该得到 { '(No Invite Code)': 17, 'LBYALTPAGE': 1 }
+  // 由于新接口只返回日期和数量，没有邀请码信息
+  // 这里暂时返回空对象，如果需要邀请码统计，可能需要其他接口
+  return {};
 });
 
 // 新增：错误日志相关状态
@@ -2064,8 +2017,23 @@ const formatStatisticValue = (value) => {
 
 // 新增：计算总注册数
 const totalRegistrations = computed(() => {
-  return registerStats.value.length
+  const data = customerRegisterStatisticData.value?.data || [];
+  return data.reduce((total, item) => total + item.count, 0);
 })
+
+// 新增：客户注册统计相关状态
+const customerRegisterStatisticLoading = ref(false)
+const customerRegisterStatisticData = ref(null)
+
+// 修改：计算HIGHLIGHT_DATE之后的注册总数
+const totalRegistrationsAfterHighlight = computed(() => {
+  const data = customerRegisterStatisticData.value?.data || [];
+  const highlightDayjs = dayjs(HIGHLIGHT_DATE);
+  
+  return data
+    .filter(item => dayjs(item.date).isAfter(highlightDayjs))
+    .reduce((total, item) => total + item.count, 0);
+});
 
 // 修改组件挂载时的初始化逻辑
 onMounted(async () => {
@@ -2073,12 +2041,13 @@ onMounted(async () => {
   window.addEventListener('resize', checkDevice)
   
   console.log('Component mounted, fetching initial data...')
-  await fetchCustomerStatistic() // 新增：获取客户统计
+  await fetchCustomerStatistic() // 获取客户统计
+  await fetchCustomerRegisterStatistic() // 获取客户注册统计
   await fetchSSEStatus()
   await fetchErrorDashboardData()
   await fetchCustomerData()
   await fetchPackageList()
-  await fetchRegisterStats()
+  // 移除原来的 fetchRegisterStats 调用
   
   if (customers.value.length > 0 && !selectedCustomerId.value) {
     selectedCustomerId.value = customers.value[0].customerId
@@ -2097,7 +2066,8 @@ onUnmounted(() => {
 const hasActiveFilters = computed(() => {
   return enableWebsiteCountFilter.value || 
          enableResultCountFilter.value || 
-         enableDeployCountFilter.value
+         enableDeployCountFilter.value ||
+         subscribeFilter.value === false; // 当显示未订阅用户时也算作激活筛选
 })
 </script>
 
@@ -2586,6 +2556,7 @@ const hasActiveFilters = computed(() => {
   justify-content: center;
   align-items: center;
   padding: 20px 0;
+  width: 100%;
 }
 
 .statistic-grid-mobile {
@@ -2599,8 +2570,10 @@ const hasActiveFilters = computed(() => {
 .statistic-grid-desktop {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 16px;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
 }
 
 .statistic-card-mobile {
@@ -2609,6 +2582,7 @@ const hasActiveFilters = computed(() => {
   border-radius: 8px;
   padding: 16px;
   text-align: center;
+  width: 100%;
 }
 
 .statistic-item-desktop {
@@ -2617,7 +2591,16 @@ const hasActiveFilters = computed(() => {
   border-radius: 8px;
   padding: 20px 24px;
   text-align: center;
+  flex: 1;
   min-width: 180px;
+  max-width: 220px;
+  transition: all 0.3s ease;
+}
+
+.statistic-item-desktop:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .statistic-label {
@@ -3090,43 +3073,50 @@ const hasActiveFilters = computed(() => {
 
 /* 新增：桌面端单行网格布局 */
 .statistic-grid-desktop-single-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  justify-content: center;
   gap: 16px;
   margin-top: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.statistic-grid-desktop-single-row .statistic-item-desktop {
+  flex: 1;
+  min-width: 160px;
+  max-width: 200px;
 }
 
 /* 确保在较小的桌面屏幕上也能正常显示 */
 @media (max-width: 1200px) {
   .statistic-grid-desktop-single-row {
-    grid-template-columns: repeat(3, 1fr);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .statistic-grid-desktop-single-row .statistic-item-desktop {
+    min-width: 140px;
+    max-width: 180px;
   }
 }
 
 @media (max-width: 992px) {
   .statistic-grid-desktop-single-row {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .statistic-grid-desktop-single-row .statistic-item-desktop {
+    min-width: 120px;
+    max-width: 160px;
   }
 }
 
-/* 桌面端统计项样式 */
-.statistic-item-desktop {
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.statistic-item-desktop:hover {
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
-}
-
-.statistic-item-desktop.highlight-item {
-  background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
-  border-color: #1890ff;
+@media (max-width: 768px) {
+  .statistic-grid-desktop-single-row {
+    display: none; /* 在移动端隐藏桌面端网格 */
+  }
 }
 
 .statistic-label {
@@ -3138,6 +3128,7 @@ const hasActiveFilters = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .statistic-value {
@@ -3148,5 +3139,31 @@ const hasActiveFilters = computed(() => {
 
 .highlight-item .statistic-value {
   color: #1890ff;
+}
+
+/* 确保统计容器在所有屏幕尺寸下都居中 */
+@media (min-width: 769px) {
+  .statistic-content {
+    padding: 24px 0;
+  }
+  
+  .statistic-grid-desktop {
+    gap: 20px;
+  }
+  
+  .statistic-item-desktop {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .statistic-grid-desktop-single-row {
+    max-width: 1400px;
+    gap: 24px;
+  }
+  
+  .statistic-grid-desktop-single-row .statistic-item-desktop {
+    max-width: 240px;
+  }
 }
 </style>
