@@ -2081,7 +2081,7 @@ const hasActiveFilters = computed(() => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .initialization-container {
-    padding: 12px 8px;
+    padding: 8px 6px;
   }
 }
 
@@ -2089,14 +2089,14 @@ const hasActiveFilters = computed(() => {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
   background: #fff;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 768px) {
   .section-card {
-    padding: 12px;
-    margin-bottom: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
     border-radius: 8px;
   }
 }
@@ -2104,8 +2104,8 @@ const hasActiveFilters = computed(() => {
 .section-header {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
   width: 100%;
 }
 
@@ -2187,25 +2187,26 @@ const hasActiveFilters = computed(() => {
 /* 移动端图表样式 */
 .mobile-chart {
   height: 300px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 @media (max-width: 768px) {
   .mobile-chart {
     height: 250px;
+    margin-top: 8px;
   }
 }
 
 /* 移动端客户列表样式 */
 .mobile-customer-list {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .customer-card {
   border: 1px solid #e8e8e8;
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
   background: #fff;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -2225,7 +2226,7 @@ const hasActiveFilters = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .customer-email {
@@ -2247,13 +2248,13 @@ const hasActiveFilters = computed(() => {
 }
 
 .customer-details {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .detail-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   font-size: 12px;
 }
 
@@ -2281,14 +2282,14 @@ const hasActiveFilters = computed(() => {
 
 /* 移动端错误日志样式 */
 .mobile-error-list {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .error-log-card {
   border: 1px solid #e8e8e8;
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 8px;
+  padding: 10px;
+  margin-bottom: 6px;
   background: #fff;
 }
 
@@ -2296,7 +2297,7 @@ const hasActiveFilters = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .error-time {
@@ -2317,12 +2318,12 @@ const hasActiveFilters = computed(() => {
   font-size: 13px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .error-website {
   font-size: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .error-website .label {
@@ -2343,7 +2344,7 @@ const hasActiveFilters = computed(() => {
 
 /* 移动端分页样式 */
 .mobile-pagination {
-  margin-top: 16px;
+  margin-top: 12px;
   text-align: center;
 }
 
@@ -2361,18 +2362,18 @@ const hasActiveFilters = computed(() => {
 /* 加载和空状态样式 */
 .loading-container {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 15px;
 }
 
 .empty-container {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 15px;
 }
 
 @media (max-width: 768px) {
   .loading-container,
   .empty-container {
-    padding: 30px 15px;
+    padding: 20px 10px;
   }
 }
 
@@ -2394,17 +2395,17 @@ const hasActiveFilters = computed(() => {
 /* 保持原有桌面端样式 */
 @media (min-width: 769px) {
   .initialization-container {
-    padding: 32px 48px;
+    padding: 24px 36px;
   }
   
   .section-card {
-    padding: 24px 32px;
-    margin-bottom: 32px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
   }
   
   .section-header {
-    margin-bottom: 18px;
-    padding-bottom: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
   }
   
   .section-title {
@@ -2555,14 +2556,14 @@ const hasActiveFilters = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px 0;
+  padding: 16px 0;
   width: 100%;
 }
 
 .statistic-grid-mobile {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
   max-width: 400px;
 }
@@ -2580,7 +2581,7 @@ const hasActiveFilters = computed(() => {
   background: #fafafa;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
   width: 100%;
 }
@@ -2589,7 +2590,7 @@ const hasActiveFilters = computed(() => {
   background: #fafafa;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
-  padding: 20px 24px;
+  padding: 16px 20px;
   text-align: center;
   flex: 1;
   min-width: 180px;
@@ -2606,7 +2607,7 @@ const hasActiveFilters = computed(() => {
 .statistic-label {
   font-size: 14px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
@@ -2622,7 +2623,7 @@ const hasActiveFilters = computed(() => {
   }
   
   .statistic-card-mobile {
-    padding: 12px;
+    padding: 10px;
   }
 }
 
@@ -2668,9 +2669,9 @@ const hasActiveFilters = computed(() => {
 .filter-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 16px;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 12px;
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e8e8e8;
@@ -2717,8 +2718,8 @@ const hasActiveFilters = computed(() => {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid #e8e8e8;
 }
 
@@ -2792,13 +2793,13 @@ const hasActiveFilters = computed(() => {
 
 .filter-header {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #e8e8e8;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -2868,10 +2869,10 @@ const hasActiveFilters = computed(() => {
 }
 
 .filter-content {
-  padding: 16px;
+  padding: 12px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 12px;
   align-items: start;
   width: 100%;
 }
@@ -2880,7 +2881,7 @@ const hasActiveFilters = computed(() => {
   background: #f8f9fa;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   transition: all 0.3s ease;
 }
 
@@ -2890,7 +2891,7 @@ const hasActiveFilters = computed(() => {
 }
 
 .filter-group-header {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .filter-checkbox {
@@ -2903,7 +2904,7 @@ const hasActiveFilters = computed(() => {
 }
 
 .filter-group-content {
-  padding-left: 20px;
+  padding-left: 18px;
   transition: opacity 0.3s ease;
 }
 
@@ -2931,8 +2932,8 @@ const hasActiveFilters = computed(() => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .section-header {
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
   .filter-container {
@@ -2940,15 +2941,15 @@ const hasActiveFilters = computed(() => {
   }
 
   .filter-header {
-    padding: 10px 12px;
+    padding: 8px 10px;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     align-items: stretch;
   }
 
   .filter-title-section {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     align-items: stretch;
   }
 
@@ -2976,18 +2977,18 @@ const hasActiveFilters = computed(() => {
   }
 
   .filter-content {
-    padding: 12px;
+    padding: 10px;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .filter-group {
     margin-bottom: 0;
-    padding: 10px;
+    padding: 8px;
   }
 
   .filter-group-content {
-    padding-left: 16px;
+    padding-left: 14px;
   }
 
   .range-inputs {
@@ -3075,8 +3076,8 @@ const hasActiveFilters = computed(() => {
 .statistic-grid-desktop-single-row {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 14px;
+  margin-top: 12px;
   width: 100%;
   max-width: 1200px;
   margin-left: auto;
@@ -3122,9 +3123,9 @@ const hasActiveFilters = computed(() => {
 .statistic-label {
   font-size: 12px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.4;
-  min-height: 32px;
+  min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3144,22 +3145,22 @@ const hasActiveFilters = computed(() => {
 /* 确保统计容器在所有屏幕尺寸下都居中 */
 @media (min-width: 769px) {
   .statistic-content {
-    padding: 24px 0;
+    padding: 18px 0;
   }
   
   .statistic-grid-desktop {
-    gap: 20px;
+    gap: 16px;
   }
   
   .statistic-item-desktop {
-    padding: 24px;
+    padding: 18px;
   }
 }
 
 @media (min-width: 1400px) {
   .statistic-grid-desktop-single-row {
     max-width: 1400px;
-    gap: 24px;
+    gap: 20px;
   }
   
   .statistic-grid-desktop-single-row .statistic-item-desktop {
