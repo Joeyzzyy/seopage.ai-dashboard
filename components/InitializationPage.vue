@@ -23,6 +23,17 @@
       <div v-else-if="customerStatisticData && customerStatisticData.data" class="statistic-content">
         <!-- 移动端使用卡片布局 -->
         <div class="statistic-grid-mobile" v-if="isMobile">
+          <!-- 总注册数 -->
+          <div class="statistic-card-mobile highlight-card">
+            <div class="statistic-label">总注册用户数</div>
+            <div class="statistic-value">{{ totalRegistrations }}</div>
+          </div>
+          <!-- 自指定日期以来的注册数 -->
+          <div class="statistic-card-mobile highlight-card">
+            <div class="statistic-label">自 {{ HIGHLIGHT_DATE }} 以来注册数</div>
+            <div class="statistic-value">{{ totalRegistrationsAfterHighlight }}</div>
+          </div>
+          <!-- 原有统计数据 -->
           <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-card-mobile">
             <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
             <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
@@ -30,6 +41,17 @@
         </div>
         <!-- 桌面端使用网格布局 -->
         <div class="statistic-grid-desktop" v-else>
+          <!-- 总注册数 -->
+          <div class="statistic-item-desktop highlight-item">
+            <div class="statistic-label">总注册用户数</div>
+            <div class="statistic-value">{{ totalRegistrations }}</div>
+          </div>
+          <!-- 自指定日期以来的注册数 -->
+          <div class="statistic-item-desktop highlight-item">
+            <div class="statistic-label">自 {{ HIGHLIGHT_DATE }} 以来注册数</div>
+            <div class="statistic-value">{{ totalRegistrationsAfterHighlight }}</div>
+          </div>
+          <!-- 原有统计数据 -->
           <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-item-desktop">
             <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
             <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
@@ -1889,6 +1911,11 @@ const formatStatisticValue = (value) => {
   return value || '-'
 }
 
+// 新增：计算总注册数
+const totalRegistrations = computed(() => {
+  return registerStats.value.length
+})
+
 // 修改组件挂载时的初始化逻辑
 onMounted(async () => {
   checkDevice()
@@ -2576,5 +2603,40 @@ onUnmounted(() => {
     align-items: stretch;
     gap: 12px;
   }
+}
+
+/* 突出显示的统计卡片样式 */
+.highlight-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.highlight-card .statistic-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.highlight-card .statistic-value {
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.highlight-item {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.highlight-item .statistic-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.highlight-item .statistic-value {
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 </style>
