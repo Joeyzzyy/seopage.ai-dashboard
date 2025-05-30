@@ -2017,8 +2017,7 @@ const formatStatisticValue = (value) => {
 
 // 新增：计算总注册数
 const totalRegistrations = computed(() => {
-  const data = customerRegisterStatisticData.value?.data || [];
-  return data.reduce((total, item) => total + item.count, 0);
+  return customerRegisterStatisticData.value?.totalCount || 0;
 })
 
 // 新增：客户注册统计相关状态
