@@ -1,95 +1,88 @@
 <template>
   <div class="initialization-container">
-    <!-- 新增：客户统计信息 -->
-    <a-card class="section-card">
-      <div class="section-header">
-        <div class="section-title-mobile">
-          <span class="section-title">客户统计信息</span>
-        </div>
-        <div class="header-actions-mobile">
-          <a-button 
-            type="primary" 
-            size="small" 
-            :loading="customerStatisticLoading"
-            @click="fetchCustomerStatistic"
-          >
-            刷新统计
-          </a-button>
-        </div>
-      </div>
-      <div v-if="customerStatisticLoading" class="loading-container">
-        <a-spin tip="获取客户统计信息中..." />
-      </div>
-      <div v-else-if="customerStatisticData && customerStatisticData.data" class="statistic-content">
-        <!-- 移动端使用卡片布局 -->
-        <div class="statistic-grid-mobile" v-if="isMobile">
-          <!-- 总注册数 -->
-          <div class="statistic-card-mobile">
-            <div class="statistic-label">总注册用户数</div>
-            <div class="statistic-value">{{ totalRegistrations }}</div>
+    <!-- 修改：整合系统概览仪表盘 -->
+    <div class="section-card dashboard-section">
+      <a-spin :spinning="customerStatisticLoading || sseStatusLoading" tip="加载中...">
+        <div class="dashboard-header">
+          <div class="dashboard-title">
+            <h3 class="title-text">系统概览仪表盘</h3>
+            <span class="update-time">最后更新: {{ lastSSEUpdateTime }}</span>
           </div>
-          <!-- 原有统计数据 -->
-          <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-card-mobile">
-            <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
-            <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
+          <!-- 移动：将当前正在运行的任务数移到标题右侧 -->
+          <div class="dashboard-header-right">
+            <div class="running-tasks-indicator">
+              <span class="task-label">当前正在运行的任务数： </span>
+              <span class="task-count">{{ sseConnectionCount }}</span>
+            </div>
           </div>
         </div>
-        <!-- 桌面端使用单行网格布局 -->
-        <div class="statistic-grid-desktop-single-row" v-else>
-          <!-- 总注册数 -->
-          <div class="statistic-item-desktop">
-            <div class="statistic-label">总注册用户数</div>
-            <div class="statistic-value">{{ totalRegistrations }}</div>
-          </div>
-          <!-- 原有统计数据 -->
-          <div v-for="(value, key) in customerStatisticData.data" :key="key" class="statistic-item-desktop">
-            <div class="statistic-label">{{ formatStatisticLabel(key) }}</div>
-            <div class="statistic-value">{{ formatStatisticValue(value) }}</div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="empty-container">
-        <a-empty description="暂无统计数据" />
-      </div>
-    </a-card>
+        
+        <div class="dashboard-content">
+          <!-- 修改：客户转化漏斗统计 -->
+          <div class="customer-stats-section">
+            <div class="funnel-container">
+              <div class="funnel-title">用户转化漏斗</div>
+              
+              <div class="funnel-steps">
+                <!-- 第1层：总注册用户数 -->
+                <div class="funnel-step step-1">
+                  <div class="step-content">
+                    <div class="step-info">
+                      <span class="step-label">总注册用户数</span>
+                      <span class="step-value">{{ totalRegistrations }}</span>
+                    </div>
+                    <!-- 新增：未跑过任务未订阅用户红色模块 -->
+                    <div class="inactive-users-module">
+                      <span class="inactive-label">未跑过任务未订阅</span>
+                      <span class="inactive-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribedNoTask) }}</span>
+                      <span class="inactive-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribedNoTask, totalRegistrations) }}</span>
+                    </div>
+                  </div>
+                  <div class="funnel-arrow"></div>
+                </div>
 
-    <!-- SSE Connection Status -->
-    <a-card class="section-card">
-      <div class="section-header">
-        <div class="section-title-mobile">
-          <span class="section-title">系统状态监控</span>
-        </div>
-        <div class="header-actions-mobile">
-          <a-button 
-            type="primary" 
-            size="small" 
-            :loading="sseStatusLoading"
-            @click="fetchSSEStatus"
-          >
-            刷新状态
-          </a-button>
-        </div>
-      </div>
-      
-      <div class="sse-status-content">
-        <div class="status-item">
-          <span class="status-label">SSE连接数:</span>
-          <span class="active-connections">{{ sseConnectionCount }}</span>
-        </div>
-        <div class="status-item">
-          <span class="status-label">最后更新:</span>
-          <span class="status-value">{{ lastSSEUpdateTime }}</span>
-        </div>
-        <div class="status-item">
-          <div :class="['status-indicator', sseConnectionCount > 0 ? 'online' : 'offline']">
-            <span class="indicator-dot"></span>
-            <span class="indicator-text">{{ sseConnectionCount > 0 ? '服务在线' : '服务离线' }}</span>
+                <!-- 第2层：有开启任务未订阅用户 -->
+                <div class="funnel-step step-2">
+                  <div class="step-content">
+                    <div class="step-info">
+                      <span class="step-label">有开启任务未订阅用户</span>
+                      <span class="step-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
+                      <span class="step-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}</span>
+                    </div>
+                  </div>
+                  <div class="funnel-arrow"></div>
+                </div>
+
+                <!-- 第3层：有部署页面未订阅用户 -->
+                <div class="funnel-step step-3">
+                  <div class="step-content">
+                    <div class="step-info">
+                      <span class="step-label">有部署页面未订阅用户</span>
+                      <span class="step-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }}</span>
+                      <span class="step-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribeDeployOne, totalRegistrations) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 转化率总结 -->
+              <div class="conversion-summary">
+                <div class="summary-item">
+                  <span class="summary-label">任务开启率：</span>
+                  <span class="summary-value">{{ calculateConversionRate(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}</span>
+                  <span class="summary-detail">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }} / {{ formatStatisticValue(totalRegistrations) }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">页面部署转化率：</span>
+                  <span class="summary-value">{{ calculateConversionRate(customerStatisticData?.data?.unsubscribeDeployOne, customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
+                  <span class="summary-detail">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }} / {{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <!-- 移除重复的通知偏好统计显示 -->
-    </a-card>
+      </a-spin>
+    </div>
 
     <!-- Error Monitoring Dashboard -->
     <a-card class="section-card">
@@ -98,7 +91,6 @@
           <span class="section-title">错误监控仪表盘</span>
         </div>
         <div class="header-actions-mobile">
-           <span class="date-label">日期范围:</span>
            <a-select
              v-model:value="errorDashboardDays"
              class="mobile-select"
@@ -442,7 +434,6 @@
           <span class="section-title">{{ selectedCustomer?.email || '选中客户' }} 的错误日志</span>
         </div>
         <div class="header-actions-mobile">
-           <span class="date-label">日期范围:</span>
            <a-select
              v-model:value="errorLogDays"
              class="mobile-select"
@@ -614,7 +605,13 @@ import dayjs from 'dayjs'
 import { 
   CalendarOutlined,
   WarningOutlined,
-  FilterOutlined
+  FilterOutlined,
+  WifiOutlined,
+  TeamOutlined,
+  DeploymentUnitOutlined,
+  PlayCircleOutlined,
+  UserOutlined,
+  LoadingOutlined
 } from '@ant-design/icons-vue'
 import { use } from "echarts/core";
 import VChart from "vue-echarts";
@@ -2068,12 +2065,26 @@ const hasActiveFilters = computed(() => {
          enableDeployCountFilter.value ||
          subscribeFilter.value === false; // 当显示未订阅用户时也算作激活筛选
 })
+
+// 新增：计算百分比
+const calculatePercentage = (value, total) => {
+  if (!value || !total || total === 0) return '0%';
+  const percentage = ((value / total) * 100).toFixed(1);
+  return `${percentage}%`;
+};
+
+// 新增：计算转化率
+const calculateConversionRate = (current, previous) => {
+  if (!current || !previous || previous === 0) return '0%';
+  const rate = ((current / previous) * 100).toFixed(1);
+  return `${rate}%`;
+};
 </script>
 
 <style scoped>
 .initialization-container {
   padding: 16px;
-  background: #f7f9fb;
+  background: #fff;
   min-height: 100vh;
 }
 
@@ -2085,8 +2096,8 @@ const hasActiveFilters = computed(() => {
 }
 
 .section-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
   background: #fff;
   padding: 12px;
   margin-bottom: 12px;
@@ -2096,7 +2107,7 @@ const hasActiveFilters = computed(() => {
   .section-card {
     padding: 10px;
     margin-bottom: 10px;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 }
 
@@ -2113,11 +2124,6 @@ const hasActiveFilters = computed(() => {
   font-weight: 600;
   color: #333;
   margin: 0;
-}
-
-/* 移除 header-actions-mobile 的限制 */
-.header-actions-mobile {
-  display: none; /* 不再使用这个容器 */
 }
 
 .date-label {
@@ -2151,7 +2157,7 @@ const hasActiveFilters = computed(() => {
 .registration-summary-mobile {
   font-size: 13px;
   color: #555;
-  background-color: #f0f2f5;
+  background-color: #f5f5f5;
   padding: 6px 10px;
   border-radius: 4px;
 }
@@ -2177,10 +2183,10 @@ const hasActiveFilters = computed(() => {
 }
 
 .invite-code-item {
-  background-color: #e6f7ff;
+  background-color: #f5f5f5;
   padding: 2px 6px;
   border-radius: 3px;
-  color: #1890ff;
+  color: #333;
 }
 
 /* 移动端图表样式 */
@@ -2203,7 +2209,7 @@ const hasActiveFilters = computed(() => {
 
 .customer-card {
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px;
   margin-bottom: 10px;
   background: #fff;
@@ -2213,12 +2219,11 @@ const hasActiveFilters = computed(() => {
 
 .customer-card:hover {
   border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
 }
 
 .customer-card.selected {
   border-color: #1890ff;
-  background-color: #e6f7ff;
+  background-color: #f0f8ff;
 }
 
 .customer-header {
@@ -2430,7 +2435,7 @@ const hasActiveFilters = computed(() => {
 
 /* 选中行样式 */
 :deep(.selected-row) {
-  background-color: #e6f7ff;
+  background-color: #f0f8ff;
 }
 
 /* 表格行点击样式 */
@@ -2474,10 +2479,10 @@ const hasActiveFilters = computed(() => {
 .active-connections {
   font-size: 18px;
   color: #1890ff;
-  background-color: #e6f7ff;
+  background-color: #f0f8ff;
   padding: 4px 12px;
   border-radius: 16px;
-  border: 1px solid #91d5ff;
+  border: 1px solid #d6e4ff;
 }
 
 .status-indicator {
@@ -2508,12 +2513,10 @@ const hasActiveFilters = computed(() => {
 
 .status-indicator.online .indicator-dot {
   background-color: #52c41a;
-  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
 }
 
 .status-indicator.offline .indicator-dot {
   background-color: #ff4d4f;
-  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
 }
 
 .indicator-text {
@@ -2577,18 +2580,18 @@ const hasActiveFilters = computed(() => {
 }
 
 .statistic-card-mobile {
-  background: #fafafa;
+  background: #fff;
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 12px;
   text-align: center;
   width: 100%;
 }
 
 .statistic-item-desktop {
-  background: #fafafa;
+  background: #fff;
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 16px 20px;
   text-align: center;
   flex: 1;
@@ -2599,7 +2602,6 @@ const hasActiveFilters = computed(() => {
 
 .statistic-item-desktop:hover {
   border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
   transform: translateY(-2px);
 }
 
@@ -2672,7 +2674,7 @@ const hasActiveFilters = computed(() => {
   margin-bottom: 10px;
   padding: 12px;
   background-color: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e8e8e8;
 }
 
@@ -2746,7 +2748,7 @@ const hasActiveFilters = computed(() => {
 
 /* 突出显示的统计卡片样式 */
 .highlight-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   color: white;
   border: none;
 }
@@ -2759,11 +2761,10 @@ const hasActiveFilters = computed(() => {
 .highlight-card .statistic-value {
   color: white;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .highlight-item {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1890ff;
   color: white;
   border: none;
 }
@@ -2776,22 +2777,20 @@ const hasActiveFilters = computed(() => {
 .highlight-item .statistic-value {
   color: white;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* 筛选器容器样式 - 拉长宽度 */
+/* 筛选器容器样式 */
 .filter-container {
   background: #ffffff;
   border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
   overflow: hidden;
   width: 100%;
-  margin: 0; /* 移除外边距 */
+  margin: 0;
 }
 
 .filter-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: #f8f9fa;
   padding: 10px 14px;
   border-bottom: 1px solid #e8e8e8;
   display: flex;
@@ -2802,7 +2801,6 @@ const hasActiveFilters = computed(() => {
   width: 100%;
 }
 
-/* 新增：筛选标题区域 */
 .filter-title-section {
   display: flex;
   align-items: center;
@@ -2821,7 +2819,6 @@ const hasActiveFilters = computed(() => {
   white-space: nowrap;
 }
 
-/* 新增：头部搜索区域 */
 .header-search-section {
   display: flex;
   align-items: center;
@@ -2835,7 +2832,6 @@ const hasActiveFilters = computed(() => {
   flex-shrink: 0;
 }
 
-/* 新增：头部统计信息 */
 .header-customer-stats {
   display: flex;
   align-items: center;
@@ -2845,7 +2841,7 @@ const hasActiveFilters = computed(() => {
   white-space: nowrap;
   padding: 4px 8px;
   background: rgba(255, 255, 255, 0.8);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #e8e8e8;
 }
 
@@ -2879,14 +2875,13 @@ const hasActiveFilters = computed(() => {
 .filter-group {
   background: #f8f9fa;
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 10px;
   transition: all 0.3s ease;
 }
 
 .filter-group:hover {
   border-color: #d9d9d9;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .filter-group-header {
@@ -2936,7 +2931,7 @@ const hasActiveFilters = computed(() => {
   }
 
   .filter-container {
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .filter-header {
@@ -3006,33 +3001,6 @@ const hasActiveFilters = computed(() => {
   }
 }
 
-/* 小屏幕优化 */
-@media (max-width: 480px) {
-  .filter-header {
-    padding: 8px 10px;
-  }
-
-  .filter-content {
-    padding: 10px;
-  }
-
-  .filter-group {
-    padding: 8px;
-  }
-
-  .filter-title {
-    font-size: 12px;
-  }
-
-  .filter-group-title {
-    font-size: 12px;
-  }
-
-  .header-customer-stats {
-    font-size: 11px;
-  }
-}
-
 /* 桌面端优化 */
 @media (min-width: 769px) {
   .filter-content {
@@ -3071,7 +3039,7 @@ const hasActiveFilters = computed(() => {
   display: none;
 }
 
-/* 新增：桌面端单行网格布局 */
+/* 桌面端单行网格布局 */
 .statistic-grid-desktop-single-row {
   display: flex;
   justify-content: center;
@@ -3115,7 +3083,7 @@ const hasActiveFilters = computed(() => {
 
 @media (max-width: 768px) {
   .statistic-grid-desktop-single-row {
-    display: none; /* 在移动端隐藏桌面端网格 */
+    display: none;
   }
 }
 
@@ -3164,6 +3132,597 @@ const hasActiveFilters = computed(() => {
   
   .statistic-grid-desktop-single-row .statistic-item-desktop {
     max-width: 240px;
+  }
+}
+
+/* 系统概览仪表盘样式 - 简化配色 */
+.dashboard-section {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.update-time {
+  font-size: 12px;
+  color: #666;
+  font-weight: 400;
+}
+
+.dashboard-status {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-content {
+  display: flex;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.system-status-section {
+  flex: 0 0 auto;
+}
+
+.customer-stats-section {
+  flex: 1;
+}
+
+.sse-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 160px;
+  transition: all 0.3s ease;
+}
+
+.sse-card:hover {
+  border-color: #1890ff;
+  transform: translateY(-2px);
+}
+
+.status-icon .icon {
+  font-size: 24px;
+  display: block;
+  color: #1890ff;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.status-value {
+  font-size: 20px;
+  color: #333;
+  font-weight: 700;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  border-color: #1890ff;
+  transform: translateY(-2px);
+}
+
+.primary-card {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: white;
+}
+
+.primary-card:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.primary-card .stat-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.primary-card .stat-value {
+  color: white;
+}
+
+.primary-card .stat-icon {
+  color: white;
+}
+
+.stat-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  color: #1890ff;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 18px;
+  color: #333;
+  font-weight: 700;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.status-indicator:hover {
+  border-color: #1890ff;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.online .indicator-dot {
+  background-color: #52c41a;
+}
+
+.status-indicator.offline .indicator-dot {
+  background-color: #ff4d4f;
+}
+
+.indicator-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.dashboard-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  z-index: 2;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-title {
+    text-align: center;
+  }
+  
+  .title-text {
+    font-size: 18px;
+  }
+  
+  .dashboard-status {
+    align-self: center;
+  }
+  
+  .dashboard-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .sse-card {
+    justify-content: center;
+    min-width: auto;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+  
+  .stat-info {
+    align-items: center;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    flex-direction: row;
+    justify-content: center;
+    text-align: left;
+  }
+  
+  .stat-info {
+    align-items: flex-start;
+  }
+}
+
+/* 桌面端大屏优化 */
+@media (min-width: 1200px) {
+  .dashboard-content {
+    gap: 32px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  
+  .sse-card {
+    min-width: 180px;
+    padding: 20px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+}
+
+/* 漏斗样式 - 简化配色 */
+.funnel-container {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.funnel-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.funnel-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.funnel-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-content {
+  background: #1890ff;
+  border-radius: 6px;
+  padding: 12px 20px;
+  color: white;
+  text-align: center;
+  min-width: 280px;
+  position: relative;
+}
+
+.step-1 .step-content {
+  background: #1890ff;
+  min-width: 320px;
+}
+
+.step-2 .step-content {
+  background: #1890ff;
+  min-width: 300px;
+  opacity: 0.9;
+}
+
+.step-3 .step-content {
+  background: #1890ff;
+  min-width: 280px;
+  opacity: 0.8;
+}
+
+.step-4 .step-content {
+  background: #1890ff;
+  min-width: 260px;
+  opacity: 0.7;
+}
+
+.step-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step-label {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.step-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step-percentage {
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.funnel-arrow {
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 12px solid #ddd;
+  margin: 4px 0;
+}
+
+.step-1 .funnel-arrow {
+  border-top-color: #1890ff;
+}
+
+.step-2 .funnel-arrow {
+  border-top-color: #1890ff;
+  opacity: 0.9;
+}
+
+.step-3 .funnel-arrow {
+  border-top-color: #1890ff;
+  opacity: 0.8;
+}
+
+.conversion-summary {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.summary-detail {
+  color: #999;
+  font-size: 12px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .funnel-container {
+    padding: 12px;
+    max-width: 100%;
+  }
+  
+  .funnel-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .step-content {
+    padding: 10px 16px;
+    min-width: 240px;
+  }
+  
+  .step-1 .step-content {
+    min-width: 260px;
+  }
+  
+  .step-2 .step-content {
+    min-width: 250px;
+  }
+  
+  .step-3 .step-content {
+    min-width: 240px;
+  }
+  
+  .step-4 .step-content {
+    min-width: 220px;
+  }
+  
+  .step-label {
+    font-size: 12px;
+  }
+  
+  .step-value {
+    font-size: 24px;
+  }
+  
+  .step-percentage {
+    font-size: 14px;
+  }
+  
+  .summary-value {
+    font-size: 18px;
+  }
+  
+  .conversion-summary {
+    padding: 10px;
+  }
+  
+  .summary-item {
+    font-size: 12px;
+  }
+  
+  .summary-detail {
+    font-size: 11px;
+  }
+}
+
+/* 新增：未跑过任务未订阅用户模块样式 */
+.inactive-users-module {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+  border-radius: 6px;
+  border: 1px solid #ff4d4f;
+  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+}
+
+.inactive-label {
+  display: block;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.inactive-value {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-right: 8px;
+}
+
+.inactive-percentage {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .inactive-users-module {
+    margin-top: 6px;
+    padding: 6px 10px;
+  }
+  
+  .inactive-label {
+    font-size: 11px;
+  }
+  
+  .inactive-value {
+    font-size: 14px;
+    margin-right: 6px;
+  }
+  
+  .inactive-percentage {
+    font-size: 11px;
   }
 }
 </style>
