@@ -209,6 +209,24 @@
               </div>
             </div>
 
+            <!-- 新增：域名绑定筛选组 -->
+            <div class="filter-group">
+              <div class="filter-group-header">
+                <a-checkbox 
+                  v-model:checked="domainBindFilter" 
+                  @change="handleFilterChange"
+                  class="filter-checkbox"
+                >
+                  <span class="filter-group-title">域名绑定筛选</span>
+                </a-checkbox>
+              </div>
+              <div class="filter-group-content" :class="{ disabled: !domainBindFilter }">
+                <div class="filter-description">
+                  <span class="description-text">仅显示已完成域名绑定的用户</span>
+                </div>
+              </div>
+            </div>
+
             <!-- 任务数量筛选组 -->
             <div class="filter-group">
               <div class="filter-group-header">
@@ -843,6 +861,7 @@ const taskStatusFilter = ref('all')
 const resultStatusFilter = ref('all')
 const deployStatusFilter = ref('all')
 const subscribeFilter = ref(true) // 新增：订阅状态筛选，默认为true（只显示订阅用户）
+const domainBindFilter = ref(false) // 新增：域名绑定筛选，默认为false（不开启筛选）
 
 // 新增：筛选开关状态
 const enableWebsiteCountFilter = ref(false)
@@ -867,6 +886,8 @@ const fetchCustomerData = async (page = 1) => {
   try {
     // 构建筛选参数
     const filterParams = buildFilterParams();
+
+    console.log('Filter Params:', filterParams);
     
     // 构建请求参数，只有当email有值时才包含email参数
     const requestParams = { 
@@ -942,6 +963,10 @@ const buildFilterParams = () => {
   // 订阅状态筛选 - 始终传递此参数
   params.subscribeFilter = subscribeFilter.value;
   
+  // 域名绑定筛选 - 始终传递此参数
+  params.domainBindFilter = domainBindFilter.value;
+  console.log('Domain Bind Filter:', params.domainBindFilter);
+  
   // 任务数量筛选 - 只有开启时才传递参数
   if (enableWebsiteCountFilter.value) {
     if (minWebsiteCount.value !== null && minWebsiteCount.value !== undefined) {
@@ -993,6 +1018,7 @@ const clearFilters = () => {
   enableWebsiteCountFilter.value = false;
   enableResultCountFilter.value = false;
   enableDeployCountFilter.value = false;
+  domainBindFilter.value = false; // 新增：重置域名绑定筛选
   
   // 重置订阅筛选为默认值
   subscribeFilter.value = true;
@@ -2063,6 +2089,7 @@ const hasActiveFilters = computed(() => {
   return enableWebsiteCountFilter.value || 
          enableResultCountFilter.value || 
          enableDeployCountFilter.value ||
+         domainBindFilter.value || // 新增：域名绑定筛选激活检查
          subscribeFilter.value === false; // 当显示未订阅用户时也算作激活筛选
 })
 

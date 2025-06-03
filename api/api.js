@@ -78,7 +78,8 @@ const getCustomerList = async (params = {}) => {
                 maxResultCount: params.maxResultCount,
                 minDeployCount: params.minDeployCount,
                 maxDeployCount: params.maxDeployCount,
-                subscribeFilter: params.subscribeFilter
+                subscribeFilter: params.subscribeFilter,
+                domainBindFilter: params.domainBindFilter
             }
         });
         return response.data;
