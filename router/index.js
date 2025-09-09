@@ -28,6 +28,12 @@ const routes = [
         path: 'edm',
         name: 'EDM',
         component: EdmPage
+      },
+      {
+        path: 'component-config',
+        name: 'ComponentConfig',
+        component: () => import('../components/ComponentConfig.vue'),
+        meta: { requiresAuth: true }
       }
     ]
   },

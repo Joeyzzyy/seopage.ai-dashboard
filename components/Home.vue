@@ -54,6 +54,10 @@
             <template #icon><mail-outlined /></template>
             邮件营销
           </a-menu-item>
+          <a-menu-item key="ComponentConfig">
+            <template #icon><setting-outlined /></template>
+            组件配置
+          </a-menu-item>
         </a-menu>
         
         <div class="logout-container">
@@ -128,7 +132,8 @@ import {
   LogoutOutlined,
   MailOutlined,
   ToolOutlined,
-  MenuOutlined
+  MenuOutlined,
+  SettingOutlined
 } from '@ant-design/icons-vue';
 import axios from 'axios';
 
@@ -139,7 +144,8 @@ export default {
     LogoutOutlined,
     MailOutlined,
     ToolOutlined,
-    MenuOutlined
+    MenuOutlined,
+    SettingOutlined
   },
   setup() {
     const route = useRoute();
@@ -235,6 +241,7 @@ export default {
         'InitializationPage': '/initialization',
         'PackageConfigPage': '/package-config',
         'EDM': '/edm',
+        'ComponentConfig': '/component-config',
         'ModelConfigSelection': '/model-config-selection'
       };
       if (routeMap[key]) {

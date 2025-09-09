@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { message } from 'ant-design-vue';
 
-// 创建一个 axios 实例
+// 创建一个 axios 实例 - 用于原有接口
 const apiClient = axios.create({
   baseURL: 'https://api.websitelm.com/v1', // 替换为实际的 API 基础地址
   timeout: 300000, // 修改为5分钟 (300000毫秒)
@@ -10,16 +10,26 @@ const apiClient = axios.create({
   },
 });
 
+// 创建一个新的 axios 实例 - 用于 Page Components API
+const componentApiClient = axios.create({
+  baseURL: 'https://agents.zhuyuejoey.com/', // Page Components API 基础地址
+  timeout: 300000, // 5分钟超时
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // 不需要 token 的接口列表
 const noAuthUrls = ['/login'];
 
+// 原有 API 客户端的拦截器
 apiClient.interceptors.request.use(
     config => {
         // 检查当前请求是否在不需要 token 的列表中
         if (!noAuthUrls.includes(config.url)) {
             const accessToken = localStorage.getItem('adminaccesstoken');
             if (accessToken) {
-                config.headers['Authorization'] = `${accessToken}`;
+                config.headers['Authorization'] = `Bearer ${accessToken}`;
             }
         }
         return config;
@@ -30,6 +40,46 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
+    response => {
+        return response;
+    },
+    error => {
+        if (error.response && error.response.status === 401) {
+          // 只保留核心验证相关的存储项
+          localStorage.removeItem('adminaccesstoken');
+          localStorage.removeItem('intelickIsLoggedIn');
+          localStorage.removeItem('customers');
+          localStorage.removeItem('currentUserId');
+
+          if (error.response.data.message === 'User not find') {
+            message.error('User not found');
+          } else if (error.response.data.message === 'Invalid credentials') {
+            message.error('Wrong username or password');
+          } else {
+            message.error('Session expired. Please login again.');
+            window.location.href = '/login';
+          }
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Page Components API 客户端的拦截器
+componentApiClient.interceptors.request.use(
+    config => {
+        // 为 Page Components API 添加认证
+        const accessToken = localStorage.getItem('adminaccesstoken');
+        if (accessToken) {
+            config.headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
+    }
+);
+
+componentApiClient.interceptors.response.use(
     response => {
         return response;
     },
@@ -500,6 +550,140 @@ const getCustomerRegisterStatistic = async (params = {}) => {
     }
 };
 
+// 组件分类相关接口 - 使用新的 API 客户端
+// 获取组件分类列表
+const getComponentCategories = async () => {
+    try {
+        const response = await componentApiClient.get('/component-categories');
+        return response.data;
+    } catch (error) {
+        console.error('Get component categories error:', error);
+        throw error;
+    }
+};
+
+// 创建组件分类
+const createComponentCategory = async (categoryData) => {
+    try {
+        const response = await componentApiClient.post('/component-categories', categoryData);
+        return response.data;
+    } catch (error) {
+        console.error('Create component category error:', error);
+        throw error;
+    }
+};
+
+// 获取单个组件分类
+const getComponentCategory = async (categoryId) => {
+    try {
+        const response = await componentApiClient.get(`/component-categories/${categoryId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Get component category error:', error);
+        throw error;
+    }
+};
+
+// 更新组件分类
+const updateComponentCategory = async (categoryId, categoryData) => {
+    try {
+        const response = await componentApiClient.put(`/component-categories/${categoryId}`, categoryData);
+        return response.data;
+    } catch (error) {
+        console.error('Update component category error:', error);
+        throw error;
+    }
+};
+
+// 删除组件分类
+const deleteComponentCategory = async (categoryId) => {
+    try {
+        const response = await componentApiClient.delete(`/component-categories/${categoryId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Delete component category error:', error);
+        throw error;
+    }
+};
+
+// 组件相关接口 - 使用新的 API 客户端
+// 获取组件列表
+const getComponents = async (params = {}) => {
+    try {
+        const response = await componentApiClient.get('/components', {
+            params: {
+                categoryId: params.categoryId,
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get components error:', error);
+        throw error;
+    }
+};
+
+// 创建组件
+const createComponent = async (componentData) => {
+    try {
+        const response = await componentApiClient.post('/components', componentData);
+        return response.data;
+    } catch (error) {
+        console.error('Create component error:', error);
+        throw error;
+    }
+};
+
+// 获取单个组件
+const getComponent = async (componentId) => {
+    try {
+        const response = await componentApiClient.get(`/components/${componentId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Get component error:', error);
+        throw error;
+    }
+};
+
+// 更新组件
+const updateComponent = async (componentId, componentData) => {
+    try {
+        const response = await componentApiClient.put(`/components/${componentId}`, componentData);
+        return response.data;
+    } catch (error) {
+        console.error('Update component error:', error);
+        throw error;
+    }
+};
+
+// 删除组件
+const deleteComponent = async (componentId) => {
+    try {
+        const response = await componentApiClient.delete(`/components/${componentId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Delete component error:', error);
+        throw error;
+    }
+};
+
+// 根据分类获取组件
+const getComponentsByCategory = async (categoryId, params = {}) => {
+    try {
+        const response = await componentApiClient.get(`/components/by-category/${categoryId}`, {
+            params: {
+                page: params.page,
+                limit: params.limit
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Get components by category error:', error);
+        throw error;
+    }
+};
+
 // 修改导出对象
 export const api = {
     login,
@@ -530,5 +714,17 @@ export const api = {
     getAlternativelyErrors,
     getSubscriptionCount,
     getCustomerStatistic,
-    getCustomerRegisterStatistic
+    getCustomerRegisterStatistic,
+    // Page Components API 接口 - 使用新的 API 客户端
+    getComponentCategories,
+    createComponentCategory,
+    getComponentCategory,
+    updateComponentCategory,
+    deleteComponentCategory,
+    getComponents,
+    createComponent,
+    getComponent,
+    updateComponent,
+    deleteComponent,
+    getComponentsByCategory
 };
