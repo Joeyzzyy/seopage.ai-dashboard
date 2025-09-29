@@ -4,7 +4,10 @@
     <a-card class="section-card">
       <div class="section-header">
         <div class="section-title-mobile">
-          <span class="section-title">System Overview Dashboard</span>
+          <span class="section-title">
+            <span class="label-en">System Overview Dashboard</span>
+            <span class="label-zh">系统概览仪表盘</span>
+          </span>
         </div>
         <div class="header-actions-mobile">
           <a-select v-model:value="registerStatsDays" class="mobile-select" @change="updateRegisterChartData">
@@ -19,12 +22,18 @@
           <!-- System Stats -->
           <div class="stats-row">
             <div class="stat-item">
-              <div class="stat-label">Total Registered Users</div>
+              <div class="stat-label">
+                <span class="label-en">Total Registered Users</span>
+                <span class="label-zh">总注册用户数</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(totalRegistrations) }}</div>
             </div>
             
             <div class="stat-item highlight">
-              <div class="stat-label">Unsubscribed Users (No Tasks)</div>
+              <div class="stat-label">
+                <span class="label-en">Unsubscribed Users (No Tasks)</span>
+                <span class="label-zh">未订阅用户 (无任务)</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribedNoTask) }}</div>
               <div class="stat-percentage">
                 {{ calculatePercentage(customerStatisticData?.data?.unsubscribedNoTask, totalRegistrations) }}
@@ -35,7 +44,10 @@
           
           <div class="stats-row">
             <div class="stat-item">
-              <div class="stat-label">Unsubscribed Users (With Tasks)</div>
+              <div class="stat-label">
+                <span class="label-en">Unsubscribed Users (With Tasks)</span>
+                <span class="label-zh">未订阅用户 (有任务)</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</div>
               <div class="stat-percentage">
                 {{ calculatePercentage(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}
@@ -44,7 +56,10 @@
             </div>
             
             <div class="stat-item">
-              <div class="stat-label">Unsubscribed Users (With Pages)</div>
+              <div class="stat-label">
+                <span class="label-en">Unsubscribed Users (With Pages)</span>
+                <span class="label-zh">未订阅用户 (有页面)</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }}</div>
               <div class="stat-percentage">
                 {{ calculatePercentage(customerStatisticData?.data?.unsubscribeDeployOne, totalRegistrations) }}
@@ -55,7 +70,10 @@
           
           <div class="stats-row">
             <div class="stat-item">
-              <div class="stat-label">Task Activation Rate</div>
+              <div class="stat-label">
+                <span class="label-en">Task Activation Rate</span>
+                <span class="label-zh">任务开启率</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }} / {{ formatStatisticValue(totalRegistrations) }}</div>
               <div class="stat-percentage">
                 {{ calculateConversionRate(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}
@@ -64,7 +82,10 @@
             </div>
             
             <div class="stat-item">
-              <div class="stat-label">Page Deployment Conversion</div>
+              <div class="stat-label">
+                <span class="label-en">Page Deployment Conversion</span>
+                <span class="label-zh">页面部署转化率</span>
+              </div>
               <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }} / {{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</div>
               <div class="stat-percentage">
                 {{ calculateConversionRate(customerStatisticData?.data?.unsubscribeDeployOne, customerStatisticData?.data?.unsubscribeTaskOne) }}
@@ -75,30 +96,48 @@
 
           <!-- Registration Statistics Section -->
           <div class="registration-stats-section">
-            <div class="section-subtitle">Registration Statistics</div>
+            <div class="section-subtitle">
+              <span class="label-en">Registration Statistics</span>
+              <span class="label-zh">注册统计</span>
+            </div>
             <div class="register-summary-stats-flat">
               <div class="register-summary-item-flat">
                 <div class="summary-value-large">{{ formatStatisticValue(todayRegistrations) }}</div>
-                <div class="summary-label-large">Today's New Registrations</div>
+                <div class="summary-label-large">
+                  <span class="label-en">Today's New Registrations</span>
+                  <span class="label-zh">今日新注册</span>
+                </div>
               </div>
               <div class="register-summary-item-flat">
                 <div class="summary-value-large">{{ formatStatisticValue(yesterdayRegistrations) }}</div>
-                <div class="summary-label-large">Yesterday's New Registrations</div>
+                <div class="summary-label-large">
+                  <span class="label-en">Yesterday's New Registrations</span>
+                  <span class="label-zh">昨日新注册</span>
+                </div>
               </div>
               <div class="register-summary-item-flat">
                 <div class="summary-value-large">{{ formatStatisticValue(last7DaysRegistrations) }}</div>
-                <div class="summary-label-large">New Registrations (Last 7 Days)</div>
+                <div class="summary-label-large">
+                  <span class="label-en">New Registrations (Last 7 Days)</span>
+                  <span class="label-zh">近7天新注册</span>
+                </div>
               </div>
               <div class="register-summary-item-flat">
                 <div class="summary-value-large">{{ formatStatisticValue(last15DaysRegistrations) }}</div>
-                <div class="summary-label-large">New Registrations (Last 15 Days)</div>
+                <div class="summary-label-large">
+                  <span class="label-en">New Registrations (Last 15 Days)</span>
+                  <span class="label-zh">近15天新注册</span>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Registration Trend Chart -->
           <div class="chart-container">
-            <div class="section-subtitle">Registration Trend</div>
+            <div class="section-subtitle">
+              <span class="label-en">Registration Trend</span>
+              <span class="label-zh">注册趋势</span>
+            </div>
             <v-chart
               :option="registerChartOption"
               autoresize
@@ -115,14 +154,18 @@
     <!-- Customer Management -->
     <a-card class="section-card">
       <div class="section-header">
-        <span class="section-title">Customer Management</span>
+        <span class="section-title">
+          <span class="label-en">Customer Management</span>
+          <span class="label-zh">客户管理</span>
+        </span>
         <!-- Remove wrapper container to let filters take full width -->
         <div class="filter-container">
           <div class="filter-header">
             <div class="filter-title-section">
               <span class="filter-title">
                 <FilterOutlined />
-                Filters
+                <span class="label-en">Filters</span>
+                <span class="label-zh">筛选条件</span>
               </span>
               <!-- Search box moved to the right of filter conditions -->
               <div class="header-search-section">
@@ -1742,10 +1785,17 @@ const calculateConversionRate = (current, previous) => {
   font-weight: 500;
   margin-bottom: 8px;
   color: #666;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .stat-item.highlight .stat-label {
   color: #ff4d4f;
+}
+
+.stat-item.highlight .stat-label .label-zh {
+  color: #ff7875;
 }
 
 .stat-value {
@@ -1794,6 +1844,20 @@ const calculateConversionRate = (current, previous) => {
   font-weight: 600;
   margin-bottom: 16px;
   color: #1890ff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label-en {
+  display: block;
+}
+
+.label-zh {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
 }
 
 .chart-container {
@@ -2179,6 +2243,9 @@ const calculateConversionRate = (current, previous) => {
 .summary-label-large {
   font-size: 14px;
   color: #666;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* 响应式调整 */
