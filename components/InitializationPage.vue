@@ -1,188 +1,154 @@
 <template>
   <div class="initialization-container">
-    <!-- 修改：整合系统概览仪表盘 -->
-    <div class="section-card dashboard-section">
-      <a-spin :spinning="customerStatisticLoading || sseStatusLoading" tip="加载中...">
-        <div class="dashboard-header">
-          <div class="dashboard-title">
-            <h3 class="title-text">系统概览仪表盘</h3>
-            <span class="update-time">最后更新: {{ lastSSEUpdateTime }}</span>
-          </div>
-          <!-- 移动：将当前正在运行的任务数移到标题右侧 -->
-          <div class="dashboard-header-right">
-            <div class="running-tasks-indicator">
-              <span class="task-label">当前正在运行的任务数： </span>
-              <span class="task-count">{{ sseConnectionCount }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="dashboard-content">
-          <!-- 修改：客户转化漏斗统计 -->
-          <div class="customer-stats-section">
-            <div class="funnel-container">
-              <div class="funnel-title">用户转化漏斗</div>
-              
-              <div class="funnel-steps">
-                <!-- 第1层：总注册用户数 -->
-                <div class="funnel-step step-1">
-                  <div class="step-content">
-                    <div class="step-info">
-                      <span class="step-label">总注册用户数</span>
-                      <span class="step-value">{{ totalRegistrations }}</span>
-                    </div>
-                    <!-- 新增：未跑过任务未订阅用户红色模块 -->
-                    <div class="inactive-users-module">
-                      <span class="inactive-label">未跑过任务未订阅</span>
-                      <span class="inactive-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribedNoTask) }}</span>
-                      <span class="inactive-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribedNoTask, totalRegistrations) }}</span>
-                    </div>
-                  </div>
-                  <div class="funnel-arrow"></div>
-                </div>
-
-                <!-- 第2层：有开启任务未订阅用户 -->
-                <div class="funnel-step step-2">
-                  <div class="step-content">
-                    <div class="step-info">
-                      <span class="step-label">有开启任务未订阅用户</span>
-                      <span class="step-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
-                      <span class="step-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}</span>
-                    </div>
-                  </div>
-                  <div class="funnel-arrow"></div>
-                </div>
-
-                <!-- 第3层：有部署页面未订阅用户 -->
-                <div class="funnel-step step-3">
-                  <div class="step-content">
-                    <div class="step-info">
-                      <span class="step-label">有部署页面未订阅用户</span>
-                      <span class="step-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }}</span>
-                      <span class="step-percentage">{{ calculatePercentage(customerStatisticData?.data?.unsubscribeDeployOne, totalRegistrations) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 转化率总结 -->
-              <div class="conversion-summary">
-                <div class="summary-item">
-                  <span class="summary-label">任务开启率：</span>
-                  <span class="summary-value">{{ calculateConversionRate(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}</span>
-                  <span class="summary-detail">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }} / {{ formatStatisticValue(totalRegistrations) }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">页面部署转化率：</span>
-                  <span class="summary-value">{{ calculateConversionRate(customerStatisticData?.data?.unsubscribeDeployOne, customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
-                  <span class="summary-detail">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }} / {{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a-spin>
-    </div>
-
-    <!-- Error Monitoring Dashboard -->
+    <!-- System Overview Dashboard & User Registration Trend -->
     <a-card class="section-card">
       <div class="section-header">
         <div class="section-title-mobile">
-          <span class="section-title">错误监控仪表盘</span>
-        </div>
-        <div class="header-actions-mobile">
-           <a-select
-             v-model:value="errorDashboardDays"
-             class="mobile-select"
-             :options="errorDashboardDateOptions"
-             @change="handleErrorDashboardDateChange"
-           >
-             <template #suffixIcon><CalendarOutlined /></template>
-           </a-select>
-        </div>
-      </div>
-      <div v-if="errorDashboardLoading" class="loading-container">
-        <a-spin tip="加载错误数据中..." />
-      </div>
-      <div v-else-if="errorDashboardData && errorDashboardData.length > 0">
-        <v-chart
-          :option="errorDashboardChartOption"
-          autoresize
-          class="mobile-chart"
-        />
-      </div>
-      <div v-else class="empty-container">
-        <a-empty :description="`最近 ${errorDashboardDays} 天内无错误数据`" />
-      </div>
-    </a-card>
-
-    <!-- User Registration Trend -->
-    <a-card class="section-card">
-      <div class="section-header">
-        <div class="title-and-summary-mobile">
-          <span class="section-title">用户注册趋势</span>
-          <!-- 移除：注册数汇总显示 -->
-          <!-- 邀请码统计 - 移动端换行显示 -->
-          <div class="invite-code-stats-mobile">
-            <template v-for="(count, code) in inviteCodeStats" :key="code">
-              <span class="invite-code-item">
-                {{ code }}: {{ count }}
-              </span>
-            </template>
-          </div>
+          <span class="section-title">System Overview Dashboard</span>
         </div>
         <div class="header-actions-mobile">
           <a-select v-model:value="registerStatsDays" class="mobile-select" @change="updateRegisterChartData">
-            <a-select-option :value="30">最近30天</a-select-option>
-            <a-select-option :value="90">最近90天</a-select-option>
-            <a-select-option :value="0">全部</a-select-option>
+            <a-select-option :value="30">Last 30 Days</a-select-option>
+            <a-select-option :value="90">Last 90 Days</a-select-option>
+            <a-select-option :value="0">All Time</a-select-option>
           </a-select>
         </div>
       </div>
-      <v-chart
-        :option="registerChartOption"
-        autoresize
-        class="mobile-chart"
-      />
+      <a-spin :spinning="customerStatisticLoading" tip="Loading...">
+        <div v-if="customerStatisticData" class="dashboard-stats">
+          <!-- System Stats -->
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-label">Total Registered Users</div>
+              <div class="stat-value">{{ formatStatisticValue(totalRegistrations) }}</div>
+            </div>
+            
+            <div class="stat-item highlight">
+              <div class="stat-label">Unsubscribed Users (No Tasks)</div>
+              <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribedNoTask) }}</div>
+              <div class="stat-percentage">
+                {{ calculatePercentage(customerStatisticData?.data?.unsubscribedNoTask, totalRegistrations) }}
+                <span class="percentage-formula">(No Tasks / Total Users)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-label">Unsubscribed Users (With Tasks)</div>
+              <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</div>
+              <div class="stat-percentage">
+                {{ calculatePercentage(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}
+                <span class="percentage-formula">(With Tasks / Total Users)</span>
+              </div>
+            </div>
+            
+            <div class="stat-item">
+              <div class="stat-label">Unsubscribed Users (With Pages)</div>
+              <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }}</div>
+              <div class="stat-percentage">
+                {{ calculatePercentage(customerStatisticData?.data?.unsubscribeDeployOne, totalRegistrations) }}
+                <span class="percentage-formula">(With Pages / Total Users)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="stats-row">
+            <div class="stat-item">
+              <div class="stat-label">Task Activation Rate</div>
+              <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }} / {{ formatStatisticValue(totalRegistrations) }}</div>
+              <div class="stat-percentage">
+                {{ calculateConversionRate(customerStatisticData?.data?.unsubscribeTaskOne, totalRegistrations) }}
+                <span class="percentage-formula">(Users with Tasks / Total Users)</span>
+              </div>
+            </div>
+            
+            <div class="stat-item">
+              <div class="stat-label">Page Deployment Conversion</div>
+              <div class="stat-value">{{ formatStatisticValue(customerStatisticData?.data?.unsubscribeDeployOne) }} / {{ formatStatisticValue(customerStatisticData?.data?.unsubscribeTaskOne) }}</div>
+              <div class="stat-percentage">
+                {{ calculateConversionRate(customerStatisticData?.data?.unsubscribeDeployOne, customerStatisticData?.data?.unsubscribeTaskOne) }}
+                <span class="percentage-formula">(Users with Pages / Users with Tasks)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Registration Statistics Section -->
+          <div class="registration-stats-section">
+            <div class="section-subtitle">Registration Statistics</div>
+            <div class="register-summary-stats-flat">
+              <div class="register-summary-item-flat">
+                <div class="summary-value-large">{{ formatStatisticValue(todayRegistrations) }}</div>
+                <div class="summary-label-large">Today's New Registrations</div>
+              </div>
+              <div class="register-summary-item-flat">
+                <div class="summary-value-large">{{ formatStatisticValue(yesterdayRegistrations) }}</div>
+                <div class="summary-label-large">Yesterday's New Registrations</div>
+              </div>
+              <div class="register-summary-item-flat">
+                <div class="summary-value-large">{{ formatStatisticValue(last7DaysRegistrations) }}</div>
+                <div class="summary-label-large">New Registrations (Last 7 Days)</div>
+              </div>
+              <div class="register-summary-item-flat">
+                <div class="summary-value-large">{{ formatStatisticValue(last15DaysRegistrations) }}</div>
+                <div class="summary-label-large">New Registrations (Last 15 Days)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Registration Trend Chart -->
+          <div class="chart-container">
+            <div class="section-subtitle">Registration Trend</div>
+            <v-chart
+              :option="registerChartOption"
+              autoresize
+              class="mobile-chart"
+            />
+          </div>
+        </div>
+        <div v-else class="empty-container">
+          <a-empty description="No data available" />
+        </div>
+      </a-spin>
     </a-card>
 
     <!-- Customer Management -->
     <a-card class="section-card">
       <div class="section-header">
-        <span class="section-title">客户管理</span>
-        <!-- 移除包装容器，让筛选器直接占满宽度 -->
+        <span class="section-title">Customer Management</span>
+        <!-- Remove wrapper container to let filters take full width -->
         <div class="filter-container">
           <div class="filter-header">
             <div class="filter-title-section">
               <span class="filter-title">
                 <FilterOutlined />
-                筛选条件
+                Filters
               </span>
-              <!-- 搜索框移到筛选条件右侧 -->
+              <!-- Search box moved to the right of filter conditions -->
               <div class="header-search-section">
                 <a-input-search
                   v-model:value="searchEmail"
-                  placeholder="搜索邮箱"
+                  placeholder="Search Email"
                   class="header-search-input"
                   @search="handleSearch"
                   @change="handleSearchChange"
                   allowClear
                   size="small"
                 />
-                <!-- 记录数量也移到这里 -->
+                <!-- Record count also moved here -->
                 <div class="header-customer-stats">
                   <span class="stats-text">
-                    共 <span class="stats-number">{{ pagination.total }}</span> 条
+                    Total: <span class="stats-number">{{ pagination.total }}</span> records
                   </span>
                   <span class="stats-text" v-if="pagination.total > 0">
-                    第 <span class="stats-number">{{ pagination.current }}</span>/{{ Math.ceil(pagination.total / pagination.pageSize) }} 页
+                    Page: <span class="stats-number">{{ pagination.current }}</span>/{{ Math.ceil(pagination.total / pagination.pageSize) }}
                   </span>
                 </div>
               </div>
             </div>
             <div class="filter-header-actions">
               <a-button size="small" @click="clearFilters" :disabled="!hasActiveFilters">
-                清空
+                Clear
               </a-button>
               <a-button 
                 type="primary" 
@@ -190,26 +156,26 @@
                 @click="applyFilters"
                 :loading="loading"
               >
-                应用
+                Apply
               </a-button>
             </div>
           </div>
           
           <div class="filter-content">
-            <!-- 新增：订阅状态筛选组 -->
+            <!-- Subscription Status Filter -->
             <div class="filter-group">
               <div class="filter-group-header">
-                <div class="filter-group-title">订阅状态筛选</div>
+                <div class="filter-group-title">Subscription Status</div>
               </div>
               <div class="filter-group-content">
                 <a-radio-group v-model:value="subscribeFilter" @change="handleFilterChange">
-                  <a-radio :value="true">仅显示未订阅用户</a-radio>
-                  <a-radio :value="false">仅显示订阅用户</a-radio>
+                  <a-radio :value="true">Show Unsubscribed Users Only</a-radio>
+                  <a-radio :value="false">Show Subscribed Users Only</a-radio>
                 </a-radio-group>
               </div>
             </div>
 
-            <!-- 新增：域名绑定筛选组 -->
+            <!-- Domain Binding Filter -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
@@ -217,17 +183,17 @@
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">域名绑定筛选</span>
+                  <span class="filter-group-title">Domain Binding Filter</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !domainBindFilter }">
                 <div class="filter-description">
-                  <span class="description-text">仅显示已完成域名绑定的用户</span>
+                  <span class="description-text">Show users with completed domain binding only</span>
                 </div>
               </div>
             </div>
 
-            <!-- 任务数量筛选组 -->
+            <!-- Task Count Filter -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
@@ -235,7 +201,7 @@
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">任务数量筛选</span>
+                  <span class="filter-group-title">Task Count Filter</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableWebsiteCountFilter }">
@@ -243,16 +209,16 @@
                   <a-input-number
                     v-model:value="minWebsiteCount"
                     :disabled="!enableWebsiteCountFilter"
-                    placeholder="最小值"
+                    placeholder="Min"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
                   />
-                  <span class="range-separator">至</span>
+                  <span class="range-separator">to</span>
                   <a-input-number
                     v-model:value="maxWebsiteCount"
                     :disabled="!enableWebsiteCountFilter"
-                    placeholder="最大值"
+                    placeholder="Max"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
@@ -261,7 +227,7 @@
               </div>
             </div>
 
-            <!-- 生成页面数筛选组 -->
+            <!-- Generated Pages Count Filter -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
@@ -269,7 +235,7 @@
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">生成页面数筛选</span>
+                  <span class="filter-group-title">Generated Pages Filter</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableResultCountFilter }">
@@ -277,16 +243,16 @@
                   <a-input-number
                     v-model:value="minResultCount"
                     :disabled="!enableResultCountFilter"
-                    placeholder="最小值"
+                    placeholder="Min"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
                   />
-                  <span class="range-separator">至</span>
+                  <span class="range-separator">to</span>
                   <a-input-number
                     v-model:value="maxResultCount"
                     :disabled="!enableResultCountFilter"
-                    placeholder="最大值"
+                    placeholder="Max"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
@@ -295,7 +261,7 @@
               </div>
             </div>
 
-            <!-- 部署数量筛选组 -->
+            <!-- Deployment Count Filter -->
             <div class="filter-group">
               <div class="filter-group-header">
                 <a-checkbox 
@@ -303,7 +269,7 @@
                   @change="handleFilterChange"
                   class="filter-checkbox"
                 >
-                  <span class="filter-group-title">部署数量筛选</span>
+                  <span class="filter-group-title">Deployment Count Filter</span>
                 </a-checkbox>
               </div>
               <div class="filter-group-content" :class="{ disabled: !enableDeployCountFilter }">
@@ -311,16 +277,16 @@
                   <a-input-number
                     v-model:value="minDeployCount"
                     :disabled="!enableDeployCountFilter"
-                    placeholder="最小值"
+                    placeholder="Min"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
                   />
-                  <span class="range-separator">至</span>
+                  <span class="range-separator">to</span>
                   <a-input-number
                     v-model:value="maxDeployCount"
                     :disabled="!enableDeployCountFilter"
-                    placeholder="最大值"
+                    placeholder="Max"
                     :min="0"
                     class="range-input"
                     @change="handleFilterChange"
@@ -332,10 +298,10 @@
         </div>
       </div>
       
-      <!-- 移动端使用卡片列表替代表格 -->
+      <!-- Mobile card list instead of table -->
       <div class="mobile-customer-list" v-if="isMobile">
         <div v-if="loading" class="loading-container">
-          <a-spin tip="加载客户数据中..." />
+          <a-spin tip="Loading customer data..." />
         </div>
         <div v-else>
           <div 
@@ -347,41 +313,28 @@
           >
             <div class="customer-header">
               <div class="customer-email">{{ customer.email }}</div>
-              <div class="customer-status">
-                <span v-if="customer.hasRecentErrors === true" class="error-indicator">
-                  <WarningOutlined />
-                  有错误
-                </span>
-                <span v-else-if="customer.hasRecentErrors === false" class="no-error-indicator">
-                  正常
-                </span>
-              </div>
             </div>
             <div class="customer-details">
               <div class="detail-item">
-                <span class="label">客户ID:</span>
+                <span class="label">Customer ID:</span>
                 <span class="value">{{ customer.customerId }}</span>
               </div>
               <div class="detail-item">
-                <span class="label">邀请码:</span>
-                <span class="value">{{ customer.inviteCode || '-' }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">注册时间:</span>
+                <span class="label">Register Time:</span>
                 <span class="value">{{ customer.registerTime ? dayjs(customer.registerTime).format('YYYY-MM-DD HH:mm') : '-' }}</span>
               </div>
             </div>
             <div class="customer-actions">
               <a-button type="default" size="small" @click.stop="handleEditPlan(customer)">
-                编辑计划
+                Edit Plan
               </a-button>
               <a-button type="primary" size="small" @click.stop="handleLoginToAltpage(customer)">
-                前往Altpage
+                Log into Account
               </a-button>
             </div>
           </div>
           
-          <!-- 移动端分页 -->
+          <!-- Mobile pagination -->
           <div class="mobile-pagination">
             <a-pagination
               v-model:current="pagination.current"
@@ -389,7 +342,7 @@
               :pageSize="pagination.pageSize"
               :showSizeChanger="false"
               :showQuickJumper="false"
-              :showTotal="(total) => `共 ${total} 条`"
+              :showTotal="(total) => `Total ${total} records`"
               @change="handleTableChange"
               size="small"
             />
@@ -397,7 +350,7 @@
         </div>
       </div>
       
-      <!-- 桌面端保持原有表格 -->
+      <!-- Desktop table -->
       <a-table
         v-else
         class="customer-table"
@@ -409,7 +362,7 @@
         :row-class-name="getRowClassName"
         size="small"
         :customRow="customRowHandler"
-        :scroll="{ x: 1500 }"
+        :scroll="{ x: 1200 }"
         rowKey="customerId"
       >
         <template #bodyCell="{ column, record }">
@@ -419,7 +372,7 @@
                 Edit Plan
               </a-button>
               <a-button type="primary" size="small" @click.stop="handleLoginToAltpage(record)">
-                Goto Altpage
+                 Log into that account
               </a-button>
             </a-space>
           </template>
@@ -433,108 +386,15 @@
               <span>{{ record.email }}</span>
             </a-tooltip>
           </template>
-          <template v-if="column.key === 'inviteCode'">
-            <a-tooltip :title="record.inviteCode">
-              <span>{{ record.inviteCode }}</span>
-            </a-tooltip>
-          </template>
         </template>
       </a-table>
     </a-card>
 
-    <!-- Error Logs -->
-    <a-card
-      v-if="selectedCustomerId"
-      class="section-card error-log-section"
-    >
-      <div class="section-header">
-        <div class="section-title-mobile">
-          <span class="section-title">{{ selectedCustomer?.email || '选中客户' }} 的错误日志</span>
-        </div>
-        <div class="header-actions-mobile">
-           <a-select
-             v-model:value="errorLogDays"
-             class="mobile-select"
-             :options="errorLogDateOptions"
-             @change="handleErrorLogDateChange"
-           >
-             <template #suffixIcon><CalendarOutlined /></template>
-           </a-select>
-        </div>
-      </div>
-      
-      <!-- 移动端错误日志列表 -->
-      <div class="mobile-error-list" v-if="isMobile">
-        <div v-if="errorLogLoading" class="loading-container">
-          <a-spin tip="加载错误日志中..." />
-        </div>
-        <div v-else-if="errorLogs.length > 0">
-          <div v-for="log in errorLogs" :key="log.id" class="error-log-card">
-            <div class="error-header">
-              <span class="error-time">{{ dayjs(log.createdAt).format('MM-DD HH:mm') }}</span>
-              <span class="error-module">{{ log.module }}</span>
-            </div>
-            <div class="error-operation">{{ log.operation }}</div>
-            <div class="error-website" v-if="log.websiteId">
-              <span class="label">网站ID:</span>
-              <span class="value">{{ log.websiteId }}</span>
-            </div>
-            <div class="error-detail">
-              <a-typography-paragraph 
-                :ellipsis="{ rows: 2, expandable: true, symbol: '展开' }"
-                :content="log.errorDetail"
-              />
-            </div>
-          </div>
-          
-          <!-- 移动端错误日志分页 -->
-          <div class="mobile-pagination">
-            <a-pagination
-              v-model:current="errorLogPagination.current"
-              :total="errorLogPagination.total"
-              :pageSize="errorLogPagination.pageSize"
-              :showSizeChanger="false"
-              :showQuickJumper="false"
-              :showTotal="(total) => `共 ${total} 条`"
-              @change="handleErrorLogTableChange"
-              size="small"
-            />
-          </div>
-        </div>
-        <div v-else class="empty-container">
-          <a-empty :description="`选定时间段内无错误日志 (${errorLogDays} 天)`" />
-        </div>
-      </div>
-      
-      <!-- 桌面端保持原有表格 -->
-      <a-table
-        v-else
-        :columns="errorLogColumns"
-        :data-source="errorLogs"
-        :pagination="errorLogPagination"
-        :loading="errorLogLoading"
-        @change="handleErrorLogTableChange"
-        size="small"
-        :scroll="{ x: 800 }"
-        rowKey="id"
-      >
-        <template #emptyText>
-          <a-empty :description="`No error logs found for the selected period (${errorLogDays} days).`" />
-        </template>
-        <template #bodyCell="{ column, text }">
-            <template v-if="column.key === 'errorMessage'">
-              <a-tooltip :title="text" placement="topLeft">
-                <span>{{ text }}</span>
-              </a-tooltip>
-            </template>
-          </template>
-      </a-table>
-    </a-card>
 
     <!-- Edit Package Modal -->
     <a-modal
       v-model:open="modalVisible"
-      title="试用套餐详情"
+      title="Trial Package Details"
       :footer="null"
       :width="isMobile ? '95%' : '600px'"
       :centered="isMobile"
@@ -621,7 +481,6 @@ import { api } from '../api/api'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { 
-  CalendarOutlined,
   WarningOutlined,
   FilterOutlined,
   WifiOutlined,
@@ -648,176 +507,12 @@ const pagination = ref({
   showQuickJumper: true,
 })
 
-// 新增：错误仪表盘相关状态
-const errorDashboardLoading = ref(false)
-const errorDashboardData = ref(null)
-const errorDashboardDays = ref(15) // 新增: 默认显示最近1天的数据
-const errorDashboardDateOptions = [ // 新增: 日期选项
-  { value: 1, label: 'Last 1 Day' },
-  { value: 3, label: 'Last 3 Days' },
-  { value: 7, label: 'Last 7 Days' },
-  { value: 15, label: 'Last 15 Days' },
-  { value: 30, label: 'Last 30 Days' },
-]
-
-// 新增：获取错误仪表盘数据函数
-const fetchErrorDashboardData = async () => {
-  errorDashboardLoading.value = true
-  try {
-    // 计算开始和结束日期
-    const endDate = dayjs()
-    const startDate = endDate.subtract(errorDashboardDays.value, 'day')
-
-    // 调用 api.getErrorDashboard 并传入 YYYY-MM-DD 格式的日期参数
-    // api.getErrorDashboard 返回的是 { code, message, data: [...] } 结构
-    const response = await api.getErrorDashboard({
-        startDate: startDate.format('YYYY-MM-DD'),
-        endDate: endDate.format('YYYY-MM-DD'),
-    })
-
-    // 修改: 从返回的对象中提取 data 属性（这才是真正的数组）
-    // 确保 response 存在并且 response.data 是一个数组
-    const actualDataArray = response && Array.isArray(response.data) ? response.data : [];
-
-    errorDashboardData.value = actualDataArray;
-    console.log('Error Dashboard Data (final):', errorDashboardData.value) // 添加日志确认最终值
-
-  } catch (error) {
-    console.error('Failed to fetch error dashboard data:', error)
-    message.error('Failed to fetch error dashboard data')
-    errorDashboardData.value = [] // 出错时设置为空数组
-  } finally {
-    errorDashboardLoading.value = false
-  }
-}
-
-// 新增: 处理错误仪表盘日期范围变化的函数
-const handleErrorDashboardDateChange = () => {
-  fetchErrorDashboardData() // 重新获取数据
-}
-
-// 新增: 错误仪表盘图表配置
-const errorDashboardChartOption = computed(() => {
-  const data = errorDashboardData.value || [];
-  const dateList = data.map(item => item.date);
-  const totalTasksList = data.map(item => item.totalTasks);
-  const failedTasksList = data.map(item => item.failedTasks);
-  // 失败率可以作为提示信息显示，或者使用双 Y 轴（更复杂）
-  // const failureRateList = data.map(item => parseFloat(item.failureRate) || 0);
-
-  return {
-    tooltip: {
-      trigger: 'axis',
-      formatter: (params) => { // 自定义 tooltip 显示内容
-        let tooltipStr = `${params[0].axisValueLabel}<br/>`;
-        params.forEach(item => {
-          const seriesName = item.seriesName;
-          const value = item.value;
-          // 查找原始数据以获取失败率
-          const originalData = data.find(d => d.date === item.axisValueLabel);
-          let rateStr = '';
-          if (seriesName === 'Failed Tasks' && originalData) {
-            rateStr = ` (${originalData.failureRate})`;
-          } else if (seriesName === 'Total Tasks' && originalData && originalData.totalTasks > 0) {
-             // 可选：如果需要在 Total Tasks 旁边也显示失败率
-             // rateStr = ` (Failure Rate: ${originalData.failureRate})`;
-          }
-          tooltipStr += `${item.marker}${seriesName}: ${value}${rateStr}<br/>`;
-        });
-        return tooltipStr;
-      }
-    },
-    legend: { // 添加图例
-      data: ['Total Tasks', 'Failed Tasks'],
-      top: 'bottom', // 图例放在底部
-      padding: [20, 0, 0, 0] // 增加底部内边距给图例空间
-    },
-    grid: { left: 50, right: 20, top: 40, bottom: 60 }, // 调整 grid 留出图例空间
-    xAxis: {
-      type: 'category',
-      data: dateList,
-      boundaryGap: false,
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1, // 保证 Y 轴刻度是整数
-      min: 0
-    },
-    series: [
-      {
-        name: 'Total Tasks',
-        type: 'line',
-        data: totalTasksList,
-        smooth: true,
-        symbol: 'circle',
-        lineStyle: { color: '#5470c6' }, // 蓝色系
-        itemStyle: { color: '#5470c6' }
-      },
-      {
-        name: 'Failed Tasks',
-        type: 'line',
-        data: failedTasksList,
-        smooth: true,
-        symbol: 'circle',
-        lineStyle: { color: '#ee6666' }, // 红色系
-        itemStyle: { color: '#ee6666' }
-      }
-      // 如果需要显示失败率作为单独的线（可能需要双 Y 轴）
-      // {
-      //   name: 'Failure Rate',
-      //   type: 'line',
-      //   yAxisIndex: 1, // 需要配置第二个 Y 轴
-      //   data: failureRateList,
-      //   smooth: true,
-      //   symbol: 'circle',
-      //   lineStyle: { color: '#91cc75' }, // 绿色系
-      //   itemStyle: { color: '#91cc75' }
-      // }
-    ]
-    // 如果需要双 Y 轴，取消注释下面的 yAxis 配置
-    // yAxis: [
-    //   { // 第一个 Y 轴（任务数）
-    //     type: 'value',
-    //     name: 'Tasks',
-    //     minInterval: 1,
-    //     min: 0
-    //   },
-    //   { // 第二个 Y 轴（失败率）
-    //     type: 'value',
-    //     name: 'Failure Rate (%)',
-    //     min: 0,
-    //     max: 100, // 假设失败率最大为 100%
-    //     axisLabel: {
-    //       formatter: '{value} %'
-    //     }
-    //   }
-    // ],
-  };
-});
+// 系统概览仪表盘相关代码已简化，移除了表格定义
 
 // Customer Table Columns
 const initializationColumns = [
   { title: 'Customer ID', dataIndex: 'customerId', key: 'customerId', width: 150, ellipsis: true },
   { title: 'Email', dataIndex: 'email', key: 'email', width: 200, ellipsis: true },
-  { title: 'Invite Code', dataIndex: 'inviteCode', key: 'inviteCode', width: 120 },
-  {
-    title: 'Recent Errors (Last 15 Days)',
-    dataIndex: 'hasRecentErrors',
-    key: 'recentErrors',
-    width: 180,
-    customRender: ({ record }) => {
-      if (record.hasRecentErrors === true) {
-        return h('span', { style: { color: '#faad14' } }, [
-          h(WarningOutlined, { style: { marginRight: '8px' } }),
-          'Errors encountered'
-        ]);
-      } else if (record.hasRecentErrors === false) {
-        return h('span', { style: { color: '#52c41a' } }, '-');
-      } else {
-        return h('span', {}, 'Checking...');
-      }
-    },
-  },
   {
     title: 'Register Time',
     dataIndex: 'registerTime',
@@ -881,7 +576,6 @@ const fetchCustomerData = async (page = 1) => {
   loading.value = true;
   selectedCustomerId.value = null;
   selectedCustomer.value = null;
-  errorLogs.value = [];
 
   try {
     // 构建筛选参数
@@ -907,43 +601,8 @@ const fetchCustomerData = async (page = 1) => {
     pagination.value.total = customerResponse.TotalCount || 0;
     pagination.value.current = page;
 
-    const customersWithStatus = rawCustomers.map(c => ({ ...c, hasRecentErrors: null }));
-    originalCustomers.value = customersWithStatus;
-    customers.value = customersWithStatus;
-
-    // Prepare error check promises
-    const errorCheckPromises = rawCustomers.map(customer => {
-      const endTime = dayjs();
-      const startTime = endTime.subtract(15, 'day'); // Check last 15 days
-      return api.getAlternativelyErrors({
-        customerId: customer.customerId,
-        startTime: startTime.format('YYYY-MM-DD'),
-        endTime: endTime.format('YYYY-MM-DD'),
-        page: 1,
-        limit: 1, // We only need to know if *any* error exists (count > 0)
-      }).then(response => ({
-        customerId: customer.customerId,
-        hasErrors: (response.totalCount || 0) > 0,
-      })).catch(err => {
-        console.error(`Failed to check errors for ${customer.customerId}:`, err);
-        return { customerId: customer.customerId, hasErrors: false, error: true }; // Assume no errors on failure for safety, maybe log?
-      });
-    });
-
-    // Wait for all error checks to complete
-    const errorResults = await Promise.allSettled(errorCheckPromises);
-
-    // Update customer data with error status
-    const finalCustomers = customers.value.map(customer => {
-      const result = errorResults.find(r => r.status === 'fulfilled' && r.value.customerId === customer.customerId);
-      if (result) {
-        return { ...customer, hasRecentErrors: result.value.hasErrors };
-      }
-      // Handle potential rejections if needed, though catch above defaults to false
-      return { ...customer, hasRecentErrors: false }; // Default if promise failed unexpectedly
-    });
-
-    customers.value = finalCustomers;
+    originalCustomers.value = rawCustomers;
+    customers.value = rawCustomers;
 
   } catch (error) {
     console.error('Failed to fetch customer list:', error);
@@ -1064,12 +723,8 @@ const handleInitialize = (record) => {
 
 // 加载客户相关数据
 const loadCustomerData = async (customerId) => {
-  // 重置错误日志状态
-  errorLogs.value = [];
-  errorLogPagination.value.current = 1;
-  errorLogPagination.value.total = 0;
-  // 获取错误日志 (使用当前选定的日期范围)
-  await fetchErrorLogs(customerId, 1); // 默认加载第一页
+  // 客户数据加载逻辑
+  // 这里可以添加其他需要加载的客户相关数据
 }
 
 // 添加新的套餐相关状态
@@ -1828,133 +1483,11 @@ const inviteCodeStats = computed(() => {
   return {};
 });
 
-// 新增：错误日志相关状态
-const errorLogLoading = ref(false)
-const errorLogs = ref([])
-const errorLogPagination = ref({
-  current: 1,
-  pageSize: 5, // 每页显示5条
-  total: 0,
-  showTotal: total => `${total} records in total`,
-  showSizeChanger: false, // 不显示切换每页条数选项
-})
-const errorLogDays = ref(15) // Default to last 15 days
-const errorLogDateOptions = [
-  { value: 1, label: 'Last 1 Day' },
-  { value: 3, label: 'Last 3 Days' },
-  { value: 7, label: 'Last 7 Days' },
-  { value: 15, label: 'Last 15 Days' }, // Ensure 15 is an option
-  { value: 30, label: 'Last 30 Days' },
-]
-
-// 新增: 错误日志表格列定义
-const errorLogColumns = [
-  {
-    title: 'Time',
-    dataIndex: 'createdAt',
-    key: 'createdAt',
-    width: 180,
-    customRender: ({ text }) => text ? dayjs(text).format('YYYY-MM-DD HH:mm:ss') : '-',
-    sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
-    defaultSortOrder: 'descend' // 默认按时间降序
-  },
-  {
-    title: 'Module',
-    dataIndex: 'module',
-    key: 'module',
-    width: 150,
-    ellipsis: true,
-  },
-  {
-    title: 'Operation',
-    dataIndex: 'operation',
-    key: 'operation',
-    width: 200,
-    ellipsis: true,
-  },
-  {
-    title: 'Website ID',
-    dataIndex: 'websiteId',
-    key: 'websiteId',
-    width: 250,
-    ellipsis: true,
-  },
-  {
-    title: 'Error Details',
-    dataIndex: 'errorDetail',
-    key: 'errorDetail',
-    ellipsis: true, // 使用 antd 的省略号功能
-    customRender: ({ text }) => h(
-      ATooltip,
-      { title: text }, // 鼠标悬浮时显示完整内容
-      () => h('span', text) // 表格单元格内显示省略的文本
-    )
-  },
-  // 可以选择性地添加 errorId 列，如果需要的话
-  // {
-  //   title: 'Error ID',
-  //   dataIndex: 'errorId',
-  //   key: 'errorId',
-  //   width: 250,
-  //   ellipsis: true,
-  // },
-];
-
-// 获取错误日志数据
-const fetchErrorLogs = async (customerId, page = 1) => {
-  if (!customerId) return;
-  errorLogLoading.value = true;
-  try {
-    const endDate = dayjs();
-    const startDate = endDate.subtract(errorLogDays.value, 'day'); // 使用 errorLogDays 控制范围
-
-    const response = await api.getAlternativelyErrors({
-      customerId: customerId,
-      startTime: startDate.format('YYYY-MM-DD'),
-      endTime: endDate.format('YYYY-MM-DD'),
-      page: page,
-      limit: errorLogPagination.value.pageSize,
-    });
-
-    // 修正：确保分页 total 和 data 数量一致
-    errorLogs.value = response.data || [];
-    errorLogPagination.value.total = response.totalCount || errorLogs.value.length;
-    errorLogPagination.value.current = page;
-
-  } catch (error) {
-    console.error(`Failed to fetch error logs for ${customerId}:`, error);
-    message.error('Failed to load error logs');
-    errorLogs.value = [];
-    errorLogPagination.value.total = 0;
-  } finally {
-    errorLogLoading.value = false;
-  }
+// 添加更新注册图表数据的函数
+const updateRegisterChartData = () => {
+  fetchCustomerRegisterStatistic();
 };
 
-// 新增: 处理错误日志表格分页/排序变化
-const handleErrorLogTableChange = (pagination, filters, sorter) => {
-  // 更新分页信息
-  errorLogPagination.value.current = pagination.current;
-  errorLogPagination.value.pageSize = pagination.pageSize;
-
-  // 如果需要处理排序，可以在这里添加逻辑
-  // const { field, order } = sorter;
-  // console.log('Sorter:', field, order);
-
-  // 重新获取当前页数据
-  if (selectedCustomerId.value) {
-    fetchErrorLogs(selectedCustomerId.value, pagination.current);
-  }
-};
-
-// 新增: 处理错误日志日期范围变化
-const handleErrorLogDateChange = () => {
-  // 重置到第一页并重新获取数据
-  errorLogPagination.value.current = 1;
-  if (selectedCustomerId.value) {
-    fetchErrorLogs(selectedCustomerId.value, 1);
-  }
-};
 
 // 添加移动端检测
 const isMobile = ref(false)
@@ -1973,44 +1506,28 @@ const handleCustomerSelect = (customer) => {
   }
 }
 
-// 新增：SSE连接状态相关状态
-const sseStatusLoading = ref(false)
-const sseConnectionCount = ref(0)
-const lastSSEUpdateTime = ref('')
-
-// 新增：获取SSE连接状态
-const fetchSSEStatus = async () => {
-  sseStatusLoading.value = true
-  try {
-    // 假设API密钥从环境变量或配置中获取
-    const apiKey = 'Mz7bHCyjvSqzOTfWHjUe6VO9kkSVnQvoxI2zgw3O894' // 这里需要替换为实际的API密钥
-    const response = await api.getSubscriptionCount(apiKey)
-    
-    sseConnectionCount.value = response.connected_total || 0
-    lastSSEUpdateTime.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
-    
-    console.log('SSE Status:', response)
-  } catch (error) {
-    console.error('Failed to fetch SSE status:', error)
-    message.error('获取SSE连接状态失败')
-    sseConnectionCount.value = 0
-    lastSSEUpdateTime.value = dayjs().format('YYYY-MM-DD HH:mm:ss')
-  } finally {
-    sseStatusLoading.value = false
-  }
-}
+// SSE相关代码已移除
 
 // 新增：客户统计相关状态
 const customerStatisticLoading = ref(false)
 const customerStatisticData = ref(null)
 
-// 新增：获取客户统计信息
+// 获取客户统计信息
 const fetchCustomerStatistic = async () => {
   customerStatisticLoading.value = true
   try {
     const response = await api.getCustomerStatistic()
     customerStatisticData.value = response
     console.log('Customer Statistic Data:', response)
+    
+    // 调试输出详细信息
+    if (response) {
+      console.log('Response structure:', JSON.stringify(response, null, 2))
+      console.log('Data property:', response.data)
+      console.log('unsubscribedNoTask:', response.data?.unsubscribedNoTask)
+      console.log('unsubscribeTaskOne:', response.data?.unsubscribeTaskOne)
+      console.log('unsubscribeDeployOne:', response.data?.unsubscribeDeployOne)
+    }
   } catch (error) {
     console.error('Failed to fetch customer statistic:', error)
     message.error('获取客户统计信息失败')
@@ -2030,17 +1547,33 @@ const formatStatisticLabel = (key) => {
   return labelMap[key] || key
 }
 
-// 新增：格式化统计值
+// 格式化统计值
 const formatStatisticValue = (value) => {
-  if (typeof value === 'number') {
-    return value.toLocaleString() // 添加千分位分隔符
+  // 如果值是对象，返回'-'
+  if (value === null || value === undefined || typeof value === 'object') {
+    return '-';
   }
-  return value || '-'
+  
+  // 如果值是数字，格式化为带千分位的字符串
+  if (typeof value === 'number') {
+    return value.toLocaleString();
+  }
+  
+  // 尝试将值转换为数字并格式化
+  const num = Number(value);
+  if (!isNaN(num)) {
+    return num.toLocaleString();
+  }
+  
+  // 其他情况返回原始值或'-'
+  return value || '-';
 }
 
-// 新增：计算总注册数
+// 计算总注册数
 const totalRegistrations = computed(() => {
-  return customerRegisterStatisticData.value?.totalCount || 0;
+  // 确保返回一个数字
+  const count = customerRegisterStatisticData.value?.totalCount;
+  return typeof count === 'number' ? count : 0;
 })
 
 // 新增：客户注册统计相关状态
@@ -2057,6 +1590,42 @@ const totalRegistrationsAfterHighlight = computed(() => {
     .reduce((total, item) => total + item.count, 0);
 });
 
+// 添加计算属性：今日注册数
+const todayRegistrations = computed(() => {
+  const data = customerRegisterStatisticData.value?.data || [];
+  const today = dayjs().format('YYYY-MM-DD');
+  const todayData = data.find(item => item.date === today);
+  return todayData ? todayData.count : 0;
+});
+
+// 添加计算属性：昨日注册数
+const yesterdayRegistrations = computed(() => {
+  const data = customerRegisterStatisticData.value?.data || [];
+  const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+  const yesterdayData = data.find(item => item.date === yesterday);
+  return yesterdayData ? yesterdayData.count : 0;
+});
+
+// 添加计算属性：过去7天注册数
+const last7DaysRegistrations = computed(() => {
+  const data = customerRegisterStatisticData.value?.data || [];
+  const sevenDaysAgo = dayjs().subtract(7, 'day');
+  
+  return data
+    .filter(item => dayjs(item.date).isAfter(sevenDaysAgo) || dayjs(item.date).isSame(sevenDaysAgo, 'day'))
+    .reduce((total, item) => total + item.count, 0);
+});
+
+// 添加计算属性：过去15天注册数
+const last15DaysRegistrations = computed(() => {
+  const data = customerRegisterStatisticData.value?.data || [];
+  const fifteenDaysAgo = dayjs().subtract(15, 'day');
+  
+  return data
+    .filter(item => dayjs(item.date).isAfter(fifteenDaysAgo) || dayjs(item.date).isSame(fifteenDaysAgo, 'day'))
+    .reduce((total, item) => total + item.count, 0);
+});
+
 // 修改组件挂载时的初始化逻辑
 onMounted(async () => {
   checkDevice()
@@ -2065,11 +1634,8 @@ onMounted(async () => {
   console.log('Component mounted, fetching initial data...')
   await fetchCustomerStatistic() // 获取客户统计
   await fetchCustomerRegisterStatistic() // 获取客户注册统计
-  await fetchSSEStatus()
-  await fetchErrorDashboardData()
   await fetchCustomerData()
   await fetchPackageList()
-  // 移除原来的 fetchRegisterStats 调用
   
   if (customers.value.length > 0 && !selectedCustomerId.value) {
     selectedCustomerId.value = customers.value[0].customerId
@@ -2093,113 +1659,360 @@ const hasActiveFilters = computed(() => {
          subscribeFilter.value === false; // 当显示未订阅用户时也算作激活筛选
 })
 
-// 新增：计算百分比
+// 计算百分比
 const calculatePercentage = (value, total) => {
-  if (!value || !total || total === 0) return '0%';
-  const percentage = ((value / total) * 100).toFixed(1);
+  // 确保值是数字
+  const numValue = Number(value) || 0;
+  const numTotal = Number(total) || 1; // 避免除以0，默认为1
+  
+  if (numTotal === 0) return '0%';
+  const percentage = ((numValue / numTotal) * 100).toFixed(1);
   return `${percentage}%`;
 };
 
-// 新增：计算转化率
+// 计算转化率
 const calculateConversionRate = (current, previous) => {
-  if (!current || !previous || previous === 0) return '0%';
-  const rate = ((current / previous) * 100).toFixed(1);
+  // 确保值是数字
+  const numCurrent = Number(current) || 0;
+  const numPrevious = Number(previous) || 1; // 避免除以0，默认为1
+  
+  if (numPrevious === 0) return '0%';
+  const rate = ((numCurrent / numPrevious) * 100).toFixed(1);
   return `${rate}%`;
 };
 </script>
 
 <style scoped>
+/* 基础样式 */
 .initialization-container {
   padding: 16px;
-  background: #fff;
-  min-height: 100vh;
+  max-width: 100%;
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .initialization-container {
-    padding: 8px 6px;
-  }
-}
-
+/* 卡片样式 */
 .section-card {
+  margin-bottom: 20px;
   border-radius: 8px;
-  border: 1px solid #e8e8e8;
-  background: #fff;
-  padding: 12px;
-  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .section-card {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-  }
-}
-
+/* 标题样式 */
 .section-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 12px;
-  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #333;
-  margin: 0;
 }
 
-.date-label {
+/* 仪表盘样式 */
+.dashboard-stats {
+  padding: 16px;
+}
+
+.stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  flex: 1;
+  min-width: 200px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-item.highlight {
+  background-color: #fff1f0;
+}
+
+.stat-label {
   font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
   color: #666;
-  white-space: nowrap;
+}
+
+.stat-item.highlight .stat-label {
+  color: #ff4d4f;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.stat-item.highlight .stat-value {
+  color: #ff4d4f;
+}
+
+.stat-percentage {
+  font-size: 14px;
+  color: #1890ff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-item.highlight .stat-percentage {
+  color: #ff4d4f;
+}
+
+.percentage-formula {
+  font-size: 11px;
+  color: #8c8c8c;
+  font-style: italic;
+}
+
+/* 图表样式 */
+.mobile-chart {
+  width: 100%;
+  height: 300px;
+}
+
+.registration-stats-section {
+  margin-top: 24px;
+  padding: 0 16px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 24px;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #1890ff;
+}
+
+.chart-container {
+  margin-top: 24px;
+  padding: 0 16px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 24px;
+}
+
+/* 筛选器样式 */
+.filter-container {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.filter-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.header-search-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-search-input {
+  width: 200px;
+}
+
+.header-customer-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.stats-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.stats-number {
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.filter-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-content {
+  padding: 12px;
+}
+
+.filter-group {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.filter-group-header {
+  margin-bottom: 12px;
+}
+
+.filter-group-title {
+  font-weight: 500;
+}
+
+.filter-group-content {
+  padding-left: 8px;
+}
+
+.filter-group-content.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-input {
+  width: 100px;
+}
+
+/* 客户卡片样式（移动端） */
+.mobile-customer-list {
+  padding: 0 4px;
+}
+
+.customer-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s;
+}
+
+.customer-card.selected {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.customer-email {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.customer-status {
+  flex-shrink: 0;
+}
+
+.error-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #faad14;
+  font-size: 12px;
+}
+
+.no-error-indicator {
+  color: #52c41a;
+  font-size: 12px;
+}
+
+.customer-details {
+  margin-bottom: 12px;
+}
+
+.detail-item {
+  display: flex;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.detail-item .label {
+  width: 80px;
+  color: #666;
+}
+
+.customer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+
+/* 加载和空状态样式 */
+.loading-container, .empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}
+
+/* 移动端分页样式 */
+.mobile-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+/* 移动端标题样式 */
+.section-title-mobile {
+  margin-bottom: 8px;
+}
+
+.header-actions-mobile {
+  margin-bottom: 8px;
 }
 
 .mobile-select {
-  min-width: 120px;
-  flex: 1;
-}
-
-@media (max-width: 768px) {
-  .mobile-select {
-    min-width: 100px;
-  }
-}
-
-.mobile-search {
   width: 100%;
-  max-width: 250px;
 }
 
 .title-and-summary-mobile {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.registration-summary-mobile {
-  font-size: 13px;
-  color: #555;
-  background-color: #f5f5f5;
-  padding: 6px 10px;
-  border-radius: 4px;
-}
-
-.registration-summary-mobile .count {
-  font-weight: bold;
-  color: #1890ff;
-  margin-left: 6px;
-  font-size: 16px;
-}
-
-@media (max-width: 768px) {
-  .registration-summary-mobile .count {
-    font-size: 18px;
-  }
 }
 
 .invite-code-stats-mobile {
@@ -2212,1544 +2025,171 @@ const calculateConversionRate = (current, previous) => {
 .invite-code-item {
   background-color: #f5f5f5;
   padding: 2px 6px;
-  border-radius: 3px;
-  color: #333;
-}
-
-/* 移动端图表样式 */
-.mobile-chart {
-  height: 300px;
-  margin-top: 12px;
-}
-
-@media (max-width: 768px) {
-  .mobile-chart {
-    height: 250px;
-    margin-top: 8px;
-  }
-}
-
-/* 移动端客户列表样式 */
-.mobile-customer-list {
-  margin-top: 12px;
-}
-
-.customer-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.customer-card:hover {
-  border-color: #1890ff;
-}
-
-.customer-card.selected {
-  border-color: #1890ff;
-  background-color: #f0f8ff;
-}
-
-.customer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.customer-email {
-  font-weight: 600;
-  color: #222;
-  font-size: 14px;
-}
-
-.customer-status {
-  font-size: 12px;
-}
-
-.error-indicator {
-  color: #faad14;
-}
-
-.no-error-indicator {
-  color: #52c41a;
-}
-
-.customer-details {
-  margin-bottom: 10px;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 3px;
-  font-size: 12px;
-}
-
-.detail-item .label {
-  color: #666;
-  font-weight: 500;
-}
-
-.detail-item .value {
-  color: #333;
-  word-break: break-all;
-}
-
-.customer-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.customer-actions .ant-btn {
-  font-size: 12px;
-  height: 28px;
-  padding: 0 8px;
-}
-
-/* 移动端错误日志样式 */
-.mobile-error-list {
-  margin-top: 12px;
-}
-
-.error-log-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 6px;
-  background: #fff;
-}
-
-.error-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.error-time {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
-}
-
-.error-module {
-  font-size: 12px;
-  background-color: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 3px;
-  color: #333;
-}
-
-.error-operation {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.error-website {
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-
-.error-website .label {
-  color: #666;
-  margin-right: 4px;
-}
-
-.error-website .value {
-  color: #333;
-  word-break: break-all;
-}
-
-.error-detail {
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4;
-}
-
-/* 移动端分页样式 */
-.mobile-pagination {
-  margin-top: 12px;
-  text-align: center;
-}
-
-.mobile-pagination :deep(.ant-pagination) {
-  justify-content: center;
-}
-
-.mobile-pagination :deep(.ant-pagination-item) {
-  min-width: 28px;
-  height: 28px;
-  line-height: 26px;
-  font-size: 12px;
-}
-
-/* 加载和空状态样式 */
-.loading-container {
-  text-align: center;
-  padding: 30px 15px;
-}
-
-.empty-container {
-  text-align: center;
-  padding: 30px 15px;
-}
-
-@media (max-width: 768px) {
-  .loading-container,
-  .empty-container {
-    padding: 20px 10px;
-  }
-}
-
-/* 隐藏桌面端表格在移动端 */
-@media (max-width: 768px) {
-  .customer-table {
-    display: none;
-  }
-}
-
-/* 隐藏移动端列表在桌面端 */
-@media (min-width: 769px) {
-  .mobile-customer-list,
-  .mobile-error-list {
-    display: none;
-  }
-}
-
-/* 保持原有桌面端样式 */
-@media (min-width: 769px) {
-  .initialization-container {
-    padding: 24px 36px;
-  }
-  
-  .section-card {
-    padding: 18px 24px;
-    margin-bottom: 24px;
-  }
-  
-  .section-header {
-    margin-bottom: 14px;
-    padding-bottom: 6px;
-  }
-  
-  .section-title {
-    font-size: 20px;
-    letter-spacing: 1px;
-  }
-  
-  .title-and-summary-mobile {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 16px;
-  }
-  
-  .registration-summary-mobile .count {
-    font-size: 24px;
-  }
-}
-
-/* 响应式图表配置 */
-:deep(.echarts) {
-  width: 100% !important;
-}
-
-/* 选中行样式 */
-:deep(.selected-row) {
-  background-color: #f0f8ff;
-}
-
-/* 表格行点击样式 */
-.customer-table :deep(.ant-table-row) {
-  cursor: pointer;
-}
-
-/* SSE状态样式 */
-.sse-status-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-@media (min-width: 769px) {
-  .sse-status-content {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-}
-
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-label {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
-}
-
-.status-value {
-  font-size: 14px;
-  color: #333;
-  font-weight: 600;
-}
-
-.active-connections {
-  font-size: 18px;
-  color: #1890ff;
-  background-color: #f0f8ff;
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid #d6e4ff;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.status-indicator.online {
-  background-color: #f6ffed;
-  border: 1px solid #b7eb8f;
-}
-
-.status-indicator.offline {
-  background-color: #fff2f0;
-  border: 1px solid #ffccc7;
-}
-
-.indicator-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.status-indicator.online .indicator-dot {
-  background-color: #52c41a;
-}
-
-.status-indicator.offline .indicator-dot {
-  background-color: #ff4d4f;
-}
-
-.indicator-text {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.status-indicator.online .indicator-text {
-  color: #52c41a;
-}
-
-.status-indicator.offline .indicator-text {
-  color: #ff4d4f;
-}
-
-@media (max-width: 768px) {
-  .sse-status-content {
-    gap: 8px;
-  }
-  
-  .status-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .active-connections {
-    font-size: 16px;
-  }
-  
-  .status-indicator {
-    align-self: stretch;
-    justify-content: center;
-  }
-}
-
-/* 客户统计样式 */
-.statistic-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px 0;
-  width: 100%;
-}
-
-.statistic-grid-mobile {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.statistic-grid-desktop {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.statistic-card-mobile {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 12px;
-  text-align: center;
-  width: 100%;
-}
-
-.statistic-item-desktop {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 16px 20px;
-  text-align: center;
-  flex: 1;
-  min-width: 180px;
-  max-width: 220px;
-  transition: all 0.3s ease;
-}
-
-.statistic-item-desktop:hover {
-  border-color: #1890ff;
-  transform: translateY(-2px);
-}
-
-.statistic-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.statistic-value {
-  font-size: 24px;
-  color: #333;
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .statistic-value {
-    font-size: 20px;
-  }
-  
-  .statistic-card-mobile {
-    padding: 10px;
-  }
-}
-
-/* 通知统计样式 */
-.notification-stats-section {
-  margin-top: 16px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-}
-
-.stats-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #222;
-  margin-bottom: 12px;
-}
-
-.notification-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-}
-
-.notification-stat-item {
-  text-align: center;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1890ff;
-}
-
-/* 筛选条件样式 */
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e8e8e8;
-}
-
-@media (min-width: 769px) {
-  .filter-section {
-    margin-bottom: 0;
-    margin-right: 16px;
-  }
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.filter-label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-  margin-left: 4px;
-}
-
-.filter-input {
-  width: 80px;
-  flex-shrink: 0;
-}
-
-.filter-input:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
-}
-
-.filter-separator {
-  color: #999;
-  font-weight: 500;
-  margin: 0 4px;
-}
-
-.filter-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid #e8e8e8;
-}
-
-@media (max-width: 768px) {
-  .filter-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .filter-row:last-of-type {
-    border-bottom: none;
-  }
-  
-  :deep(.ant-checkbox-wrapper) {
-    margin-bottom: 4px;
-  }
-  
-  .filter-input {
-    width: 100px;
-  }
-}
-
-/* 突出显示的统计卡片样式 */
-.highlight-card {
-  background: #1890ff;
-  color: white;
-  border: none;
-}
-
-.highlight-card .statistic-label {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
-}
-
-.highlight-card .statistic-value {
-  color: white;
-  font-weight: 700;
-}
-
-.highlight-item {
-  background: #1890ff;
-  color: white;
-  border: none;
-}
-
-.highlight-item .statistic-label {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
-}
-
-.highlight-item .statistic-value {
-  color: white;
-  font-weight: 700;
-}
-
-/* 筛选器容器样式 */
-.filter-container {
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
-  width: 100%;
-  margin: 0;
-}
-
-.filter-header {
-  background: #f8f9fa;
-  padding: 10px 14px;
-  border-bottom: 1px solid #e8e8e8;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-
-.filter-title-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-}
-
-.filter-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.header-search-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.header-search-input {
-  width: 200px;
-  flex-shrink: 0;
-}
-
-.header-customer-stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #666;
-  white-space: nowrap;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.8);
   border-radius: 4px;
-  border: 1px solid #e8e8e8;
 }
 
-.header-customer-stats .stats-text {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.header-customer-stats .stats-number {
-  color: #1890ff;
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.filter-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.filter-content {
-  padding: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
-  align-items: start;
-  width: 100%;
-}
-
-.filter-group {
-  background: #f8f9fa;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 10px;
-  transition: all 0.3s ease;
-}
-
-.filter-group:hover {
-  border-color: #d9d9d9;
-}
-
-.filter-group-header {
-  margin-bottom: 6px;
-}
-
-.filter-checkbox {
-  font-weight: 500;
-}
-
-.filter-group-title {
-  color: #333;
-  font-size: 13px;
-}
-
-.filter-group-content {
-  padding-left: 18px;
-  transition: opacity 0.3s ease;
-}
-
-.filter-group-content.disabled {
-  opacity: 0.5;
-}
-
-.range-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.range-input {
-  width: 80px;
-  flex-shrink: 0;
-}
-
-.range-separator {
-  color: #999;
-  font-weight: 500;
-  font-size: 12px;
-}
-
-/* 移动端适配 */
+/* 响应式布局 */
 @media (max-width: 768px) {
-  .section-header {
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .filter-container {
-    border-radius: 6px;
-  }
-
-  .filter-header {
-    padding: 8px 10px;
-    flex-direction: column;
-    gap: 6px;
-    align-items: stretch;
-  }
-
-  .filter-title-section {
-    flex-direction: column;
-    gap: 6px;
-    align-items: stretch;
-  }
-
-  .filter-title {
-    justify-content: center;
-    font-size: 13px;
-  }
-
-  .header-search-section {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .header-search-input {
-    width: 100%;
-  }
-
-  .header-customer-stats {
-    align-self: center;
-    justify-content: center;
-  }
-
-  .filter-header-actions {
-    justify-content: center;
-  }
-
-  .filter-content {
-    padding: 10px;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .filter-group {
-    margin-bottom: 0;
+  .initialization-container {
     padding: 8px;
   }
 
-  .filter-group-content {
-    padding-left: 14px;
-  }
-
-  .range-inputs {
+  .section-header {
     flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  .range-input {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dashboard-header-right {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .step-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .inactive-users-module {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .filter-title-section {
+    margin-bottom: 8px;
     width: 100%;
   }
 
-  .range-separator {
-    text-align: center;
-    padding: 2px 0;
-  }
-}
-
-/* 桌面端优化 */
-@media (min-width: 769px) {
-  .filter-content {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+  .header-search-section {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .header-search-input {
-    width: 240px;
-  }
-}
-
-/* 大屏幕优化 */
-@media (min-width: 1200px) {
-  .filter-content {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    width: 100%;
+    max-width: 200px;
   }
 
-  .header-search-input {
-    width: 280px;
+  .filter-header-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
-  .header-customer-stats .stats-text:not(:last-child)::after {
-    content: '|';
-    margin-left: 6px;
-    margin-right: 2px;
-    color: #d9d9d9;
-  }
-}
-
-/* 移除原来的搜索区域样式 */
-.search-section,
-.search-input,
-.customer-stats {
-  display: none;
-}
-
-/* 桌面端单行网格布局 */
-.statistic-grid-desktop-single-row {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 12px;
-  width: 100%;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.statistic-grid-desktop-single-row .statistic-item-desktop {
-  flex: 1;
-  min-width: 160px;
-  max-width: 200px;
-}
-
-/* 确保在较小的桌面屏幕上也能正常显示 */
-@media (max-width: 1200px) {
-  .statistic-grid-desktop-single-row {
+  .range-inputs {
     flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .statistic-grid-desktop-single-row .statistic-item-desktop {
-    min-width: 140px;
-    max-width: 180px;
   }
 }
 
-@media (max-width: 992px) {
-  .statistic-grid-desktop-single-row {
-    gap: 12px;
-  }
-  
-  .statistic-grid-desktop-single-row .statistic-item-desktop {
-    min-width: 120px;
-    max-width: 160px;
-  }
+/* 表格选中行样式 */
+:deep(.selected-row) {
+  background-color: #e6f7ff;
 }
 
-@media (max-width: 768px) {
-  .statistic-grid-desktop-single-row {
-    display: none;
-  }
+/* 模态框样式 */
+.package-form {
+  max-width: 100%;
 }
 
-.statistic-label {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 6px;
-  line-height: 1.4;
-  min-height: 28px;
+/* 添加注册汇总统计样式 */
+.register-summary-stats {
+  margin: 12px 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.statistic-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
+.register-summary-row {
+  display: flex;
+  gap: 16px;
 }
 
-.highlight-item .statistic-value {
-  color: #1890ff;
-}
-
-/* 确保统计容器在所有屏幕尺寸下都居中 */
-@media (min-width: 769px) {
-  .statistic-content {
-    padding: 18px 0;
-  }
-  
-  .statistic-grid-desktop {
-    gap: 16px;
-  }
-  
-  .statistic-item-desktop {
-    padding: 18px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .statistic-grid-desktop-single-row {
-    max-width: 1400px;
-    gap: 20px;
-  }
-  
-  .statistic-grid-desktop-single-row .statistic-item-desktop {
-    max-width: 240px;
-  }
-}
-
-/* 系统概览仪表盘样式 - 简化配色 */
-.dashboard-section {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-header {
+.register-summary-item {
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.dashboard-title {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.title-text {
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
-}
-
-.update-time {
-  font-size: 12px;
-  color: #666;
-  font-weight: 400;
-}
-
-.dashboard-status {
-  position: relative;
-  z-index: 1;
-}
-
-.dashboard-content {
-  display: flex;
-  gap: 24px;
-  position: relative;
-  z-index: 1;
-}
-
-.system-status-section {
-  flex: 0 0 auto;
-}
-
-.customer-stats-section {
-  flex: 1;
-}
-
-.sse-card {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 160px;
-  transition: all 0.3s ease;
-}
-
-.sse-card:hover {
-  border-color: #1890ff;
-  transform: translateY(-2px);
-}
-
-.status-icon .icon {
-  font-size: 24px;
-  display: block;
-  color: #1890ff;
-}
-
-.status-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.status-label {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
-}
-
-.status-value {
-  font-size: 20px;
-  color: #333;
-  font-weight: 700;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.stat-card {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.stat-card:hover {
-  border-color: #1890ff;
-  transform: translateY(-2px);
-}
-
-.primary-card {
-  background: #1890ff;
-  border: 1px solid #1890ff;
-  color: white;
-}
-
-.primary-card:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
-}
-
-.primary-card .stat-label {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.primary-card .stat-value {
-  color: white;
-}
-
-.primary-card .stat-icon {
-  color: white;
-}
-
-.stat-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  color: #1890ff;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #666;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.stat-value {
-  font-size: 18px;
-  color: #333;
-  font-weight: 700;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  transition: all 0.3s ease;
-}
-
-.status-indicator:hover {
-  border-color: #1890ff;
-}
-
-.indicator-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse 2s infinite;
-}
-
-.status-indicator.online .indicator-dot {
-  background-color: #52c41a;
-}
-
-.status-indicator.offline .indicator-dot {
-  background-color: #ff4d4f;
-}
-
-.indicator-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #333;
-}
-
-.dashboard-loading {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  z-index: 2;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-    margin-bottom: 16px;
-  }
-  
-  .dashboard-title {
-    text-align: center;
-  }
-  
-  .title-text {
-    font-size: 18px;
-  }
-  
-  .dashboard-status {
-    align-self: center;
-  }
-  
-  .dashboard-content {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .sse-card {
-    justify-content: center;
-    min-width: auto;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  
-  .stat-card {
-    padding: 12px;
-    flex-direction: column;
-    text-align: center;
-    gap: 6px;
-  }
-  
-  .stat-info {
-    align-items: center;
-  }
-  
-  .stat-label {
-    font-size: 10px;
-    text-align: center;
-  }
-  
-  .stat-value {
-    font-size: 16px;
-  }
-}
-
-/* 小屏幕优化 */
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .stat-card {
-    flex-direction: row;
-    justify-content: center;
-    text-align: left;
-  }
-  
-  .stat-info {
-    align-items: flex-start;
-  }
-}
-
-/* 桌面端大屏优化 */
-@media (min-width: 1200px) {
-  .dashboard-content {
-    gap: 32px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-  
-  .sse-card {
-    min-width: 180px;
-    padding: 20px;
-  }
-  
-  .stat-card {
-    padding: 16px;
-  }
-}
-
-/* 漏斗样式 - 简化配色 */
-.funnel-container {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.funnel-title {
-  text-align: center;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 16px;
-}
-
-.funnel-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.funnel-step {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.step-content {
-  background: #1890ff;
-  border-radius: 6px;
-  padding: 12px 20px;
-  color: white;
-  text-align: center;
-  min-width: 280px;
-  position: relative;
-}
-
-.step-1 .step-content {
-  background: #1890ff;
-  min-width: 320px;
-}
-
-.step-2 .step-content {
-  background: #1890ff;
-  min-width: 300px;
-  opacity: 0.9;
-}
-
-.step-3 .step-content {
-  background: #1890ff;
-  min-width: 280px;
-  opacity: 0.8;
-}
-
-.step-4 .step-content {
-  background: #1890ff;
-  min-width: 260px;
-  opacity: 0.7;
-}
-
-.step-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.step-label {
-  font-size: 13px;
-  font-weight: 500;
-  opacity: 0.9;
-}
-
-.step-value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.step-percentage {
-  font-size: 16px;
-  font-weight: 600;
-  opacity: 0.8;
-}
-
-.funnel-arrow {
-  width: 0;
-  height: 0;
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-top: 12px solid #ddd;
-  margin: 4px 0;
-}
-
-.step-1 .funnel-arrow {
-  border-top-color: #1890ff;
-}
-
-.step-2 .funnel-arrow {
-  border-top-color: #1890ff;
-  opacity: 0.9;
-}
-
-.step-3 .funnel-arrow {
-  border-top-color: #1890ff;
-  opacity: 0.8;
-}
-
-.conversion-summary {
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 12px;
-  border: 1px solid #e8e8e8;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.summary-item:last-child {
-  margin-bottom: 0;
 }
 
 .summary-label {
+  font-size: 13px;
   color: #666;
-  font-weight: 500;
 }
 
 .summary-value {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: #1890ff;
 }
 
-.summary-detail {
-  color: #999;
-  font-size: 12px;
-}
-
-/* 移动端适配 */
+/* 响应式调整 */
 @media (max-width: 768px) {
-  .funnel-container {
-    padding: 12px;
-    max-width: 100%;
+  .register-summary-row {
+    flex-direction: column;
+    gap: 8px;
   }
   
-  .funnel-title {
-    font-size: 14px;
-    margin-bottom: 12px;
-  }
-  
-  .step-content {
-    padding: 10px 16px;
-    min-width: 240px;
-  }
-  
-  .step-1 .step-content {
-    min-width: 260px;
-  }
-  
-  .step-2 .step-content {
-    min-width: 250px;
-  }
-  
-  .step-3 .step-content {
-    min-width: 240px;
-  }
-  
-  .step-4 .step-content {
-    min-width: 220px;
-  }
-  
-  .step-label {
-    font-size: 12px;
-  }
-  
-  .step-value {
-    font-size: 24px;
-  }
-  
-  .step-percentage {
-    font-size: 14px;
-  }
-  
-  .summary-value {
-    font-size: 18px;
-  }
-  
-  .conversion-summary {
-    padding: 10px;
-  }
-  
-  .summary-item {
-    font-size: 12px;
-  }
-  
-  .summary-detail {
-    font-size: 11px;
+  .register-summary-item {
+    width: 100%;
   }
 }
 
-/* 新增：未跑过任务未订阅用户模块样式 */
-.inactive-users-module {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
-  border-radius: 6px;
-  border: 1px solid #ff4d4f;
-  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+/* 添加平铺注册汇总统计样式 */
+.register-summary-stats-flat {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+  padding: 0 16px;
 }
 
-.inactive-label {
-  display: block;
-  font-size: 12px;
-  color: #fff;
-  font-weight: 500;
-  margin-bottom: 2px;
+.register-summary-item-flat {
+  flex: 1;
+  min-width: 150px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
 }
 
-.inactive-value {
-  display: inline-block;
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  margin-right: 8px;
+.register-summary-item-flat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.inactive-percentage {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
+.summary-value-large {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 8px;
 }
 
-/* 移动端适配 */
+.summary-label-large {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 响应式调整 */
 @media (max-width: 768px) {
-  .inactive-users-module {
-    margin-top: 6px;
-    padding: 6px 10px;
+  .register-summary-stats-flat {
+    flex-direction: column;
+    padding: 0 8px;
   }
   
-  .inactive-label {
-    font-size: 11px;
-  }
-  
-  .inactive-value {
-    font-size: 14px;
-    margin-right: 6px;
-  }
-  
-  .inactive-percentage {
-    font-size: 11px;
+  .register-summary-item-flat {
+    width: 100%;
   }
 }
 </style>

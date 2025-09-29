@@ -1,6 +1,6 @@
 <template>
   <a-layout style="min-height: 100vh">
-    <!-- 移动端顶部导航栏 -->
+    <!-- Mobile top navigation bar -->
     <div v-if="isMobile" class="mobile-header">
       <div class="mobile-header-content">
         <a-button 
@@ -11,19 +11,19 @@
           <MenuOutlined />
         </a-button>
         <div class="mobile-title">
-          <span class="title-text">seopage.ai后台管理</span>
+          <span class="title-text">seopage.ai Admin</span>
         </div>
       </div>
     </div>
 
-    <!-- 移动端侧边栏遮罩 -->
+    <!-- Mobile sidebar overlay -->
     <div 
       v-if="isMobile && mobileMenuVisible" 
       class="mobile-overlay"
       @click="closeMobileMenu"
     ></div>
 
-    <!-- 侧边栏 -->
+    <!-- Sidebar -->
     <a-layout-sider 
       :width="isMobile ? 280 : 200"
       :class="{
@@ -44,19 +44,19 @@
         >
           <a-menu-item key="InitializationPage">
             <template #icon><user-outlined /></template>
-            客户管理
+            Customer Management
           </a-menu-item>
           <a-menu-item key="PackageConfigPage">
             <template #icon><schedule-outlined /></template>
-            套餐配置
+            Package Config
           </a-menu-item>
           <a-menu-item key="EDM">
             <template #icon><mail-outlined /></template>
-            邮件营销
+            Email Marketing
           </a-menu-item>
           <a-menu-item key="ComponentConfig">
             <template #icon><setting-outlined /></template>
-            组件配置
+            Component Config
           </a-menu-item>
         </a-menu>
         
@@ -68,13 +68,13 @@
             @click="handleLogout"
           >
             <template #icon><logout-outlined /></template>
-            退出登录
+            Logout
           </a-button>
         </div>
       </div>
     </a-layout-sider>
     
-    <!-- 桌面端占位 sider -->
+    <!-- Desktop placeholder sider -->
     <a-layout-sider v-if="!isMobile" :width="200" style="visibility: hidden; background: transparent;" />
     
     <!-- Content Area -->
@@ -92,10 +92,10 @@
     </a-layout-content>
   </a-layout>
   
-  <!-- 添加用户切换模态框 -->
+  <!-- User Switch Modal -->
   <a-modal
     v-model:open="isUserModalVisible"
-    title="切换用户"
+    title="Switch User"
     @ok="switchUser"
     @cancel="hideUserModal"
     :okButtonProps="{ 
@@ -104,8 +104,8 @@
         borderColor: '#1890ff'
       } 
     }"
-    okText="切换"
-    cancelText="取消"
+    okText="Switch"
+    cancelText="Cancel"
     :width="isMobile ? '90%' : '500px'"
   >
     <a-radio-group v-model:value="tempSelectedUser" class="user-radio-group">
@@ -270,10 +270,10 @@ export default {
     },
     handleLogout() {
       this.$confirm({
-        title: '确认退出',
-        content: '您确定要退出登录吗？',
-        okText: '退出',
-        cancelText: '取消',
+        title: 'Confirm Logout',
+        content: 'Are you sure you want to logout?',
+        okText: 'Logout',
+        cancelText: 'Cancel',
         okButtonProps: {
           danger: true
         },
