@@ -113,7 +113,7 @@
             <a-form-item label="价格ID" name="priceId">
               <a-select v-model:value="formState.priceId" placeholder="选择价格ID">
                 <a-select-option v-for="price in priceList" :key="price.priceId" :value="price.priceId">
-                  {{ price.productName }} ({{ price.productDesc }}) - ${{ (price.price / 100).toFixed(2) }}
+                  {{ price.productName }} - ${{ (price.price / 100).toFixed(2) }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -202,7 +202,7 @@ export default {
         key: 'stripeProduct',
         customRender: ({ text }) => {
           const price = priceList.value.find(p => p.priceId === text);
-          return price ? `${price.productName} (${price.productDesc})` : text || 'Not linked';
+          return price ? `${price.productName}` : text || 'Not linked';
         }
       },
       {
@@ -360,7 +360,7 @@ export default {
 
     const getPriceProductName = (priceId) => {
       const price = priceList.value.find(p => p.priceId === priceId);
-      return price ? `${price.productName} (${price.productDesc})` : 'Not linked';
+      return price ? `${price.productName}` : 'Not linked';
     };
 
 
