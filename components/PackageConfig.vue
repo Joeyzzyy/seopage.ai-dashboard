@@ -61,6 +61,7 @@
         :data-source="packages"
         :row-key="record => record.packageFeatureId"
         :loading="loading"
+        :pagination="{ pageSize: 20 }"
         class="main-table"
       >
         <template #bodyCell="{ column, record }">

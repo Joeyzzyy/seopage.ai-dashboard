@@ -3,8 +3,8 @@ import { message } from 'ant-design-vue';
 
 // 创建一个 axios 实例 - 用于原有接口
 const apiClient = axios.create({
-//   baseURL: 'https://api.websitelm.com/v1', 
-  baseURL: 'https://api.zhuyuejoey.com/v1', 
+  baseURL: 'https://api.websitelm.com/v1', 
+//   baseURL: 'https://api.zhuyuejoey.com/v1', 
   timeout: 300000, // 修改为5分钟 (300000毫秒)
   headers: {
     'Content-Type': 'application/json',
