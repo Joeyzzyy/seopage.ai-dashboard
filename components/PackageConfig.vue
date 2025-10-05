@@ -29,6 +29,10 @@
                 <span class="value">{{ pkg.packageType === 1 ? '月付' : '年付' }}</span>
               </div>
               <div class="detail-row">
+                <span class="label">项目数量限制:</span>
+                <span class="value">{{ pkg.projectNumberLimit || 5 }}</span>
+              </div>
+              <div class="detail-row">
                 <span class="label">Stripe产品:</span>
                 <span class="value">{{ getPriceProductName(pkg.priceId) }}</span>
               </div>
@@ -124,26 +128,31 @@
             <h4>功能限制配置</h4>
             
             <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+              <a-form-item label="项目数量限制" name="projectNumberLimit">
+                <a-input-number v-model:value="formState.projectNumberLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
               <a-form-item label="页面生成限制" name="pageGeneratorLimit">
                 <a-input-number v-model:value="formState.pageGeneratorLimit" :min="0" style="width: 100%;" />
-              </a-form-item>
-              <a-form-item label="免费部署页面限制" name="freeDeploymentPageLimit">
-                <a-input-number v-model:value="formState.freeDeploymentPageLimit" :min="0" style="width: 100%;" />
               </a-form-item>
             </div>
             
             <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
+              <a-form-item label="免费部署页面限制" name="freeDeploymentPageLimit">
+                <a-input-number v-model:value="formState.freeDeploymentPageLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
               <a-form-item label="内部链接存储限制" name="internalLinkStorageLimit">
                 <a-input-number v-model:value="formState.internalLinkStorageLimit" :min="0" style="width: 100%;" />
               </a-form-item>
+            </div>
+            
+            <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
               <a-form-item label="图片存储限制" name="imageStorageLimit">
                 <a-input-number v-model:value="formState.imageStorageLimit" :min="0" style="width: 100%;" />
               </a-form-item>
+              <a-form-item label="视频存储限制" name="videoStorageLimit">
+                <a-input-number v-model:value="formState.videoStorageLimit" :min="0" style="width: 100%;" />
+              </a-form-item>
             </div>
-            
-            <a-form-item label="视频存储限制" name="videoStorageLimit">
-              <a-input-number v-model:value="formState.videoStorageLimit" :min="0" style="width: 100%;" />
-            </a-form-item>
           </div>
           
           <a-form-item label="套餐描述" name="packageDescription">
@@ -196,6 +205,12 @@ export default {
         dataIndex: 'packagePrice',
         key: 'price',
         customRender: ({ text }) => `$${text}`
+      },
+      {
+        title: 'Project Limit',
+        dataIndex: 'projectNumberLimit',
+        key: 'projectNumberLimit',
+        customRender: ({ text }) => text || 5
       },
       {
         title: 'Stripe Product',
@@ -264,6 +279,7 @@ export default {
       packagePrice: 0,
       packageType: 1,
       priceId: undefined,
+      projectNumberLimit: 5,
       pageGeneratorLimit: 0,
       freeDeploymentPageLimit: 0,
       internalLinkStorageLimit: 0,
@@ -278,6 +294,7 @@ export default {
       packagePrice: [{ required: true, message: '请输入套餐价格' }],
       packageType: [{ required: true, message: '请选择套餐类型' }],
       priceId: [{ required: true, message: '请选择价格ID' }],
+      projectNumberLimit: [{ required: true, message: '请输入项目数量限制' }],
       pageGeneratorLimit: [{ required: true, message: '请输入页面生成限制' }],
       freeDeploymentPageLimit: [{ required: true, message: '请输入免费部署页面限制' }],
       internalLinkStorageLimit: [{ required: true, message: '请输入内部链接存储限制' }],
@@ -292,6 +309,7 @@ export default {
       formState.packagePrice = 0;
       formState.packageType = 1;
       formState.priceId = undefined;
+      formState.projectNumberLimit = 5;
       formState.pageGeneratorLimit = 0;
       formState.freeDeploymentPageLimit = 0;
       formState.internalLinkStorageLimit = 0;
