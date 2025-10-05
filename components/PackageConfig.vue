@@ -82,179 +82,6 @@
       </a-table>
     </div>
 
-    <div class="section-card" style="margin-top: 32px;">
-      <div class="section-header">
-        <span class="section-title">试用码管理</span>
-      </div>
-      <div v-if="isMobile" class="mobile-trial-form">
-        <div class="form-group">
-          <label>套餐</label>
-          <a-select 
-            v-model:value="trialForm.packageId" 
-            placeholder="选择套餐"
-            style="width: 100%;"
-          >
-            <a-select-option 
-              v-for="pkg in packages" 
-              :key="pkg.packageFeatureId" 
-              :value="pkg.packageFeatureId"
-            >
-              {{ pkg.packageName }}
-            </a-select-option>
-          </a-select>
-        </div>
-        
-        <div class="form-group">
-          <label>天数</label>
-          <a-input-number 
-            v-model:value="trialForm.days" 
-            :min="1" 
-            style="width: 100%;"
-          />
-        </div>
-        
-        <div class="form-group">
-          <label>名称</label>
-          <a-input 
-            v-model:value="trialForm.name" 
-            placeholder="试用名称"
-            style="width: 100%;"
-          />
-        </div>
-        
-        <div class="form-group">
-          <a-button type="primary" @click="createTrialCode" block>
-            生成试用码
-          </a-button>
-        </div>
-      </div>
-      <a-form v-else layout="inline" :model="trialForm" class="trial-form">
-        <a-form-item label="套餐">
-          <a-select 
-            v-model:value="trialForm.packageId" 
-            style="width: 200px;"
-            placeholder="选择套餐"
-          >
-            <a-select-option 
-              v-for="pkg in packages" 
-              :key="pkg.packageFeatureId" 
-              :value="pkg.packageFeatureId"
-            >
-              {{ pkg.packageName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="天数">
-          <a-input-number 
-            v-model:value="trialForm.days" 
-            :min="1" 
-            style="width: 100px;"
-          />
-        </a-form-item>
-        <a-form-item label="名称">
-          <a-input 
-            v-model:value="trialForm.name" 
-            placeholder="试用名称"
-            style="width: 200px;"
-          />
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" @click="createTrialCode">
-            生成试用码
-          </a-button>
-        </a-form-item>
-      </a-form>
-      <a-divider />
-      <div v-if="isMobile" class="mobile-trial-list">
-        <div v-if="trialLoading" class="loading-container">
-          <a-spin tip="加载试用码中..." />
-        </div>
-        <div v-else>
-          <div 
-            v-for="trial in trialCodes" 
-            :key="trial.trialId"
-            class="trial-card"
-          >
-            <div class="trial-header">
-              <div class="trial-code">{{ trial.inviteCode }}</div>
-              <a-tag :color="trial.active ? 'green' : 'red'">
-                {{ trial.active ? '可用' : '已使用' }}
-              </a-tag>
-            </div>
-            
-            <div class="trial-details">
-              <div class="detail-row">
-                <span class="label">试用名称:</span>
-                <span class="value">{{ trial.trialName }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">天数:</span>
-                <span class="value">{{ trial.duration }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">描述:</span>
-                <span class="value">{{ trial.description || '-' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">创建时间:</span>
-                <span class="value">{{ new Date(trial.created_at).toLocaleDateString('zh-CN') }}</span>
-              </div>
-            </div>
-            
-            <div class="trial-actions">
-              <a-button 
-                type="primary" 
-                danger 
-                size="small"
-                @click="handleDeleteTrial(trial)"
-                :disabled="!trial.active"
-              >
-                删除
-              </a-button>
-            </div>
-          </div>
-          
-          <div class="mobile-pagination">
-            <a-pagination
-              v-model:current="pagination.current"
-              :total="pagination.total"
-              :pageSize="pagination.pageSize"
-              :showSizeChanger="false"
-              :showQuickJumper="false"
-              :showTotal="(total) => `共 ${total} 条`"
-              @change="handlePaginationChange"
-              size="small"
-            />
-          </div>
-        </div>
-      </div>
-      <a-table 
-        v-else
-        :columns="trialColumns" 
-        :data-source="trialCodes" 
-        :loading="trialLoading"
-        :pagination="pagination"
-        class="main-table"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <a-tag :color="record.active ? 'green' : 'red'">
-              {{ record.active ? '可用' : '已使用' }}
-            </a-tag>
-          </template>
-          <template v-if="column.key === 'action'">
-            <a-button 
-              type="link" 
-              danger 
-              @click="handleDeleteTrial(record)"
-              :disabled="!record.active"
-            >
-              删除
-            </a-button>
-          </template>
-        </template>
-      </a-table>
-    </div>
 
     <a-modal
       v-model:open="modalVisible"
@@ -294,14 +121,6 @@
           
           <div class="limits-section">
             <h4>功能限制配置</h4>
-            <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
-              <a-form-item label="手动大纲生成限制" name="manualOutlineGeneratorLimit">
-                <a-input-number v-model:value="formState.manualOutlineGeneratorLimit" :min="0" style="width: 100%;" />
-              </a-form-item>
-              <a-form-item label="AI大纲生成限制" name="aiOutlineGeneratorLimit">
-                <a-input-number v-model:value="formState.aiOutlineGeneratorLimit" :min="0" style="width: 100%;" />
-              </a-form-item>
-            </div>
             
             <div class="form-row" :class="{ 'mobile-form-row': isMobile }">
               <a-form-item label="页面生成限制" name="pageGeneratorLimit">
@@ -330,18 +149,6 @@
             <a-textarea v-model:value="formState.packageDescription" placeholder="输入套餐功能，每行一个" :rows="isMobile ? 3 : 4" />
           </a-form-item>
           
-          <a-form-item label="额外福利" name="additionalBenefits">
-            <a-button type="dashed" @click="addBenefit" block>
-              <plus-outlined /> 添加福利
-            </a-button>
-            <div v-for="(benefit, index) in formState.additionalBenefits" :key="index" style="margin-top: 8px;">
-              <a-input v-model:value="formState.additionalBenefits[index]">
-                <template #suffix>
-                  <minus-circle-outlined @click="removeBenefit(index)" style="cursor: pointer" />
-                </template>
-              </a-input>
-            </div>
-          </a-form-item>
         </a-form>
       </div>
     </a-modal>
@@ -351,14 +158,13 @@
 <script>
 import { ref, reactive, onMounted, onUnmounted, h, computed } from 'vue';
 import { message, Modal, Tag } from 'ant-design-vue';
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue';
+import { PlusOutlined } from '@ant-design/icons-vue';
 import { api } from '../api/api';
 
 export default {
   name: 'PackageConfig',
   components: {
     PlusOutlined,
-    MinusCircleOutlined,
   },
   setup() {
     const isMobile = ref(false);
@@ -371,7 +177,6 @@ export default {
       checkDevice();
       window.addEventListener('resize', checkDevice);
       fetchPackages();
-      fetchTrialCodes();
       fetchPriceList();
     });
 
@@ -428,57 +233,6 @@ export default {
     const formRef = ref(null);
     const loading = ref(false);
 
-    const trialForm = reactive({
-      packageId: undefined,
-      days: 7,
-      name: '',
-    });
-
-    const trialCodes = ref([]);
-    const trialLoading = ref(false);
-
-    const trialColumns = [
-      {
-        title: 'Trial Code',
-        dataIndex: 'inviteCode',
-        key: 'code',
-      },
-      {
-        title: 'Trial Name',
-        dataIndex: 'trialName',
-        key: 'trialName',
-      },
-      {
-        title: 'Duration (Days)',
-        dataIndex: 'duration',
-        key: 'days',
-      },
-      {
-        title: 'Description',
-        dataIndex: 'description',
-        key: 'description',
-      },
-      {
-        title: 'Status',
-        dataIndex: 'active',
-        key: 'status',
-        customRender: ({ text }) => h(Tag, {
-          color: text ? 'green' : 'red'
-        }, () => text ? 'Available' : 'Used')
-      },
-      {
-        title: 'Created At',
-        dataIndex: 'created_at',
-        key: 'createdAt',
-        customRender: ({ text }) => new Date(text).toLocaleString('en-US'),
-      },
-      {
-        title: 'Action',
-        key: 'action',
-        fixed: 'right',
-        width: 100,
-      },
-    ];
 
     const fetchPackages = async () => {
       loading.value = true;
@@ -492,44 +246,6 @@ export default {
       }
     };
 
-    const fetchTrialCodes = async () => {
-      trialLoading.value = true;
-      try {
-        const params = {
-          page: pagination.value.current,
-          limit: pagination.value.pageSize
-        };
-        const response = await api.getTrialPackages(params);
-        trialCodes.value = response.data;
-        pagination.value.total = response.total;
-        pagination.value.totalPage = response.totalPage;
-      } catch (error) {
-        message.error('Failed to fetch trial codes: ' + error.message);
-      } finally {
-        trialLoading.value = false;
-      }
-    };
-
-    const pagination = ref({
-      current: 1,
-      pageSize: 10,
-      total: 0,
-      totalPage: 0,
-      showSizeChanger: true,
-      showTotal: (total) => `Total ${total} items`,
-      onChange: (page, pageSize) => {
-        pagination.value.current = page;
-        pagination.value.pageSize = pageSize;
-        fetchTrialCodes();
-      },
-      onShowSizeChange: (current, size) => {
-        pagination.value.current = 1;
-        pagination.value.pageSize = size;
-        fetchTrialCodes();
-      }
-    });
-
-    const trialList = ref([]);
 
     const priceList = ref([]);
 
@@ -547,15 +263,12 @@ export default {
       packagePrice: 0,
       packageType: 1,
       priceId: undefined,
-      manualOutlineGeneratorLimit: 0,
-      aiOutlineGeneratorLimit: 0,
       pageGeneratorLimit: 0,
       freeDeploymentPageLimit: 0,
       internalLinkStorageLimit: 0,
       imageStorageLimit: 0,
       videoStorageLimit: 0,
       packageDescription: '',
-      additionalBenefits: [],
       active: true
     });
 
@@ -564,8 +277,6 @@ export default {
       packagePrice: [{ required: true, message: '请输入套餐价格' }],
       packageType: [{ required: true, message: '请选择套餐类型' }],
       priceId: [{ required: true, message: '请选择价格ID' }],
-      manualOutlineGeneratorLimit: [{ required: true, message: '请输入手动大纲生成限制' }],
-      aiOutlineGeneratorLimit: [{ required: true, message: '请输入AI大纲生成限制' }],
       pageGeneratorLimit: [{ required: true, message: '请输入页面生成限制' }],
       freeDeploymentPageLimit: [{ required: true, message: '请输入免费部署页面限制' }],
       internalLinkStorageLimit: [{ required: true, message: '请输入内部链接存储限制' }],
@@ -580,15 +291,12 @@ export default {
       formState.packagePrice = 0;
       formState.packageType = 1;
       formState.priceId = undefined;
-      formState.manualOutlineGeneratorLimit = 0;
-      formState.aiOutlineGeneratorLimit = 0;
       formState.pageGeneratorLimit = 0;
       formState.freeDeploymentPageLimit = 0;
       formState.internalLinkStorageLimit = 0;
       formState.imageStorageLimit = 0;
       formState.videoStorageLimit = 0;
       formState.packageDescription = '';
-      formState.additionalBenefits = [];
       formState.active = true;
       modalVisible.value = true;
     };
@@ -648,72 +356,13 @@ export default {
       modalVisible.value = false;
     };
 
-    const addBenefit = () => {
-      formState.additionalBenefits.push('');
-    };
 
-    const removeBenefit = (index) => {
-      formState.additionalBenefits.splice(index, 1);
-    };
-
-    const createTrialCode = async () => {
-      if (!trialForm.packageId || !trialForm.days || !trialForm.name) {
-        message.error('Please fill in all required fields');
-        return;
-      }
-
-      try {
-        const trialData = {
-          packageId: trialForm.packageId,
-          trailDays: trialForm.days,
-          trialName: trialForm.name
-        };
-        await api.applyTrialPackage(trialData);
-        message.success('Trial code created successfully');
-        fetchTrialCodes();
-        trialForm.name = '';
-      } catch (error) {
-        message.error('Failed to create trial code: ' + error.message);
-      }
-    };
-
-    const handleDeleteTrial = (record) => {
-      console.log('Trial record:', record);
-      
-      const trialId = record.trialId;
-      
-      if (!trialId) {
-        message.error('Invalid trial ID');
-        return;
-      }
-
-      Modal.confirm({
-        title: 'Confirm Delete',
-        content: `Are you sure you want to delete trial code "${record.inviteCode}"?`,
-        okText: 'Confirm',
-        cancelText: 'Cancel',
-        async onOk() {
-          try {
-            await api.deleteTrialPackage(trialId);
-            message.success('Trial code deleted successfully');
-            fetchTrialCodes();
-          } catch (error) {
-            message.error('Delete failed: ' + error.message);
-          }
-        },
-      });
-    };
 
     const getPriceProductName = (priceId) => {
       const price = priceList.value.find(p => p.priceId === priceId);
       return price ? `${price.productName} (${price.productDesc})` : 'Not linked';
     };
 
-    const handlePaginationChange = (page, pageSize) => {
-      pagination.value.current = page;
-      pagination.value.pageSize = pageSize;
-      fetchTrialCodes();
-    };
 
     return {
       columns,
@@ -729,22 +378,10 @@ export default {
       handleDelete,
       handleModalOk,
       handleModalCancel,
-      addBenefit,
-      removeBenefit,
-      trialForm,
-      trialCodes,
-      trialLoading,
-      trialColumns,
-      createTrialCode,
-      pagination,
-      trialList,
-      fetchTrialCodes,
-      handleDeleteTrial,
       priceList,
       fetchPriceList,
       getPriceProductName,
       isMobile,
-      handlePaginationChange,
     };
   },
 };
@@ -781,10 +418,6 @@ export default {
   letter-spacing: 1px;
 }
 
-.trial-form {
-  margin-bottom: 16px;
-  gap: 16px;
-}
 
 .main-table {
   margin-top: 8px;
@@ -870,74 +503,6 @@ export default {
   justify-content: flex-end;
 }
 
-.mobile-trial-form {
-  margin-bottom: 24px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #333;
-}
-
-.mobile-trial-list {
-  margin-top: 16px;
-}
-
-.trial-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  background: #fff;
-}
-
-.trial-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.trial-code {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  font-size: 14px;
-  color: #333;
-  background: #f5f5f5;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.trial-details {
-  margin-bottom: 16px;
-}
-
-.trial-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.mobile-pagination {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.mobile-pagination :deep(.ant-pagination) {
-  justify-content: center;
-}
-
-.mobile-pagination :deep(.ant-pagination-item) {
-  min-width: 28px;
-  height: 28px;
-  line-height: 26px;
-  font-size: 12px;
-}
 
 .mobile-modal {
   margin: 0;
@@ -1005,15 +570,10 @@ export default {
     display: none;
   }
   
-  .trial-form {
-    display: none;
-  }
 }
 
 @media (min-width: 769px) {
-  .mobile-package-list,
-  .mobile-trial-form,
-  .mobile-trial-list {
+  .mobile-package-list {
     display: none;
   }
 }
@@ -1045,9 +605,6 @@ export default {
   margin-top: 16px;
 }
 
-.trial-form {
-  margin-bottom: 20px;
-}
 
 .package-modal :deep(.ant-modal-content) {
   border-radius: 12px;
