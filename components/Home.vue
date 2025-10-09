@@ -25,7 +25,7 @@
 
     <!-- Sidebar -->
     <a-layout-sider 
-      :width="isMobile ? 280 : 200"
+      :width="isMobile ? 300 : 240"
       :class="{
         'desktop-sider': !isMobile,
         'mobile-sider': isMobile,
@@ -33,9 +33,6 @@
       }"
     >
       <div class="sidebar-container">
-        <div class="logo">
-          <h1>Admin System</h1>
-        </div>
         <a-menu
           mode="inline"
           :selectedKeys="[currentView]"
@@ -43,19 +40,15 @@
           style="border-right: 0;"
         >
           <a-menu-item key="InitializationPage">
-            <template #icon><user-outlined /></template>
             Customer Management
           </a-menu-item>
           <a-menu-item key="PackageConfigPage">
-            <template #icon><schedule-outlined /></template>
             Package Config
           </a-menu-item>
           <a-menu-item key="EDM">
-            <template #icon><mail-outlined /></template>
             Email Marketing
           </a-menu-item>
           <a-menu-item key="ComponentConfig">
-            <template #icon><setting-outlined /></template>
             Component Config
           </a-menu-item>
         </a-menu>
@@ -67,7 +60,6 @@
             block 
             @click="handleLogout"
           >
-            <template #icon><logout-outlined /></template>
             Logout
           </a-button>
         </div>
@@ -75,7 +67,7 @@
     </a-layout-sider>
     
     <!-- Desktop placeholder sider -->
-    <a-layout-sider v-if="!isMobile" :width="200" style="visibility: hidden; background: transparent;" />
+    <a-layout-sider v-if="!isMobile" :width="240" style="visibility: hidden; background: transparent;" />
     
     <!-- Content Area -->
     <a-layout-content 
@@ -127,25 +119,13 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { 
-  UserOutlined, 
-  ScheduleOutlined, 
-  LogoutOutlined,
-  MailOutlined,
-  ToolOutlined,
-  MenuOutlined,
-  SettingOutlined
+  MenuOutlined
 } from '@ant-design/icons-vue';
 import axios from 'axios';
 
 export default {
   components: {
-    UserOutlined,
-    ScheduleOutlined,
-    LogoutOutlined,
-    MailOutlined,
-    ToolOutlined,
-    MenuOutlined,
-    SettingOutlined
+    MenuOutlined
   },
   setup() {
     const route = useRoute();
@@ -307,14 +287,14 @@ export default {
 <style scoped>
 /* 移动端顶部导航栏 */
 .mobile-header {
-  background: linear-gradient(135deg, #1a1f3c 0%, #2d3250 100%);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   padding: 12px 16px;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .mobile-header-content {
@@ -324,14 +304,14 @@ export default {
 }
 
 .menu-button {
-  color: white;
+  color: #495057;
   font-size: 18px;
   padding: 4px;
   border-radius: 6px;
 }
 
 .menu-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .mobile-title {
@@ -341,7 +321,7 @@ export default {
 }
 
 .title-text {
-  color: white;
+  color: #495057;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 1px;
@@ -373,7 +353,7 @@ export default {
 .mobile-sider {
   position: fixed !important;
   top: 0;
-  left: -280px;
+  left: -300px;
   bottom: 0;
   z-index: 1000;
   transition: left 0.3s ease;
@@ -435,9 +415,9 @@ html, body, #app {
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-  background: linear-gradient(180deg, #1a1f3c 0%, #2d3250 100%);
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
   width: 100%;
   box-sizing: border-box;
 }
@@ -452,11 +432,12 @@ html, body, #app {
   line-height: 50px;
   margin: 8px 12px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #495057;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(5px);
   width: calc(100% - 24px);
   box-sizing: border-box;
+  font-size: 13px;
 }
 
 /* 移动端菜单项样式调整 */
@@ -465,41 +446,31 @@ html, body, #app {
     height: 48px;
     line-height: 48px;
     margin: 4px 8px;
-    font-size: 16px;
+    font-size: 14px;
   }
 }
 
 :deep(.ant-menu-item:hover) {
-  background: linear-gradient(90deg, rgba(82, 190, 255, 0.1), rgba(82, 190, 255, 0.05)) !important;
-  color: #52beff;
+  background: linear-gradient(90deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05)) !important;
+  color: #007bff;
   transform: translateX(5px);
-  box-shadow: 0 0 20px rgba(82, 190, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 123, 255, 0.1);
 }
 
 :deep(.ant-menu-item.ant-menu-item-selected) {
-  background: linear-gradient(90deg, rgba(82, 190, 255, 0.2), rgba(82, 190, 255, 0.1));
-  color: #52beff;
+  background: linear-gradient(90deg, rgba(0, 123, 255, 0.2), rgba(0, 123, 255, 0.1));
+  color: #007bff;
   font-weight: 500;
-  box-shadow: 0 0 25px rgba(82, 190, 255, 0.15);
-  border-left: 3px solid #52beff;
+  box-shadow: 0 0 25px rgba(0, 123, 255, 0.15);
+  border-left: 3px solid #007bff;
 }
 
-:deep(.ant-menu-item .anticon) {
-  font-size: 18px;
-  margin-right: 12px;
-  transition: all 0.3s ease;
-}
-
-:deep(.ant-menu-item:hover .anticon) {
-  transform: scale(1.1);
-  color: #52beff;
-}
 
 .logout-container {
   margin-top: auto;
   padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(135deg, rgba(26, 31, 60, 0.8) 0%, rgba(45, 50, 80, 0.8) 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(233, 236, 239, 0.8) 100%);
   width: 100%;
   box-sizing: border-box;
 }
@@ -508,18 +479,18 @@ html, body, #app {
   height: 40px;
   border-radius: 8px;
   font-weight: 500;
-  background: rgba(255, 77, 79, 0.1);
-  border: 1px solid rgba(255, 77, 79, 0.2);
-  color: #ff4d4f;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: #dc3545;
   transition: all 0.3s ease;
 }
 
 .logout-container .ant-btn:hover {
-  background: rgba(255, 77, 79, 0.2);
-  border-color: rgba(255, 77, 79, 0.3);
-  color: #ff4d4f;
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.3);
+  color: #dc3545;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 77, 79, 0.2);
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.2);
 }
 
 /* 滚动条样式 */
@@ -528,7 +499,7 @@ html, body, #app {
 }
 
 .sidebar-container::-webkit-scrollbar-thumb {
-  background-color: rgba(82, 190, 255, 0.3);
+  background-color: rgba(0, 123, 255, 0.3);
   border-radius: 2px;
 }
 
@@ -554,33 +525,6 @@ html, body, #app {
   animation: gradientAnimation 15s ease infinite;
 }
 
-.logo {
-  height: 64px;
-  padding: 16px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(135deg, #1a1f3c 0%, #2d3250 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-shadow: 0 0 10px rgba(82, 190, 255, 0.5);
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .logo h1 {
-    font-size: 18px;
-  }
-}
 
 /* 桌面端隐藏移动端元素 */
 @media (min-width: 769px) {
